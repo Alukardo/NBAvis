@@ -1,0 +1,50 @@
+<div layout="row" layout-align="center center">
+    <div layout="row" layout-align="center center">
+        <label>Select Date</label>
+        <input type="text" id="date" ng-model="date" ng-change="selectDate(date)" class="form-control">
+    </div>
+</div>
+<md-grid-list
+        md-cols-sm="1" md-cols-md="2" md-cols-gt-md="6" md-row-height-gt-md="1:1" md-row-height="4:3"
+        md-gutter="8px" md-gutter-gt-sm="4px">
+    <md-grid-tile ng-repeat="game in dailyGamesList"
+                  md-rowspan="{{game.rowspan}}"
+                  md-colspan="{{game.colspan}}"
+                  ng-class="{'tileHover': hover }"
+                  ng-mouseover="hover = true"
+                  ng-mouseleave="hover = false"
+                  ng-style="{'background-color':game.background}"
+                  ng-click="navigateToContent(game)">
+        <table align="center" valign="middle">
+            <tr>
+                <td  align="center">
+                    <img width="60%" height="60%" class='teamLogo' ng-attr-src="assets/images/teamLogo/{{game['awayName']}}.svg"></img>
+                </td>
+                <td align="center" width="50"><h3 style="color: white">VS</h3></td>
+                <td align="center">
+                    <img width="60%" height="60%" class='teamLogo' ng-attr-src="assets/images/teamLogo/{{game['homeName']}}.svg"></img>
+                </td>
+            </tr>
+        </table>
+
+        <md-grid-tile-footer>
+            <table align="center" valign="middle">
+                <tr>
+                    <td align="center"><h3 style="color: white">{{game['awayName']}}</h3></td>
+                    <td width="100"></td>
+                    <td align="center"><h3 style="color: white">{{game['homeName']}}</h3></td>
+                </tr>
+                <tr>
+                    <td align="center"><h3 style="color: white">{{game['awayScore']}}</h3></td>
+                    <td align="center" width="120"><h3 ng-show='game.state == 1' style="color:red;">LIVE</h3></td>
+                    <td align="center"><h3 style="color: white">{{game['homeScore']}}</h3></td>
+                </tr>
+            </table>
+
+        </md-grid-tile-footer>
+    </md-grid-tile>
+</md-grid-list>
+
+<script>
+    $('#date').bootstrapMaterialDatePicker({weekStart: 0, time: false, format: 'YYYY-MM-DD'});
+</script>

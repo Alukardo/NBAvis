@@ -1,0 +1,46 @@
+
+.md-header {
+	background-color: #1976D2 !important; 
+}
+md-tab {
+	color: #90caf9 !important; 
+}
+md-tab.active, md-tab:focus {
+	color: white !important;
+}
+md-tab[disabled] {
+	opacity: 0.5; 
+}
+.md-header .md-ripple {
+	border-color: #FFFF8D !important; 
+}
+md-tabs-ink-bar {
+	background-color: #FFFF8D !important; 
+}
+md-tabs .md-paginator {
+	color: white; 
+}
+
+.isSelected{
+	opacity: 1.0; 	
+}
+
+.notSelected{
+	opacity: 0.1; 
+}
+
+#tooltip {
+	position: relative;
+	display: inline;
+	width:300px;
+	color: #FFFFFF;
+	background: #000000;
+	height: 120px;
+	line-height: 30px;
+	text-align: center;
+	border-radius: 6px;
+}
+
+md-select{
+	margin-top: 0 !important;
+}

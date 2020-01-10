@@ -1,0 +1,35 @@
+<md-tabs md-selected="data.selectedIndex">
+	<md-tab id="tab1" aria-controls="tab1-content">
+		Level One
+	</md-tab>
+	<md-tab id="tab2" aria-controls="tab2-content">
+		Level Two
+	</md-tab>
+	<md-tab id="tab3" aria-controls="tab3-content">
+		Level Three
+	</md-tab>
+	<md-tab id="tab4" aria-controls="tab4-content">
+		Level Four
+	</md-tab>
+	<md-tab id="tab5" aria-controls="tab5-content">
+		Level Five
+	</md-tab>
+	<md-button class="md-primary" ng-click="showToolMenu()">Tool Menu</md-button>
+</md-tabs>
+<ng-switch on="data.selectedIndex" class="tabpanel-container">
+	<div role="tabpanel" id="tab1-content" aria-labelledby="tab1" ng-switch-when="0" >
+		<game-graph></game-graph>
+    </div>
+    <div role="tabpanel" id="tab2-content" aria-labelledby="tab2" ng-switch-when="1">
+		<game-graph></game-graph>
+    </div>
+    <div role="tabpanel" id="tab3-content" aria-labelledby="tab3" ng-switch-when="2">
+		<game-graph></game-graph>
+    </div>
+    <div role="tabpanel" id="tab4-content" aria-labelledby="tab4" ng-switch-when="3">
+		<game-graph></game-graph>
+    </div>
+	<div role="tabpanel" id="tab5-content" aria-labelledby="tab5" ng-switch-when="4">
+		<my-directive></my-directive>
+	</div>
+</ng-switch>

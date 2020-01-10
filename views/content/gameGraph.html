@@ -1,0 +1,102 @@
+<svg id="gameSVG" width="100%" ng-attr-height="{{windowHeight}}" style="margin-left:1%;" version="1.1" xmlns="http://www.w3.org/2000/svg">
+	<g id="levelOneAway" class="levelOne" ng-if="data.selectedIndex >= 0 && data.selectedIndex <= 2">
+		<polygon ng-repeat="quarter in quarterDrawData" ng-attr-points="{{quarter.away.upLeft.x}},{{quarter.away.upLeft.y}}
+		{{quarter.away.bottomLeft.x}},{{quarter.away.bottomLeft.y}}
+		{{quarter.away.bottomRight.x}},{{quarter.away.bottomRight.y}}
+		{{quarter.away.upRight.x}},{{quarter.away.upRight.y}}"
+		style="fill:{{teamColor.away}}"
+		ng-mousemove="quarterMouseover($index,$event)"
+		ng-mouseleave="quarterMouseleave($index)"·
+		ng-click="data.selectedIndex == 0 && quarterMouseSelect($index)"
+		ng-class="{'isSelected': quarterSelected && quarter.away.isSelected , 'notSelected': (quarterSelected && (!(quarter.away.isSelected)))}"/>
+	</g>
+	<g id="levelOneCompareLine" class="levelOne" ng-if="data.selectedIndex >= 0 && data.selectedIndex <= 2">
+		<line class="levelOneCompareStartLine" ng-repeat="quarter in quarterDrawData" ng-attr-x1="{{quarter.compareLine.startLine.start.x}}" ng-attr-y1="{{quarter.compareLine.startLine.start.y}}" ng-attr-x2="{{quarter.compareLine.startLine.end.x}}" ng-attr-y2="{{quarter.compareLine.startLine.end.y}}" style="stroke:{{quarter.compareLine.startLine.color}};stroke-width:{{quarter.compareLine.startLine.width}}"
+		ng-class="{'isSelected': quarterSelected && quarter.away.isSelected , 'notSelected': (quarterSelected && (!(quarter.away.isSelected)))}"/>
+
+		<line class="levelOneCompareEndLine" ng-repeat="quarter in quarterDrawData" ng-attr-x1="{{quarter.compareLine.endLine.start.x}}" ng-attr-y1="{{quarter.compareLine.endLine.start.y}}" ng-attr-x2="{{quarter.compareLine.endLine.end.x}}" ng-attr-y2="{{quarter.compareLine.endLine.end.y}}" style="stroke:{{quarter.compareLine.endLine.color}};stroke-width:{{quarter.compareLine.endLine.width}}"
+		ng-class="{'isSelected': quarterSelected && quarter.away.isSelected , 'notSelected': (quarterSelected && (!(quarter.away.isSelected)))}"/>
+	</g>
+	<g id="levelOneHome" class="levelOne" ng-if="data.selectedIndex >= 0 && data.selectedIndex <= 2">
+		<polygon ng-repeat="quarter in quarterDrawData" ng-attr-points="{{quarter.home.upLeft.x}},{{quarter.home.upLeft.y}}
+		{{quarter.home.bottomLeft.x}},{{quarter.home.bottomLeft.y}}
+		{{quarter.home.bottomRight.x}},{{quarter.home.bottomRight.y}}
+		{{quarter.home.upRight.x}},{{quarter.home.upRight.y}}"
+		style="fill:{{teamColor.home}};"
+		ng-mousemove="quarterMouseover($index,$event)"
+		ng-mouseleave="quarterMouseleave($index)"
+		ng-click="data.selectedIndex == 0 && quarterMouseSelect($index)"
+		ng-class="{'isSelected': quarterSelected && quarter.home.isSelected , 'notSelected': quarterSelected && !quarter.home.isSelected}"/>
+	</g>
+	<g id="levelTwoAway" class="levelTwo" ng-if="data.selectedIndex >= 1 && data.selectedIndex <= 2">
+		<polygon ng-repeat="minute in minuteDrawData" ng-attr-points="
+		{{minute.away.upLeft.x}},{{minute.away.upLeft.y}}
+		{{minute.away.bottomLeft.x}},{{minute.away.bottomLeft.y}}
+		{{minute.away.bottomRight.x}},{{minute.away.bottomRight.y}}
+		{{minute.away.upRight.x}},{{minute.away.upRight.y}}"
+		style="fill:{{minute.away.background}};"
+		ng-mouseover="minuteMouseover($index,$event)"
+		ng-mouseleave="minuteMouseleave($index)"
+		ng-click="data.selectedIndex >= 1 && minuteMouseSelect($index)"
+		ng-class="{'isSelected': minuteSelected && minute.away.isSelected , 'notSelected': minuteSelected && !minute.away.isSelected}"/>
+	</g>
+	<g id="levelTwoCompareLine" class="levelTwo" ng-if="data.selectedIndex >= 1 && data.selectedIndex <= 2">
+		<line class="levelTwoCompareStartLine" ng-repeat="minute in minuteDrawData" ng-attr-x1="{{minute.compareLine.startLine.start.x}}" ng-attr-y1="{{minute.compareLine.startLine.start.y}}" ng-attr-x2="{{minute.compareLine.startLine.end.x}}" ng-attr-y2="{{minute.compareLine.startLine.end.y}}" style="stroke:{{minute.compareLine.startLine.color}};stroke-width:{{minute.compareLine.startLine.width}}"
+		ng-class="{'isSelected': minuteSelected && minute.away.isSelected , 'notSelected': minuteSelected && !minute.away.isSelected}"/>
+
+		<line class="levelTwoCompareEndLine" ng-repeat="minute in minuteDrawData" ng-attr-x1="{{minute.compareLine.endLine.start.x}}" ng-attr-y1="{{minute.compareLine.endLine.start.y}}" ng-attr-x2="{{minute.compareLine.endLine.end.x}}" ng-attr-y2="{{minute.compareLine.endLine.end.y}}" style="stroke:{{minute.compareLine.endLine.color}};stroke-width:{{minute.compareLine.endLine.width}}"
+		ng-class="{'isSelected': minuteSelected && minute.away.isSelected , 'notSelected': minuteSelected && !minute.away.isSelected}" />
+	</g>
+	<g id="levelTwoHome" class="levelTwo" ng-if="data.selectedIndex >= 1 && data.selectedIndex <= 2">
+		<polygon ng-repeat="minute in minuteDrawData" ng-attr-points="{{minute.home.upLeft.x}},{{minute.home.upLeft.y}}
+		{{minute.home.bottomLeft.x}},{{minute.home.bottomLeft.y}}
+		{{minute.home.bottomRight.x}},{{minute.home.bottomRight.y}}
+		{{minute.home.upRight.x}},{{minute.home.upRight.y}}"
+		style="fill:{{minute.home.background}};"
+		ng-mouseover="minuteMouseover($index)"
+		ng-mouseleave="minuteMouseleave($index)"
+		ng-click="data.selectedIndex >= 1 && minuteMouseSelect($index)"
+		ng-class="{'isSelected': minuteSelected && minute.home.isSelected , 'notSelected': minuteSelected && !minute.home.isSelected}"/>
+	</g>
+	<g id="levelThreeAway" class="levelThree" ng-if="data.selectedIndex >= 2 && data.selectedIndex <= 2">
+		<g ng-repeat="minPlay in playDrawData">
+			<circle ng-repeat="play in minPlay.away" ng-attr-cx="{{play.center.x}}" ng-attr-cy="{{play.center.y}}" ng-attr-r="{{play.radius}}" fill="{{play.background}}"
+			ng-mousemove="playMouseover(play, $event)"
+			ng-mouseleave="playMouseleave()"
+			ng-class="{'isSelected': minuteSelected && minPlay.away.isSelected , 'notSelected': minuteSelected && !minPlay.away.isSelected}"/>
+		</g>
+	</g>
+	<g id="levelThreeHome" class="levelThree" ng-if="data.selectedIndex >= 2 && data.selectedIndex <= 2">
+		<g ng-repeat="minPlay in playDrawData">
+			<circle ng-repeat="play in minPlay.home" ng-attr-cx="{{play.center.x}}" ng-attr-cy="{{play.center.y}}" ng-attr-r="{{play.radius}}" fill="{{play.background}}"
+			ng-mousemove="playMouseover(play, $event)"
+			ng-mouseleave="playMouseleave()"
+			ng-class="{'isSelected': minuteSelected && minPlay.home.isSelected , 'notSelected': minuteSelected && !minPlay.home.isSelected}"/>
+		</g>
+	</g>
+	<g id="gameLogo"   ng-if="data.selectedIndex <= 2">
+		<polygon ng-attr-points="0,0 0,{{windowHeight}} 80,{{windowHeight}} 80,0" style="fill:#FFFFFF"/>
+		<image xlink:href="" ng-href="assets/images/teamLogo/{{game['awayName']}}.svg" x="0" ng-attr-y="{{awayIconY}}" width="75" height="75"/>
+		<image xlink:href="" ng-href="assets/images/teamLogo/{{game['homeName']}}.svg" x="0" ng-attr-y="{{homeIconY}}" width="75" height="75"/>
+	</g>
+	<g id="playerEntity" ng-if="data.selectedIndex == 3">
+  		<text ng-repeat="playerName in sortedList" x="0" ng-attr-y="{{sortedY[playerName]}}">{{playerName}}</text>
+  	    <path ng-repeat="playerName in sortedList" fill="white" stroke-linejoin="round" ng-attr-stroke-width="{{storyLineDrawData[playerName].width}}" ng-attr-stroke="{{storyLineDrawData[playerName].color}}" ng-attr-d="{{storyLineDrawData[playerName].path}}"></path>
+	</g>
+</svg>
+<div id="tooltip" style="display:none ;position:absolute;">
+	<div class="row">
+  		<span class="col-md-6"   style="top:15px">
+  			<img id='playerPhoto'  ng-attr-src='{{eventPlayerImg}}'  width="125px">
+  		</span>
+  		<span id="tooltipInfo" class="col-md-6" width="100%" style="text-align:left;">
+			<span id="tooltipTime">{{eventTime}}</span>
+			<br >
+			<span id="tooltipPlayerName">{{eventPlayer}}</span>
+			<br >
+			<span id="tooltipType">{{eventType}}</span>
+			<br >
+			<span id="tooltipPoint">{{eventPoint}}</span>
+  		</span>
+	</div>
+</div>

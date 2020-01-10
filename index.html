@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html ng-app='nbaVisApp'>
+<head>
+    <meta charset='utf-8'>
+    <title>Game Vis</title>
+    <link rel="stylesheet" href="bower_components/angular-material/angular-material.min.css">
+    <link rel="stylesheet" href="bower_components/ngprogress/ngprogress.css">
+    <link rel="stylesheet" href="bower_components/bootstrap/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="bower_components/bootstrap-material-design/dist/css/material.min.css">
+    <link rel="stylesheet" href="bower_components/bootstrap-material-datepicker/css/bootstrap-material-datepicker.css">
+    <link rel="stylesheet" href="bower_components/jquery.tipsy/css/jquery.tipsy.css">
+    <link rel="stylesheet" href="assets/stylesheets/global.css">
+    <link rel="stylesheet" href="assets/stylesheets/schedule.css">
+    <link rel="stylesheet" href="assets/stylesheets/content.css">
+
+    <script src='bower_components/jquery/dist/jquery.min.js'></script>
+    <script src='bower_components/d3/d3.min.js'></script>
+    <script src='bower_components/bootstrap/dist/js/bootstrap.min.js'></script>
+    <script src='bower_components/bootstrap-material-design/dist/js/material.min.js'></script>
+    <script src='bower_components/momentjs/min/moment-with-locales.min.js'></script>
+    <script src='bower_components/bootstrap-material-datepicker/js/bootstrap-material-datepicker.js'></script>
+    <script src='bower_components/angular/angular.min.js'></script>
+    <script src='bower_components/angular-route/angular-route.min.js'></script>
+    <script src='bower_components/angular-ui-router/release/angular-ui-router.min.js'></script>
+    <script src='bower_components/angular-resource/angular-resource.min.js'></script>
+    <script src='bower_components/ngstorage/ngstorage.min.js'></script>
+    <script src='bower_components/angular-animate/angular-animate.min.js'></script>
+    <script src='bower_components/angular-aria/angular-aria.min.js'></script>
+    <script src='bower_components/angular-material/angular-material.min.js'></script>
+    <script src='bower_components/svg-morpheus/compile/minified/svg-morpheus.js'></script>
+    <script src='bower_components/angular-material-icons/angular-material-icons.min.js'></script>
+    <script src='bower_components/ngprogress/build/ngprogress.min.js'></script>
+    <script src='bower_components/jquery.tipsy/js/jquery.tipsy.min.js'></script>
+</head>
+<body layout='row'>
+<div layout="column" tabIndex="-1" role="main" flex ng-controller="globalCtrl">
+    <md-toolbar>
+        <h2 class="md-toolbar-tools">
+            <ng-md-icon icon="{{menuIcon}}" size="36" style="fill:white" options='{"rotation": "counterclock"}'
+                        ng-click="toolbarMenuClick(menuIcon)"></ng-md-icon>
+            <span>Game Vis</span>
+        </h2>
+    </md-toolbar>
+    <md-content ui-view flex></md-content>
+</div>
+
+<script src='app/nbaVis.app.js'></script>
+<!--Controller-->
+<script src='app/controllers/scheduleCtrl.js'></script>
+<script src='app/controllers/contentCtrl.js'></script>
+<!--Services-->
+<script src='app/services/scheduleService.js'></script>
+<script src='app/services/contentService.js'></script>
+<!--Directives-->
+</body>
+</html>
