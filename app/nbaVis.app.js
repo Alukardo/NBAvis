@@ -177,6 +177,7 @@
             let color = {};
             color.home = teamColor[game['homeName']].home;
             color.away = teamColor[game['awayName']].away;
+            color.none = "#888888"
             return color;
         };
         globalService.clear = function(){

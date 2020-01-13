@@ -3,9 +3,9 @@
         .controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$stateParams', '$sessionStorage', '$window', 'ngProgress', 'contentService', 'globalService',
             function ($rootScope, $scope, $mdBottomSheet, $stateParams, $sessionStorage, $window, ngProgress, contentService, globalService) {
 
-                let Point  = globalService.Point;
-                let Line   = globalService.Line;
-                let Quad   = globalService.Quad;
+                let Point = globalService.Point;
+                let Line = globalService.Line;
+                let Quad = globalService.Quad;
                 let Circle = globalService.Circle;
 
                 $scope.compareColor = function (home, away) {
@@ -47,7 +47,7 @@
 
                     $rootScope.eventData = [];
                     $rootScope.playerInfo = [];
-                    $rootScope.storyLine = {};
+                    $rootScope.storyLine = [[]];
                     $rootScope.storyLineData = [];
                     $rootScope.storyLineInteractionCount = [];
                     $rootScope.sortedY = [];
@@ -66,14 +66,14 @@
                     return $scope.loadContentData();
                 };
                 $scope.initializeWindowSize = function () {
-                    $scope.windowWidth  = $window.innerWidth;
+                    $scope.windowWidth = $window.innerWidth;
                     $scope.windowHeight = $window.innerHeight;
-                    $rootScope.factor.x = $scope.windowWidth  / 180;
+                    $rootScope.factor.x = $scope.windowWidth / 180;
                     $rootScope.factor.y = $scope.windowHeight / 100;
-                    $scope.halfHeightY  = $scope.windowHeight / 2.5;
+                    $scope.halfHeightY = $scope.windowHeight / 2.5;
                 };
                 $scope.loadContentData = function () {
-                    if ($sessionStorage.rawData === undefined){
+                    if ($sessionStorage.rawData === undefined) {
                         ngProgress.start();
                         contentService.getGameBoxDataByID(
                             $sessionStorage.game,
@@ -104,7 +104,7 @@
                                 ngProgress.complete();
                             });
                         console.log("# loadContentData  ");
-                    }else{
+                    } else {
                         ngProgress.start();
                         $scope.rawData = $sessionStorage.rawData;
                         $scope.rawPlayerData = $sessionStorage.playerData;
@@ -119,12 +119,12 @@
                 };
                 $scope.generateData = function () {
                     if ($scope.loadFlag === false) return;
-                    let preOffsetX = -1;
+
                     console.log('# Generate Game Data');
                     angular.forEach($scope.rawData, function (quarter) {
-                        let score = { home : 0, away : 0 };
-                        angular.forEach(quarter, function(minute){
-                            angular.forEach(minute, function(event){
+                        let score = {home: 0, away: 0};
+                        angular.forEach(quarter, function (minute) {
+                            angular.forEach(minute, function (event) {
                                 score.home += event['home_point'];
                                 score.away += event['away_point'];
                             });
@@ -132,9 +132,9 @@
                         $rootScope.quarterScore.push(score);
                     });
                     angular.forEach($scope.rawData, function (quarter) {
-                        angular.forEach(quarter, function(minute){
-                            let score = { quarter : 0, minute : 0, home : 0, away : 0 };
-                            angular.forEach(minute, function(event){
+                        angular.forEach(quarter, function (minute) {
+                            let score = {quarter: 0, minute: 0, home: 0, away: 0};
+                            angular.forEach(minute, function (event) {
                                 score.quarter = event['quarterId'];
                                 score.minute = event['minute'];
                                 score.home += event['home_point'];
@@ -144,12 +144,12 @@
                         });
                     });
                     angular.forEach($scope.rawData, function (quarter) {
-                        angular.forEach(quarter, function(minute){
+                        angular.forEach(quarter, function (minute) {
                             let tempMinutePlayHomeArray = [];
                             let tempMinutePlayAwayArray = [];
-                            angular.forEach(minute, function(event){
+                            angular.forEach(minute, function (event) {
                                 $rootScope.eventData.push(event);
-                                let tempPlayInfo = { eventId : event['eventId'], type : event['event_type'], point : 0 };
+                                let tempPlayInfo = {eventId: event['eventId'], type: event['event_type'], point: 0};
                                 if (event['home_description'] != null) {
                                     tempPlayInfo.point = event['home_point'];
                                     tempMinutePlayHomeArray.push(tempPlayInfo);
@@ -159,7 +159,7 @@
                                     tempMinutePlayAwayArray.push(tempPlayInfo);
                                 }
                             });
-                            let tempPlayData = {home : tempMinutePlayHomeArray, away : tempMinutePlayAwayArray};
+                            let tempPlayData = {home: tempMinutePlayHomeArray, away: tempMinutePlayAwayArray};
                             $rootScope.playData.push(tempPlayData);
                         });
                     });
@@ -170,44 +170,37 @@
                                     if (player.name !== null && $rootScope.storyLineData[player.name] === undefined) {
                                         $rootScope.storyLineData[player.name] = [];
                                     }
-                                    if (player.name !== null){
+                                    if (player.name !== null) {
                                         $rootScope.storyLineData[player.name].push(event['eventId']);
                                     }
                                 });
                             });
                         });
                     });
+
+                    let Index = { home : 0, away : 0 };
                     angular.forEach($sessionStorage.playerData, function (player) {
                         let playerName = player['firstName'] + ' ' + player['lastName'];
-                        $rootScope.storyLine[playerName] = [];
+                        let playerId = player['imgAlias'];
+                        if (player['team'] === $scope.game['homeId']) {
+                            $rootScope.storyLine[0][playerId] = {team: player['team'], position : Index.home, offset: 0, available : player['starter'], name: playerName};
+                            Index.home++;
+                        }
+                        if (player['team'] === $scope.game['awayId']) {
+                            $rootScope.storyLine[0][playerId] = {team: player['team'], position : Index.away, offset: 0, available : player['starter'], name: playerName};
+                            Index.away++;
+                        }
                     });
+
+                    let preOffsetX = -1;
                     angular.forEach($scope.rawData, function (quarter) {
                         angular.forEach(quarter, function (minute) {
                             angular.forEach(minute, function (event) {
-                                let player0  = event['players'][0].name;
-                                let player1  = event['players'][1].name;
-                                let player2  = event['players'][2].name;
-                                let offsetX  = event['timeOffset'];
-                                let actType  = event['event_type'];
-                                if (offsetX <= preOffsetX) offsetX = preOffsetX + 1 ;
-                                angular.forEach(Object.keys($rootScope.storyLine), function (player){
-                                    if(player === player0) {
-                                        if(player1 === null && player2 === null){
-                                            $rootScope.storyLine[player].push( {offsetX : offsetX, actType : actType, rePlayer : null}) ;
-                                        }else if(player1 !== null){
-                                            $rootScope.storyLine[player].push( {offsetX : offsetX, actType : actType, rePlayer : player0});
-                                        }else if(player2 !== null){
-                                            $rootScope.storyLine[player].push( {offsetX : offsetX, actType : actType, rePlayer : player0});
-                                        }
-                                    }
-                                    else if( player === player1 || player === player2) {
-                                        $rootScope.storyLine[player].push( {offsetX : offsetX, actType : 0 - actType, rePlayer : player0});
-                                    }
-                                    else{
-                                        $rootScope.storyLine[player].push( {offsetX : offsetX, actType : 0, rePlayer : null}) ;
-                                    }
+                                let offsetX = event['timeOffset'];
+                                let actType = event['event_type'];
+                                if (offsetX <= preOffsetX) offsetX = preOffsetX + 1;
 
-                                });
+
                                 preOffsetX = offsetX;
                             });
                         });
@@ -215,6 +208,7 @@
                     return $scope.generateDrawData();
                 };
                 $scope.generateDrawData = function () {
+
 
                     $rootScope.quarterDrawData = [];
                     $rootScope.minuteDrawData = [];
@@ -229,8 +223,12 @@
                     let homeOrgX = 80, homeOrgY = $scope.halfHeightY + $rootScope.factor.y * 2;
                     let awayOrgX = 80, awayOrgY = $scope.halfHeightY - $rootScope.factor.y * 2;
 
-                    $scope.homeIconY = $scope.halfHeightY - 37.5 + $rootScope.factor.y * 11;
-                    $scope.awayIconY = $scope.halfHeightY - 37.5 - $rootScope.factor.y * 11;
+                    $scope.Icon = {home: null, away: null};
+                    $scope.Icon.home = {x: 0, y: $scope.halfHeightY - 37.5 + $rootScope.factor.y * 11};
+                    $scope.Icon.away = {x: 0, y: $scope.halfHeightY - 37.5 - $rootScope.factor.y * 11};
+
+                    if ($scope.loadFlag === false) return;
+                    console.log('# Generate Draw Data');
 
                     angular.forEach($rootScope.quarterScore, function (quarterScore, quarterIndex) {
 
@@ -395,7 +393,7 @@
                         });
                         angular.forEach(minuteInfo.home, function (playInfo, playIndex) {
                             tempPlayHomeDrawInfo = {};
-                            background = '' ;
+                            background = '';
                             radius = 1;
                             if (playInfo.point === 0) {
                                 background = '#000000';
@@ -457,15 +455,20 @@
                         tempOrgX = 150;
                         tempOrgY = Math.floor($rootScope.sortedY[playerName]) - 5;
                         let tempOrg = 'M' + tempOrgX + ' ' + tempOrgY;
-                        tempColor = $rootScope.playerInfo[playerName]['team'] ? $scope.teamColor.home : $scope.teamColor.away;
+                        tempColor = $rootScope.playerInfo[playerName]['team'] === $scope.game['homeId'] ? $scope.teamColor.home : $scope.teamColor.away;
                         tempPathObj = $rootScope.storyLineDrawData[playerName] === undefined ?
-                            { path : tempOrg, points :[{x : tempOrgX, y : tempOrgY}], color: tempColor, width : 1} : $rootScope.storyLineDrawData[playerName];
+                            {
+                                path: tempOrg,
+                                points: [{x: tempOrgX, y: tempOrgY}],
+                                color: tempColor,
+                                width: 1
+                            } : $rootScope.storyLineDrawData[playerName];
                         angular.forEach($rootScope.storyLineData[playerName], function (eventId) {
                             tempEndX = $rootScope.eventData[eventId]['timeOffset'] * interactionFactor + 150;
                             tempEndY = tempOrgY;
                             if (tempEndX > tempOrgX) {
                                 tempPathObj.path = tempPathObj.path + ' L' + tempEndX + ' ' + tempOrgY;
-                                tempPathObj.points.push({ x : tempEndX, y : tempOrgY});
+                                tempPathObj.points.push({x: tempEndX, y: tempOrgY});
                                 tempOrgX = tempEndX;
                             }
                             switch ($rootScope.eventData[eventId]['event_type']) {
@@ -475,38 +478,38 @@
                                     if ($rootScope.eventData[eventId]['players'][0]['name'] === playerName) {
                                         if ($rootScope.eventData[eventId]['players'][1]['id'] != 0) {
                                             let playerName1 = $rootScope.eventData[eventId]['players'][1]['name'];
-                                            if($rootScope.sortedY[playerName]< $rootScope.sortedY[playerName1]){
+                                            if ($rootScope.sortedY[playerName] < $rootScope.sortedY[playerName1]) {
                                                 tempEndY = Math.floor(0.5 * ($rootScope.sortedY[playerName] + $rootScope.sortedY[playerName1]) - 5) - 2;
-                                            }else{
+                                            } else {
                                                 tempEndY = Math.floor(0.5 * ($rootScope.sortedY[playerName] + $rootScope.sortedY[playerName1]) - 5) + 2;
                                             }
 
-                                            tempPathObj.path += ' L' + Math.floor(tempOrgX + 1) + ' ' + tempEndY + ' L' + Math.floor(tempOrgX + 2) + ' ' + tempOrgY ;
-                                            tempPathObj.points.push({ x : Math.floor(tempOrgX + 1), y : tempEndY});
-                                            tempPathObj.points.push({ x : Math.floor(tempOrgX + 2), y : tempOrgY});
+                                            tempPathObj.path += ' L' + Math.floor(tempOrgX + 1) + ' ' + tempEndY + ' L' + Math.floor(tempOrgX + 2) + ' ' + tempOrgY;
+                                            tempPathObj.points.push({x: Math.floor(tempOrgX + 1), y: tempEndY});
+                                            tempPathObj.points.push({x: Math.floor(tempOrgX + 2), y: tempOrgY});
                                             tempOrgX = Math.floor(tempEndX + 2);
                                         }
                                     }
-                                    if ($rootScope.eventData[eventId]['players'][1]['name'] === playerName){
+                                    if ($rootScope.eventData[eventId]['players'][1]['name'] === playerName) {
                                         let playerName1 = $rootScope.eventData[eventId]['players'][0]['name'];
-                                        if($rootScope.sortedY[playerName] < $rootScope.sortedY[playerName1]){
+                                        if ($rootScope.sortedY[playerName] < $rootScope.sortedY[playerName1]) {
                                             tempEndY = Math.floor(0.5 * ($rootScope.sortedY[playerName] + $rootScope.sortedY[playerName1]) - 5) - 2;
-                                        }else{
+                                        } else {
                                             tempEndY = Math.floor(0.5 * ($rootScope.sortedY[playerName] + $rootScope.sortedY[playerName1]) - 5) + 2;
                                         }
-                                        tempPathObj.path += ' L' + Math.floor(tempOrgX + 1) + ' ' + tempEndY + ' L' + Math.floor(tempOrgX + 2) + ' ' + tempOrgY ;
-                                        tempPathObj.points.push({ x : Math.floor(tempOrgX + 1), y : tempEndY});
-                                        tempPathObj.points.push({ x : Math.floor(tempOrgX + 2), y : tempOrgY});
+                                        tempPathObj.path += ' L' + Math.floor(tempOrgX + 1) + ' ' + tempEndY + ' L' + Math.floor(tempOrgX + 2) + ' ' + tempOrgY;
+                                        tempPathObj.points.push({x: Math.floor(tempOrgX + 1), y: tempEndY});
+                                        tempPathObj.points.push({x: Math.floor(tempOrgX + 2), y: tempOrgY});
                                         tempOrgX = Math.floor(tempEndX + 2);
                                     }
-                                        break;
+                                    break;
                                 default:
                                     break;
                             }
                         });
-                        tempEndX = 150 + ( 720 * 4 + 5 * 60 ) * interactionFactor;
+                        tempEndX = 150 + (720 * 4 + 5 * 60) * interactionFactor;
                         tempPathObj.path = tempPathObj.path + ' L' + tempEndX + ' ' + tempOrgY;
-                        tempPathObj.points.push({ x : tempEndX, y : tempOrgY});
+                        tempPathObj.points.push({x: tempEndX, y: tempOrgY});
                         $rootScope.storyLineDrawData[playerName] = tempPathObj;
                     }
 
@@ -586,13 +589,10 @@
                         }
 
                     }
-
-
                     sumInteractionCountSorted = Object.keys(sumInteractionCount).sort(function (a, b) {
                         return sumInteractionCount[b] - sumInteractionCount[a]
                     });
 
-                    // testPlayer = ['Austin Rivers','Blake Griffin','Chris Paul','DeAndre Jordan','Glen Davis','JJ Redick','Jamal Crawford','Matt Barnes'];
                     for (let playerName in sumInteractionCountSorted) {
                         // if($.inArray(sumInteractionCountSorted[playerName],testPlayer) > -1){
                         $rootScope.sortedList.push(sumInteractionCountSorted[playerName]);
@@ -629,11 +629,12 @@
                     let tempAwaySortedY = $scope.halfHeightY - $rootScope.factor.y * 35,
                         tempHomeSortedY = $scope.halfHeightY + $rootScope.factor.y * 5;
                     for (let playeIndex in $rootScope.sortedList) {
-                        //true is home team
-                        if ($rootScope.playerInfo[$rootScope.sortedList[playeIndex]]['team'] === true) {
+
+                        if ($rootScope.playerInfo[$rootScope.sortedList[playeIndex]]['team'] === $scope.game['homeId']) {
                             $rootScope.sortedY[$rootScope.sortedList[playeIndex]] = tempHomeSortedY;
                             tempHomeSortedY += $rootScope.factor.y * 3;
-                        } else {
+                        }
+                        if ($rootScope.playerInfo[$rootScope.sortedList[playeIndex]]['team'] === $scope.game['awayId']) {
                             $rootScope.sortedY[$rootScope.sortedList[playeIndex]] = tempAwaySortedY;
                             tempAwaySortedY += $rootScope.factor.y * 3;
                         }
@@ -892,11 +893,13 @@
                         .attr('id', 'gameSVG')
                         .attr('width', '100%')
                         .attr('height', $scope.windowHeight)
-                        .style('margin-left', '1%')
-                        .append('g')
+                        .style('margin-left', '1%');
+
+                    let storyLEntity = svg.append('g')
                         .attr('id', 'storyLEntity')
                         .attr('ng-if', 'data.selectedIndex === 4');
-                    let texts = svg.append('g')
+
+                    let playerNames = storyLEntity.append('g')
                         .attr('id', 'playerName')
                         .selectAll('text')
                         .data($rootScope.sortedList)
@@ -909,7 +912,6 @@
                         .text(function (d) {
                             return d;
                         });
-
 
 
                     let paths = svg.append('g')
@@ -925,14 +927,14 @@
                         .attr("d", function (d) {
                             return lineFunction($rootScope.storyLineDrawData[d].points);
                         })
-                        .attr('stroke',function (d) {
+                        .attr('stroke', function (d) {
                             return d3.rgb($rootScope.storyLineDrawData[d].color);
                         })
-                        .attr("stroke-width",function (d) {
+                        .attr("stroke-width", function (d) {
                             return d3.rgb($rootScope.storyLineDrawData[d].width);
                         })
                         .attr('stroke-linecap', 'round')
-                        .attr('fill','none');
+                        .attr('fill', 'none');
 
 
                     let zoomRate = 0.1;
