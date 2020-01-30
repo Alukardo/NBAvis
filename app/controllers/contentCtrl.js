@@ -183,15 +183,21 @@
                         let playerName = player['firstName'] + ' ' + player['lastName'];
                         let playerId = player['imgAlias'];
                         if (player['team'] === $scope.game['homeId']) {
-                            $rootScope.storyLine[0][playerId] = {team: player['team'], position : Index.home, offset: 0, available : player['starter'], name: playerName};
+                            $rootScope.storyLine[0][playerId] = {team: player['team'], position : Index.home, offsetX : 0, offsetY : 0, available : player['starter'], name: playerName};
                             Index.home++;
                         }
                         if (player['team'] === $scope.game['awayId']) {
-                            $rootScope.storyLine[0][playerId] = {team: player['team'], position : Index.away, offset: 0, available : player['starter'], name: playerName};
+                            $rootScope.storyLine[0][playerId] = {team: player['team'], position : Index.away, offsetX : 0, offsetY : 0, available : player['starter'], name: playerName};
                             Index.away++;
                         }
                     });
-
+                    $rootScope.storyLine[0].sort(function(a,b){
+                        if(a.team === b.team){//如果id相同，按照age的降序
+                            return  a.position - b.position
+                        }else{
+                            return a.team - b.team
+                        }
+                    })
                     let preOffsetX = -1;
                     angular.forEach($scope.rawData, function (quarter) {
                         angular.forEach(quarter, function (minute) {
@@ -199,8 +205,18 @@
                                 let offsetX = event['timeOffset'];
                                 let actType = event['event_type'];
                                 if (offsetX <= preOffsetX) offsetX = preOffsetX + 1;
-
-
+                                angular.forEach($sessionStorage.playerData, function (player) {
+                                    let playerName = player['firstName'] + ' ' + player['lastName'];
+                                    let playerId = player['imgAlias'];
+                                    if (player['team'] === $scope.game['homeId']) {
+                                        $rootScope.storyLine[0][playerId] = {team: player['team'], position : Index.home, offsetX : offsetX, offsetY : 0, available : player['starter'], name: playerName};
+                                        Index.home++;
+                                    }
+                                    if (player['team'] === $scope.game['awayId']) {
+                                        $rootScope.storyLine[0][playerId] = {team: player['team'], position : Index.away, offsetX : offsetX, offsetY : 0, available : player['starter'], name: playerName};
+                                        Index.away++;
+                                    }
+                                });
                                 preOffsetX = offsetX;
                             });
                         });
