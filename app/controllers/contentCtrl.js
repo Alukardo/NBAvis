@@ -209,7 +209,6 @@
                 };
                 $scope.generateDrawData = function () {
 
-
                     $rootScope.quarterDrawData = [];
                     $rootScope.minuteDrawData = [];
                     $rootScope.playDrawData = [];
@@ -863,12 +862,9 @@
                         theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
                     }
 
-                    function svgInitialize() {
-                        theSvgElement = $element.find('#gameSVG');
-                        theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
-                    }
+                    theSvgElement = $element.find('#gameSVG');
+                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
 
-                    svgInitialize();
 
                 }
             };
