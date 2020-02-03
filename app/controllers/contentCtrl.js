@@ -47,7 +47,7 @@
 
                     $rootScope.eventData = [];
                     $rootScope.playerInfo = [];
-                    $rootScope.storyLine = { pre:[], data:[] };
+                    $rootScope.storyLine = { pre:{}, data:[], ps:[] };
                     $rootScope.storyLineData = [];
                     $rootScope.storyLineInteractionCount = [];
                     $rootScope.sortedY = [];
@@ -183,15 +183,15 @@
                         let playerName = player['firstName'] + ' ' + player['lastName'];
                         let playerId = player['imgAlias'];
                         if (player['team'] === $scope.game['homeId']) {
-                            $rootScope.storyLine.pre[playerId] = {startX : 80, startY : Math.floor($scope.halfHeightY - $rootScope.factor.y * (5 + pIndex.home * 2)), color : $scope.teamColor.home};
+                            $rootScope.storyLine.pre[playerId] = {name : playerName, startX : 80, startY : Math.floor($scope.halfHeightY - $rootScope.factor.y * (5 + pIndex.home * 3)), color : $scope.teamColor.home};
                             pIndex.home++;
-                        };
+                        }
                         if (player['team'] === $scope.game['awayId']) {
-                            $rootScope.storyLine.pre[playerId] = {startX : 80, startY : Math.floor($scope.halfHeightY + $rootScope.factor.y * (5 + pIndex.home * 2)), color : $scope.teamColor.away};
+                            $rootScope.storyLine.pre[playerId] = {name : playerName, startX : 80, startY : Math.floor($scope.halfHeightY + $rootScope.factor.y * (5 + pIndex.away * 3)), color : $scope.teamColor.away};
                             pIndex.away++;
-                        };
+                        }
+                        $rootScope.storyLine.ps.push(playerId);
                     });
-
 
                     let preOffsetX = -1;
                     let Index = { home : 0, away : 0 };
@@ -932,7 +932,8 @@
                         })
                         .text(function (d) {
                             return d;
-                        });
+                        })
+                        .style('font-family', 'Arial');
 
 
                     let paths = svg.append('g')
@@ -956,6 +957,161 @@
                         })
                         .attr('stroke-linecap', 'round')
                         .attr('fill', 'none');
+
+                    let narr = d3.layout.narrative();
+                    svg.append('g')
+                        .attr('id', 'narrative');
+
+                    let zoomRate = 0.1;
+                    let theSvgElement;
+                    let currentX = 0, currentY = 0;
+
+
+                    angular.element($element).attr("draggable", "true");
+                    $element.bind("dragstart", function (e) {
+                        // if(e.shiftKey){
+                        currentX = e.originalEvent.clientX;
+                        currentY = e.originalEvent.clientY;
+                        // }
+                    });
+                    $element.bind("dragover", function (e) {
+                        // if(e.shiftKey){
+                        if (e.preventDefault) {
+                            e.preventDefault();
+                        }
+
+                        $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
+                        $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
+
+                        theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                        currentX = e.originalEvent.clientX;
+                        currentY = e.originalEvent.clientY;
+                        return false;
+                        // }
+                    });
+                    $element.bind("drop", function (e) {
+                        // if(e.shiftKey){
+                        if (e.stopPropogation) {
+                            e.stopPropogation(); // Necessary. Allows us to drop.
+                        }
+                        return false;
+                        // }
+                    });
+                    $element.bind('mousewheel', function (mouseWheelEvent) {
+                        let zoomCenter = {
+                            'x': mouseWheelEvent.originalEvent.clientX,
+                            'y': mouseWheelEvent.originalEvent.clientY
+                        };
+                        if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
+                            zoom('zoomIn', zoomCenter);
+                        } else {
+                            zoom('zoomOut', zoomCenter);
+                        }
+
+                        mouseWheelEvent.cancelBubble = true;
+                        return false;
+                    });
+
+                    function zoom(zoomType, zoomCenter) {
+                        $rootScope.matrix[0] = parseFloat($rootScope.matrix[0]);	//scale-x
+                        $rootScope.matrix[3] = parseFloat($rootScope.matrix[3]);	//scale-y
+
+                        if (zoomType === 'zoomIn') {
+                            if ($rootScope.matrix[0] + zoomRate > 0.1 && $rootScope.matrix[3] + zoomRate > 0.1) {
+                                $rootScope.matrix[0] += zoomRate;
+                                $rootScope.matrix[3] += zoomRate;
+                                $rootScope.matrix[4] -= (zoomCenter.x * zoomRate);
+                                $rootScope.matrix[5] -= (zoomCenter.y * zoomRate);
+                            }
+                        } else if (zoomType === 'zoomOut') {
+                            if ($rootScope.matrix[0] - zoomRate > 0.1 && $rootScope.matrix[3] - zoomRate > 0.1) {
+                                $rootScope.matrix[0] -= zoomRate;
+                                $rootScope.matrix[3] -= zoomRate;
+                                $rootScope.matrix[4] += (zoomCenter.x * zoomRate);
+                                $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
+                            }
+                        }
+                        theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                    }
+
+                    function svgInitialize() {
+                        theSvgElement = $element.find('#gameSVG');
+                        theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                    }
+
+                    svgInitialize();
+
+
+                }
+            };
+        }])
+        .directive("storyLine", ['$rootScope', '$document', function ($rootScope) {
+            return {
+                restrict: "E",  // Element name: <my-directive></my-directive>
+                link: function ($scope, $element) {
+
+                    let lineFunction = d3.svg.line()
+                        .interpolate('linear')
+                        .tension(Math.random())
+                        .x(function (d) {
+                            return d.x;
+                        })
+                        .y(function (d) {
+                            return d.y;
+                        });
+
+
+                    let svg = d3.select('story-line')
+                        .append('svg')
+                        .attr('id', 'gameSVG')
+                        .attr('width', '100%')
+                        .attr('height', $scope.windowHeight)
+                        .style('margin-left', '1%');
+
+                    let storyLEntity = svg.append('g')
+                        .attr('id', 'storyLEntity')
+                        .attr('ng-if', 'data.selectedIndex === 5');
+
+                    let playerNames = storyLEntity.append('g')
+                        .attr('id', 'playerName')
+                        .selectAll('text')
+                        .data($rootScope.storyLine.ps)
+                        .enter()
+                        .append('text')
+                        .attr('x', '0')
+                        .attr('y', function (d) {
+                            return $rootScope.storyLine.pre[d].startY;
+                        })
+                        .text(function (d) {
+                            return $rootScope.storyLine.pre[d].name;
+                        })
+                        .style('font-family', 'Arial')
+                        .style('fill', function (d) {
+                            return $rootScope.storyLine.pre[d].color;
+                        });
+
+
+                    // let paths = svg.append('g')
+                    //     .attr('id', 'storyLine')
+                    //     .selectAll('g')
+                    //     .data($rootScope.sortedList)
+                    //     .enter()
+                    //     .append('g')
+                    //     .attr('id', function (d) {
+                    //         return d;
+                    //     })
+                    //     .append('path')
+                    //     .attr("d", function (d) {
+                    //         return lineFunction($rootScope.storyLineDrawData[d].points);
+                    //     })
+                    //     .attr('stroke', function (d) {
+                    //         return d3.rgb($rootScope.storyLineDrawData[d].color);
+                    //     })
+                    //     .attr("stroke-width", function (d) {
+                    //         return d3.rgb($rootScope.storyLineDrawData[d].width);
+                    //     })
+                    //     .attr('stroke-linecap', 'round')
+                    //     .attr('fill', 'none');
 
                     let narr = d3.layout.narrative();
                     svg.append('g')
