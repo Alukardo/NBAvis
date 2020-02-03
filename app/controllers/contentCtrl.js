@@ -47,7 +47,7 @@
 
                     $rootScope.eventData = [];
                     $rootScope.playerInfo = [];
-                    $rootScope.storyLine = { pre:{}, data:[], ps:[] };
+                    $rootScope.storyLine = { pre:{}, data:[], ps:[], draw: {} };
                     $rootScope.storyLineData = [];
                     $rootScope.storyLineInteractionCount = [];
                     $rootScope.sortedY = [];
@@ -183,16 +183,17 @@
                         let playerName = player['firstName'] + ' ' + player['lastName'];
                         let playerId = player['imgAlias'];
                         if (player['team'] === $scope.game['homeId']) {
-                            $rootScope.storyLine.pre[playerId] = {name : playerName, startX : 80, startY : Math.floor($scope.halfHeightY - $rootScope.factor.y * (5 + pIndex.home * 3)), color : $scope.teamColor.home};
+                            $rootScope.storyLine.pre[playerId] = {name : playerName, startX : 150, startY : Math.floor($scope.halfHeightY - $rootScope.factor.y * (5 + pIndex.home * 3)), color : $scope.teamColor.home};
                             pIndex.home++;
                         }
                         if (player['team'] === $scope.game['awayId']) {
-                            $rootScope.storyLine.pre[playerId] = {name : playerName, startX : 80, startY : Math.floor($scope.halfHeightY + $rootScope.factor.y * (5 + pIndex.away * 3)), color : $scope.teamColor.away};
+                            $rootScope.storyLine.pre[playerId] = {name : playerName, startX : 150, startY : Math.floor($scope.halfHeightY + $rootScope.factor.y * (5 + pIndex.away * 3)), color : $scope.teamColor.away};
                             pIndex.away++;
                         }
                         $rootScope.storyLine.ps.push(playerId);
-                    });
+                        $rootScope.storyLine.draw[playerId] = [];
 
+                    });
                     let preOffsetX = -1;
                     let Index = { home : 0, away : 0 };
                     // $rootScope.storyLine[0].sort(function(a,b){
@@ -213,17 +214,24 @@
                                     let playerName = player['firstName'] + ' ' + player['lastName'];
                                     let playerId = player['imgAlias'];
                                     if (player['team'] === $scope.game['homeId']) {
-                                        temp[playerId] = {name: playerName, team: player['team'], position : Index.home, offsetX : offsetX, offsetY : 0, available : player['starter']};
+                                        temp.push({id : playerId, name: playerName, team: player['team'], position : Index.home, offsetX : offsetX, offsetY : 0, available : player['starter']});
                                         Index.home++;
                                     }
                                     if (player['team'] === $scope.game['awayId']) {
-                                        temp[playerId] = {name: playerName, team: player['team'], position : Index.away, offsetX : offsetX, offsetY : 0, available : player['starter']};
+                                        temp.push({id : playerId, name: playerName, team: player['team'], position : Index.away, offsetX : offsetX, offsetY : 0, available : player['starter']});
                                         Index.away++;
                                     }
                                 });
                                 $rootScope.storyLine.data.push(temp);
                                 preOffsetX = offsetX;
                             });
+                        });
+                    });
+                    angular.forEach($rootScope.storyLine.data, function (record) {
+                        angular.forEach(record, function (p) {
+                            let x = $rootScope.storyLine.pre[p.id].startX + p.offsetX;
+                            let y = $rootScope.storyLine.pre[p.id].startY + p.offsetY - 5;
+                            $rootScope.storyLine.draw[p.id].push({ x: x, y: y});
                         });
                     });
                     return $scope.generateDrawData();
@@ -532,6 +540,7 @@
                         tempPathObj.points.push({x: tempEndX, y: tempOrgY});
                         $rootScope.storyLineDrawData[playerName] = tempPathObj;
                     }
+
 
                     $rootScope.quarterOriginDrawData = $rootScope.quarterDrawData;
                     $rootScope.minuteOriginDrawData = $rootScope.minuteDrawData;
@@ -1088,31 +1097,29 @@
                         });
 
 
-                    // let paths = svg.append('g')
-                    //     .attr('id', 'storyLine')
-                    //     .selectAll('g')
-                    //     .data($rootScope.sortedList)
-                    //     .enter()
-                    //     .append('g')
-                    //     .attr('id', function (d) {
-                    //         return d;
-                    //     })
-                    //     .append('path')
-                    //     .attr("d", function (d) {
-                    //         return lineFunction($rootScope.storyLineDrawData[d].points);
-                    //     })
-                    //     .attr('stroke', function (d) {
-                    //         return d3.rgb($rootScope.storyLineDrawData[d].color);
-                    //     })
-                    //     .attr("stroke-width", function (d) {
-                    //         return d3.rgb($rootScope.storyLineDrawData[d].width);
-                    //     })
-                    //     .attr('stroke-linecap', 'round')
-                    //     .attr('fill', 'none');
+                    let paths = svg.append('g')
+                        .attr('id', 'storyLine')
+                        .selectAll('g')
+                        .data($rootScope.storyLine.ps)
+                        .enter()
+                        .append('g')
+                        .attr('id', function (d) {
+                            return d;
+                        })
+                        .append('path')
+                        .attr("d", function (d) {
+                            return lineFunction($rootScope.storyLine.draw[d]);
+                        })
+                        .attr('stroke', function (d) {
+                            return d3.rgb($rootScope.storyLine.pre[d].color);
+                        })
+                        .attr("stroke-width", function (d) {
+                            return 1;
+                        })
+                        .attr('stroke-linecap', 'round')
+                        .attr('fill', 'none');
 
-                    let narr = d3.layout.narrative();
-                    svg.append('g')
-                        .attr('id', 'narrative');
+
 
                     let zoomRate = 0.1;
                     let theSvgElement;
@@ -1192,7 +1199,6 @@
                     }
 
                     svgInitialize();
-
 
                 }
             };
