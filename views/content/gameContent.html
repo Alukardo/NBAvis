@@ -14,6 +14,9 @@
 	<md-tab id="tab5" aria-controls="tab5-content">
 		Level Five (use D3)
 	</md-tab>
+	<md-tab id="tab6" aria-controls="tab5-content">
+		Story Line
+	</md-tab>
 	<md-button class="md-primary" ng-click="showToolMenu()">Tool Menu</md-button>
 </md-tabs>
 <ng-switch on="data.selectedIndex" class="tabpanel-container">
@@ -31,5 +34,8 @@
     </div>
 	<div role="tabpanel" id="tab5-content" aria-labelledby="tab5" ng-switch-when="4">
 		<my-directive></my-directive>
+	</div>
+	<div role="tabpanel" id="tab6-content" aria-labelledby="tab6" ng-switch-when="5">
+		<story-line></story-line>
 	</div>
 </ng-switch>
