@@ -47,7 +47,7 @@
 
                     $rootScope.eventData = [];
                     $rootScope.playerInfo = [];
-                    $rootScope.storyLine = [[]];
+                    $rootScope.storyLine = { pre:[], data:[] };
                     $rootScope.storyLineData = [];
                     $rootScope.storyLineInteractionCount = [];
                     $rootScope.sortedY = [];
@@ -118,8 +118,8 @@
                     }
                 };
                 $scope.generateData = function () {
-                    if ($scope.loadFlag === false) return;
 
+                    if ($scope.loadFlag === false) return;
                     console.log('# Generate Game Data');
                     angular.forEach($scope.rawData, function (quarter) {
                         let score = {home: 0, away: 0};
@@ -178,45 +178,50 @@
                         });
                     });
 
-                    let Index = { home : 0, away : 0 };
+                    let pIndex = { home : 0, away : 0 };
                     angular.forEach($sessionStorage.playerData, function (player) {
                         let playerName = player['firstName'] + ' ' + player['lastName'];
                         let playerId = player['imgAlias'];
                         if (player['team'] === $scope.game['homeId']) {
-                            $rootScope.storyLine[0][playerId] = {team: player['team'], position : Index.home, offsetX : 0, offsetY : 0, available : player['starter'], name: playerName};
-                            Index.home++;
-                        }
+                            $rootScope.storyLine.pre[playerId] = {startX : 80, startY : Math.floor($scope.halfHeightY - $rootScope.factor.y * (5 + pIndex.home * 2)), color : $scope.teamColor.home};
+                            pIndex.home++;
+                        };
                         if (player['team'] === $scope.game['awayId']) {
-                            $rootScope.storyLine[0][playerId] = {team: player['team'], position : Index.away, offsetX : 0, offsetY : 0, available : player['starter'], name: playerName};
-                            Index.away++;
-                        }
+                            $rootScope.storyLine.pre[playerId] = {startX : 80, startY : Math.floor($scope.halfHeightY + $rootScope.factor.y * (5 + pIndex.home * 2)), color : $scope.teamColor.away};
+                            pIndex.away++;
+                        };
                     });
-                    $rootScope.storyLine[0].sort(function(a,b){
-                        if(a.team === b.team){//如果id相同，按照age的降序
-                            return  a.position - b.position
-                        }else{
-                            return a.team - b.team
-                        }
-                    })
+
+
                     let preOffsetX = -1;
+                    let Index = { home : 0, away : 0 };
+                    // $rootScope.storyLine[0].sort(function(a,b){
+                    //     if(a.team === b.team){//如果id相同，按照age的降序
+                    //         return  a.position - b.position
+                    //     }else{
+                    //         return a.team - b.team
+                    //     }
+                    // })
                     angular.forEach($scope.rawData, function (quarter) {
                         angular.forEach(quarter, function (minute) {
                             angular.forEach(minute, function (event) {
                                 let offsetX = event['timeOffset'];
                                 let actType = event['event_type'];
                                 if (offsetX <= preOffsetX) offsetX = preOffsetX + 1;
+                                let  temp = [];
                                 angular.forEach($sessionStorage.playerData, function (player) {
                                     let playerName = player['firstName'] + ' ' + player['lastName'];
                                     let playerId = player['imgAlias'];
                                     if (player['team'] === $scope.game['homeId']) {
-                                        $rootScope.storyLine[0][playerId] = {team: player['team'], position : Index.home, offsetX : offsetX, offsetY : 0, available : player['starter'], name: playerName};
+                                        temp[playerId] = {name: playerName, team: player['team'], position : Index.home, offsetX : offsetX, offsetY : 0, available : player['starter']};
                                         Index.home++;
                                     }
                                     if (player['team'] === $scope.game['awayId']) {
-                                        $rootScope.storyLine[0][playerId] = {team: player['team'], position : Index.away, offsetX : offsetX, offsetY : 0, available : player['starter'], name: playerName};
+                                        temp[playerId] = {name: playerName, team: player['team'], position : Index.away, offsetX : offsetX, offsetY : 0, available : player['starter']};
                                         Index.away++;
                                     }
                                 });
+                                $rootScope.storyLine.data.push(temp);
                                 preOffsetX = offsetX;
                             });
                         });
@@ -224,7 +229,6 @@
                     return $scope.generateDrawData();
                 };
                 $scope.generateDrawData = function () {
-
 
                     $rootScope.quarterDrawData = [];
                     $rootScope.minuteDrawData = [];
@@ -904,6 +908,7 @@
                             return d.y;
                         });
 
+
                     let svg = d3.select('my-directive')
                         .append('svg')
                         .attr('id', 'gameSVG')
@@ -952,6 +957,9 @@
                         .attr('stroke-linecap', 'round')
                         .attr('fill', 'none');
 
+                    let narr = d3.layout.narrative();
+                    svg.append('g')
+                        .attr('id', 'narrative');
 
                     let zoomRate = 0.1;
                     let theSvgElement;
@@ -1031,6 +1039,8 @@
                     }
 
                     svgInitialize();
+
+
                 }
             };
         }])
