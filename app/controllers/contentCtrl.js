@@ -49,7 +49,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             $rootScope.eventData = [];
             $rootScope.playerInfo = [];
             $rootScope.storyLine = {pre: {}, data: [], ps: [], draw: {}};
-            $rootScope.storyLine2 = {"characters":[], "scenes": [], "groups":[]};
+            $rootScope.storyLine2 = {"characters":[], "scenes": []};
             $rootScope.storyLineInteractionCount = [];
             $rootScope.sortedY = [];
             $rootScope.sortedList = [];
