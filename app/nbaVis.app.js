@@ -27,8 +27,8 @@ app.config(['$routeProvider', '$locationProvider', '$stateProvider', '$urlRouter
                 templateUrl: 'views/content/gameContent.html',
                 controller: 'contentCtrl'
             });
-    }]);
-app.controller('globalCtrl', ['$rootScope', '$state', '$mdBottomSheet', '$http', function ($rootScope, $state, $mdBottomSheet) {
+    }])
+    .controller('globalCtrl', ['$rootScope', '$state', '$mdBottomSheet', '$http', function ($rootScope, $state, $mdBottomSheet) {
     $rootScope.factor = {'x': '', 'y': ''};
     $rootScope.aggregate = {'unit': '', 'value': '', 'threshold': ''};
     $rootScope.data = {'selectedIndex': 0};
@@ -63,8 +63,8 @@ app.controller('globalCtrl', ['$rootScope', '$state', '$mdBottomSheet', '$http',
         let tempB = (parseInt((tempTeamColor).substring(5, 7), 16) - (teamScore / 10.0)) < 0 ? 0 : (parseInt((tempTeamColor).substring(5, 7), 16) + (teamScore * 10));
         return 'rgb(' + tempR + ',' + tempG + ',' + tempB + ')';
     };
-}]);
-app.controller('toolMenuCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$sessionStorage', '$window', function ($rootScope, $scope, $mdBottomSheet, $sessionStorage, $window) {
+}])
+    .controller('toolMenuCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$sessionStorage', '$window', function ($rootScope, $scope, $mdBottomSheet, $sessionStorage, $window) {
     $scope.resetMatrix = function () {
         $rootScope.factor.x = $window.innerWidth / 180;
         $rootScope.matrix = [1, 0, 0, 1, 0, 0];
@@ -134,8 +134,8 @@ app.controller('toolMenuCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$sess
         }
     }
 
-}]);
-app.factory('globalService', ['$sessionStorage', '$http', function ($sessionStorage, $http) {
+}])
+    .factory('globalService', ['$sessionStorage', '$http', function ($sessionStorage, $http) {
     let globalService = {};
     let teamColor = {
         "ATL": {"away": "#000080", "home": "#FF0000"},
