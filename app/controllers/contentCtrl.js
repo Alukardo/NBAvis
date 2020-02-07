@@ -270,27 +270,33 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     $rootScope.storyLine.draw[p.id].push({x: x, y: y});
                 });
             });
-            let init = [];
+            let init = {home :{relations:[], duration:0}, away:{relations:[], duration:0}};
             angular.forEach($sessionStorage.playerData, function (player) {
                 let temp = {id: '', name: '', affiliation: ''};
                 temp.id = player['imgAlias'];
                 temp.name = player['firstName'] + ' ' + player['lastName'];
-                if (player['team'] === $scope.game['homeId']) temp.affiliation = $scope.teamColor.home;
-                if (player['team'] === $scope.game['awayId']) temp.affiliation = $scope.teamColor.away;
+
+                if (player['team'] === $scope.game['homeId']) temp.affiliation = $scope.teamColor.home, init.home.relations.push(temp.id);
+                if (player['team'] === $scope.game['awayId']) temp.affiliation = $scope.teamColor.away, init.away.relations.push(temp.id);
+
                 $rootScope.storyLine2.characters.push(temp);
-                init.push(temp.id);
             });
-            $rootScope.storyLine2.scenes.push(init);
+            //$rootScope.storyLine2.scenes.push(init.home);
+            //$rootScope.storyLine2.scenes.push(init.away);
+            let preEvent = null;
             angular.forEach($scope.rawData, function (quarter) {
                 angular.forEach(quarter, function (minute) {
                     angular.forEach(minute, function (event) {
                         let players = event['players'];
-                        let temp = [];
+                        let temps = [];
                         angular.forEach(players, function (player) {
-                            if (player.id !== 0) temp.push(player.id.toString());
+                            if (player.id !== 0) temps.push(player.id.toString());
                         });
-                        if (temp.length > 1)
-                            $rootScope.storyLine2.scenes.push(temp);
+                        if (temps.length > 1){
+                            let duration = (preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset']) + 1;
+                            $rootScope.storyLine2.scenes.push({relations: temps, duration: duration});
+                            preEvent = event;
+                        }
                     });
                 });
             });
@@ -1283,6 +1289,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .attr('height', Canvas.height + 100);
 
                 // Calculate the actual width of every character label.
+                let i = -1;
                 scenes.forEach(function (scene) {
                     scene.characters.forEach(function (character) {
                         svg.append('text')
@@ -1298,7 +1305,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let narrative = d3.layout.narrative()
                     .scenes(scenes)
                     .size([Canvas.width, Canvas.height])
-                    .pathSpace(20)
+                    .pathSpace(40)
                     .groupMargin(10)
                     .labelSize(labelSize)
                     .scenePadding([0, sceneWidth / 2, 0, sceneWidth / 2])
@@ -1437,11 +1444,12 @@ function wrangle(data) {
 
     return data.scenes.map(function (scene) {
         return {
-            characters: scene.map(function (id) {
+            characters: scene.relations.map(function (id) {
                 return characterById(id);
             }).filter(function (d) {
                 return (d);
-            })
+            }),
+            duration:  scene.duration
         };
     });
 
