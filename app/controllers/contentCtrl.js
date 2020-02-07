@@ -272,17 +272,25 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             });
             let init = {home :{relations:[], duration:0}, away:{relations:[], duration:0}};
             angular.forEach($sessionStorage.playerData, function (player) {
-                let temp = {id: '', name: '', affiliation: ''};
+                let temp = {id: '', name: '', affiliation: '', initialgroup: 0};
                 temp.id = player['imgAlias'];
                 temp.name = player['firstName'] + ' ' + player['lastName'];
 
-                if (player['team'] === $scope.game['homeId']) temp.affiliation = $scope.teamColor.home, init.home.relations.push(temp.id);
-                if (player['team'] === $scope.game['awayId']) temp.affiliation = $scope.teamColor.away, init.away.relations.push(temp.id);
+                if (player['team'] === $scope.game['homeId']) {
+                    temp.affiliation = $scope.teamColor.home;
+                    temp.initialgroup = 1;
+                    if(player['starter'] === true)init.home.relations.push(temp.id);
+                }
+                if (player['team'] === $scope.game['awayId']) {
+                    temp.affiliation = $scope.teamColor.away;
+                    temp.initialgroup = 2;
+                    if(player['starter'] === true)init.away.relations.push(temp.id);
+                }
 
                 $rootScope.storyLine2.characters.push(temp);
             });
-            //$rootScope.storyLine2.scenes.push(init.home);
-            //$rootScope.storyLine2.scenes.push(init.away);
+            $rootScope.storyLine2.scenes.push(init.home);
+            $rootScope.storyLine2.scenes.push(init.away);
             let preEvent = null;
             angular.forEach($scope.rawData, function (quarter) {
                 angular.forEach(quarter, function (minute) {
@@ -1305,7 +1313,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let narrative = d3.layout.narrative()
                     .scenes(scenes)
                     .size([Canvas.width, Canvas.height])
-                    .pathSpace(40)
+                    .pathSpace(10)
                     .groupMargin(10)
                     .labelSize(labelSize)
                     .scenePadding([0, sceneWidth / 2, 0, sceneWidth / 2])
@@ -1313,7 +1321,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .layout();
 
                 // Get the extent so we can re-size the SVG appropriately.
-                svg.attr('height', narrative.extent()[1]);
+                svg.attr('height', narrative.extent()[1] + 100);
 
                 // Draw links
                 svg.selectAll('.link').data(narrative.links()).enter()
@@ -1335,7 +1343,9 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         return 'translate(' + [x, y] + ')';
                     })
                     .append('rect')
-                    .attr('width', sceneWidth)
+                    .attr('width', function (d) {
+                        return d.width;
+                    })
                     .attr('height', function (d) {
                         return d.height;
                     })
