@@ -270,27 +270,33 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     $rootScope.storyLine.draw[p.id].push({x: x, y: y});
                 });
             });
-            let init = [];
+            let init = {home :{relations:[], duration:0}, away:{relations:[], duration:0}};
             angular.forEach($sessionStorage.playerData, function (player) {
                 let temp = {id: '', name: '', affiliation: ''};
                 temp.id = player['imgAlias'];
                 temp.name = player['firstName'] + ' ' + player['lastName'];
-                if (player['team'] === $scope.game['homeId']) temp.affiliation = $scope.teamColor.home;
-                if (player['team'] === $scope.game['awayId']) temp.affiliation = $scope.teamColor.away;
+
+                if (player['team'] === $scope.game['homeId']) temp.affiliation = $scope.teamColor.home, init.home.relations.push(temp.id);
+                if (player['team'] === $scope.game['awayId']) temp.affiliation = $scope.teamColor.away, init.away.relations.push(temp.id);
+
                 $rootScope.storyLine2.characters.push(temp);
-                init.push(temp.id);
             });
-            $rootScope.storyLine2.scenes.push(init);
+            //$rootScope.storyLine2.scenes.push(init.home);
+            //$rootScope.storyLine2.scenes.push(init.away);
+            let preEvent = null;
             angular.forEach($scope.rawData, function (quarter) {
                 angular.forEach(quarter, function (minute) {
                     angular.forEach(minute, function (event) {
                         let players = event['players'];
-                        let temp = [];
+                        let temps = [];
                         angular.forEach(players, function (player) {
-                            if (player.id !== 0) temp.push(player.id.toString());
+                            if (player.id !== 0) temps.push(player.id.toString());
                         });
-                        if (temp.length > 1)
-                            $rootScope.storyLine2.scenes.push(temp);
+                        if (temps.length > 1){
+                            let duration = (preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset']) + 1;
+                            $rootScope.storyLine2.scenes.push({relations: temps, duration: duration});
+                            preEvent = event;
+                        }
                     });
                 });
             });
@@ -1268,563 +1274,6 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             restrict: "E",  // Element name: <my-directive></my-directive>
             link: function ($scope, $element) {
                 console.log($rootScope.data.selectedIndex);
-                let json = {
-                    "characters": [
-                        {
-                            "id": "R2D",
-                            "name": "R2-D2",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "C3P",
-                            "name": "C-3PO",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "RO1",
-                            "name": "Rebel Officers",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "ST1",
-                            "name": "Stormtroopers",
-                            "affiliation": "dark"
-                        },
-                        {
-                            "id": "DV1",
-                            "name": "Anakin Skywalker / Darth Vader",
-                            "affiliation": "vader"
-                        },
-                        {
-                            "id": "PL1",
-                            "name": "Princess Leia Organa",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "JW1",
-                            "name": "Jawas",
-                            "affiliation": "other"
-                        },
-                        {
-                            "id": "LS1",
-                            "name": "Luke Skywalker",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "OL1",
-                            "name": "Owen Lars",
-                            "affiliation": "other"
-                        },
-                        {
-                            "id": "BL1",
-                            "name": "Beru Lars",
-                            "affiliation": "other"
-                        },
-                        {
-                            "id": "TR1",
-                            "name": "Tusken Raiders",
-                            "affiliation": "other"
-                        },
-                        {
-                            "id": "OB1",
-                            "name": "Obi-Wan Kenobi",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "GT1",
-                            "name": "General Tagge",
-                            "affiliation": "dark"
-                        },
-                        {
-                            "id": "AM1",
-                            "name": "Admiral Motti",
-                            "affiliation": "dark"
-                        },
-                        {
-                            "id": "GMT",
-                            "name": "Grand Moff Tarkin",
-                            "affiliation": "dark"
-                        },
-                        {
-                            "id": "CB1",
-                            "name": "Chewbacca",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "HS1",
-                            "name": "Han Solo",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "GR1",
-                            "name": "Greedo",
-                            "affiliation": "other"
-                        },
-                        {
-                            "id": "JTH",
-                            "name": "Jabba The Hutt",
-                            "affiliation": "other"
-                        },
-                        {
-                            "id": "GW1",
-                            "name": "General Willard",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "GJD",
-                            "name": "General Jan Dodonna",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "JV1",
-                            "name": "Jon 'Dutch' Vander",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "WA1",
-                            "name": "Wedge Antilles",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "BD2",
-                            "name": "Biggs Darklighter",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "GD1",
-                            "name": "Garven Dreis",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "JP1",
-                            "name": "Jek Porkins",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "DT1",
-                            "name": "Dex Tiree",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "DK1",
-                            "name": "Davish Krail",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "TN1",
-                            "name": "Theron Nett",
-                            "affiliation": "light"
-                        },
-                        {
-                            "id": "PN1",
-                            "name": "Puck Naeco",
-                            "affiliation": "light"
-                        }
-                    ],
-                    "scenes": [
-                        [
-                            "R2D",
-                            "C3P",
-                            "DV1",
-                            "ST1",
-                            "RO1"
-                        ],
-                        [
-                            "R2D",
-                            "C3P",
-                            "DV1",
-                            "PL1"
-                        ],
-                        [
-                            "DV1",
-                            "PL1"
-                        ],
-                        [
-                            "R2D",
-                            "C3P"
-                        ],
-                        [
-                            "R2D",
-                            "C3P",
-                            "ST1",
-                            "JW1"
-                        ],
-                        [
-                            "R2D",
-                            "C3P",
-                            "LS1",
-                            "OL1",
-                            "BL1",
-                            "JW1"
-                        ],
-                        [
-                            "R2D",
-                            "C3P",
-                            "LS1"
-                        ],
-                        [
-                            "LS1",
-                            "OL1",
-                            "BL1"
-                        ],
-                        [
-                            "LS1",
-                            "C3P",
-                            "OL1",
-                            "BL1",
-                            ""
-                        ],
-                        [
-                            "LS1",
-                            "C3P",
-                            "R2D",
-                            "TR1"
-                        ],
-                        [
-                            "LS1",
-                            "OB1",
-                            "R2D",
-                            "C3P",
-                            "TR1"
-                        ],
-                        [
-                            "LS1",
-                            "OB1",
-                            "R2D",
-                            "C3P"
-                        ],
-                        [
-                            "LS1",
-                            "OB1",
-                            "R2D",
-                            "C3P"
-                        ],
-                        [
-                            "GT1",
-                            "AM1",
-                            "DV1",
-                            "GMT"
-                        ],
-                        [
-                            "LS1",
-                            "OB1",
-                            "R2D",
-                            "C3P",
-                            "OL1",
-                            "BL1"
-                        ],
-                        [
-                            "DV1",
-                            "PL1"
-                        ],
-                        [
-                            "LS1",
-                            "OB1",
-                            "R2D",
-                            "C3P"
-                        ],
-                        [
-                            "LS1",
-                            "OB1",
-                            "R2D",
-                            "C3P"
-                        ],
-                        [
-                            "LS1",
-                            "OB1",
-                            "R2D",
-                            "C3P",
-                            "CB1"
-                        ],
-                        [
-                            "LS1",
-                            "OB1",
-                            "CB1",
-                            "HS1"
-                        ],
-                        [
-                            "HS1",
-                            "GR1"
-                        ],
-                        [
-                            "DV1",
-                            "GMT",
-                            "GT1",
-                            "AM1",
-                            "R2D",
-                            "LS1",
-                            "OB1",
-                            "C3P"
-                        ],
-                        [
-                            "HS1",
-                            "CB1",
-                            "JTH"
-                        ],
-                        [
-                            "LS1",
-                            "OB1",
-                            "R2D",
-                            "C3P",
-                            "HS1",
-                            "CB1",
-                            "ST1"
-                        ],
-                        [
-                            "GMT",
-                            "DV1",
-                            "PL1",
-                            "AMI"
-                        ],
-                        [
-                            "LS1",
-                            "OB1",
-                            "R2D",
-                            "C3P",
-                            "HS1",
-                            "CB1",
-                            "GMT",
-                            "DV1",
-                            ""
-                        ],
-                        [
-                            "HS1",
-                            "CB1",
-                            "LS1",
-                            "OB1",
-                            "ST1"
-                        ],
-                        [
-                            "DV1",
-                            "GMT"
-                        ],
-                        [
-                            "DV1",
-                            "ST1",
-                            "LS1",
-                            "HS1",
-                            "OB1",
-                            "CB1",
-                            "R2D",
-                            "C3P"
-                        ],
-                        [
-                            "LS1",
-                            "HS1",
-                            "OB1",
-                            "CB1",
-                            "R2D",
-                            "C3P",
-                            "ST1"
-                        ],
-                        [
-                            "LS1",
-                            "HS1",
-                            "OB1",
-                            "CB1",
-                            "DV1"
-                        ],
-                        [
-                            "LS1",
-                            "HS1",
-                            "CB1",
-                            "PL1",
-                            "ST1"
-                        ],
-                        [
-                            "DV1",
-                            "GMT"
-                        ],
-                        [
-                            "HS1",
-                            "LS1",
-                            "PL1",
-                            "CB1",
-                            "C3P",
-                            "R2D"
-                        ],
-                        [
-                            "LS1",
-                            "HS1",
-                            "PL1",
-                            "CB1"
-                        ],
-                        [
-                            "LS1",
-                            "HS1",
-                            "PL1",
-                            "CB1",
-                            "C3P",
-                            "R2D",
-                            "ST1"
-                        ],
-                        [
-                            "OB1",
-                            "LS1",
-                            "HS1",
-                            "PL1",
-                            "CB1",
-                            "ST1"
-                        ],
-                        [
-                            "LS1",
-                            "PL1",
-                            "HS1",
-                            "CB1",
-                            "R2D",
-                            "C3P",
-                            "OB1",
-                            "ST1"
-                        ],
-                        [
-                            "LS1",
-                            "PL1"
-                        ],
-                        [
-                            "DV1",
-                            "LS1",
-                            "PL1",
-                            "HS1",
-                            "CB1",
-                            "R2D",
-                            "C3P",
-                            "OB1",
-                            "ST1"
-                        ],
-                        [
-                            "DV1",
-                            "LS1",
-                            "PL1",
-                            "HS1",
-                            "CB1",
-                            "R2D",
-                            "C3P",
-                            "OB1",
-                            "ST1"
-                        ],
-                        [
-                            "LS1",
-                            "HS1",
-                            "PL1",
-                            "CB1",
-                            "C3P",
-                            "R2D"
-                        ],
-                        [
-                            "DV1",
-                            "GMT"
-                        ],
-                        [
-                            "DV1",
-                            "GMT",
-                            "HS1",
-                            "LS1",
-                            "PL1",
-                            "CB1"
-                        ],
-                        [
-                            "LS1",
-                            "PL1",
-                            "HS1",
-                            "CB1",
-                            "R2D",
-                            "C3P",
-                            "RO1",
-                            "GW1"
-                        ],
-                        [
-                            "DV1",
-                            "GMT"
-                        ],
-                        [
-                            "GJD",
-                            "PL1",
-                            "LS1",
-                            "HS1",
-                            "CB1",
-                            "RO1",
-                            "JV1",
-                            "WA1"
-                        ],
-                        [
-                            "DV1",
-                            "GMT"
-                        ],
-                        [
-                            "HS1",
-                            "CB1",
-                            "LS1",
-                            "C3P",
-                            "RO1"
-                        ],
-                        [
-                            "LS1",
-                            "PL1",
-                            "R2D",
-                            "C3P",
-                            "BD2",
-                            "RO1",
-                            "GD1"
-                        ],
-                        [
-                            "PL1",
-                            "C3P",
-                            "LS1",
-                            "BD2",
-                            "JP1",
-                            "GJD",
-                            "WA1",
-                            "R2D",
-                            "GD1"
-                        ],
-                        [
-                            "DV1"
-                        ],
-                        [
-                            "LS1",
-                            "GJD",
-                            "WA1",
-                            "BD2",
-                            "PL1",
-                            "C3P",
-                            "PN1",
-                            "TN1",
-                            "DK1",
-                            "JV1",
-                            "DT1",
-                            "GD1"
-                        ],
-                        [
-                            "LS1",
-                            "HS1",
-                            "DV1",
-                            "CB1",
-                            "PL1",
-                            "C3P",
-                            "GJD"
-                        ],
-                        [
-                            "PL1",
-                            "HS1",
-                            "LS1",
-                            "C3P",
-                            "CB1",
-                            "R2D",
-                            "RO1"
-                        ],
-                        [
-                            "PL1",
-                            "HS1",
-                            "LS1",
-                            "C3P",
-                            "CB1",
-                            "R2D",
-                            "RO1",
-                            "GJD"
-                        ]
-                    ]
-                };
-
                 let scenes = wrangle($rootScope.storyLine2);
                 let sceneWidth = 10;
                 let Canvas = {width: 0, height: 0};
@@ -1840,6 +1289,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .attr('height', Canvas.height + 100);
 
                 // Calculate the actual width of every character label.
+                let i = -1;
                 scenes.forEach(function (scene) {
                     scene.characters.forEach(function (character) {
                         svg.append('text')
@@ -1855,7 +1305,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let narrative = d3.layout.narrative()
                     .scenes(scenes)
                     .size([Canvas.width, Canvas.height])
-                    .pathSpace(20)
+                    .pathSpace(40)
                     .groupMargin(10)
                     .labelSize(labelSize)
                     .scenePadding([0, sceneWidth / 2, 0, sceneWidth / 2])
@@ -1994,11 +1444,12 @@ function wrangle(data) {
 
     return data.scenes.map(function (scene) {
         return {
-            characters: scene.map(function (id) {
+            characters: scene.relations.map(function (id) {
                 return characterById(id);
             }).filter(function (d) {
                 return (d);
-            })
+            }),
+            duration:  scene.duration
         };
     });
 
