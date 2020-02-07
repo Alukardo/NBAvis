@@ -280,7 +280,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 $rootScope.storyLine2.characters.push(temp);
                 init.push(temp.id);
             });
-            $rootScope.storyLine2.scenes.push(init);
+            //$rootScope.storyLine2.scenes.push(init);
             angular.forEach($scope.rawData, function (quarter) {
                 angular.forEach(quarter, function (minute) {
                     angular.forEach(minute, function (event) {
@@ -1983,7 +1983,7 @@ function eventWeight(actType, position) {
 }
 function wrangle(data) {
 
-    var charactersMap = {};
+    let charactersMap = {};
 
     return data.scenes.map(function(scene){
         return {characters: scene.map(function(id){
