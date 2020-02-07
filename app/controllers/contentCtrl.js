@@ -49,7 +49,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             $rootScope.eventData = [];
             $rootScope.playerInfo = [];
             $rootScope.storyLine = {pre: {}, data: [], ps: [], draw: {}};
-            $rootScope.storyLine2 = {"characters":[], "scenes": []};
+            $rootScope.storyLine2 = {"characters": [], "scenes": []};
             $rootScope.storyLineInteractionCount = [];
             $rootScope.sortedY = [];
             $rootScope.sortedList = [];
@@ -272,25 +272,25 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             });
             let init = [];
             angular.forEach($sessionStorage.playerData, function (player) {
-                let temp = {id : '', name: '', affiliation: ''};
+                let temp = {id: '', name: '', affiliation: ''};
                 temp.id = player['imgAlias'];
                 temp.name = player['firstName'] + ' ' + player['lastName'];
-                if(player['team'] === $scope.game['homeId']) temp.affiliation =  $scope.teamColor.home;
-                if(player['team'] === $scope.game['awayId']) temp.affiliation =  $scope.teamColor.away;
+                if (player['team'] === $scope.game['homeId']) temp.affiliation = $scope.teamColor.home;
+                if (player['team'] === $scope.game['awayId']) temp.affiliation = $scope.teamColor.away;
                 $rootScope.storyLine2.characters.push(temp);
                 init.push(temp.id);
             });
-            //$rootScope.storyLine2.scenes.push(init);
+            $rootScope.storyLine2.scenes.push(init);
             angular.forEach($scope.rawData, function (quarter) {
                 angular.forEach(quarter, function (minute) {
                     angular.forEach(minute, function (event) {
                         let players = event['players'];
-                        let temp  = [];
+                        let temp = [];
                         angular.forEach(players, function (player) {
-                            if(player.id !== 0) temp.push(player.id.toString());
+                            if (player.id !== 0) temp.push(player.id.toString());
                         });
-                        if(temp.length > 1)
-                        $rootScope.storyLine2.scenes.push(temp);
+                        if (temp.length > 1)
+                            $rootScope.storyLine2.scenes.push(temp);
                     });
                 });
             });
@@ -874,1080 +874,1086 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
         return $scope.init();
     }])
     .directive('gameGraph', ['$rootScope', '$document', function ($rootScope) {
-    return {
-        restrict: 'E',
-        templateUrl: 'views/content/gameGraph.html',
-        link: function ($scope, $element) {
+        return {
+            restrict: 'E',
+            templateUrl: 'views/content/gameGraph.html',
+            link: function ($scope, $element) {
 
-            console.log($rootScope.data.selectedIndex);
+                console.log($rootScope.data.selectedIndex);
 
-            let zoomRate = 0.1;
-            let theSvgElement;
-            let currentX = 0, currentY = 0;
+                let zoomRate = 0.1;
+                let theSvgElement;
+                let currentX = 0, currentY = 0;
 
-            $rootScope.matrix = [1, 0, 0, 1, 0, 0];
-            angular.element($element).attr("draggable", "true");
-            $element.bind("dragstart", function (e) {
-                // if(e.shiftKey){
-                currentX = e.originalEvent.clientX;
-                currentY = e.originalEvent.clientY;
-                // }
-            });
-            $element.bind("dragover", function (e) {
-                // if(e.shiftKey){
-                if (e.preventDefault) {
-                    e.preventDefault();
-                }
-
-                $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
-                $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
-
-                theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
-                currentX = e.originalEvent.clientX;
-                currentY = e.originalEvent.clientY;
-                return false;
-                // }
-            });
-            $element.bind("drop", function (e) {
-                // if(e.shiftKey){
-                if (e.stopPropogation) {
-                    e.stopPropogation(); // Necessary. Allows us to drop.
-                }
-                return false;
-                // }
-            });
-            $element.bind('mousewheel', function (mouseWheelEvent) {
-                let zoomCenter = {
-                    'x': mouseWheelEvent.originalEvent.clientX,
-                    'y': mouseWheelEvent.originalEvent.clientY
-                };
-                if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
-                    zoom('zoomIn', zoomCenter);
-                } else {
-                    zoom('zoomOut', zoomCenter);
-                }
-
-                mouseWheelEvent.cancelBubble = true;
-                return false;
-            });
-
-            function zoom(zoomType, zoomCenter) {
-                $rootScope.matrix[0] = parseFloat($rootScope.matrix[0]);	//scale-x
-                $rootScope.matrix[3] = parseFloat($rootScope.matrix[3]);	//scale-y
-
-                if (zoomType === 'zoomIn') {
-                    if ($rootScope.matrix[0] + zoomRate > 0.1 && $rootScope.matrix[3] + zoomRate > 0.1) {
-                        $rootScope.matrix[0] += zoomRate;
-                        $rootScope.matrix[3] += zoomRate;
-                        $rootScope.matrix[4] -= (zoomCenter.x * zoomRate);
-                        $rootScope.matrix[5] -= (zoomCenter.y * zoomRate);
+                $rootScope.matrix = [1, 0, 0, 1, 0, 0];
+                angular.element($element).attr("draggable", "true");
+                $element.bind("dragstart", function (e) {
+                    // if(e.shiftKey){
+                    currentX = e.originalEvent.clientX;
+                    currentY = e.originalEvent.clientY;
+                    // }
+                });
+                $element.bind("dragover", function (e) {
+                    // if(e.shiftKey){
+                    if (e.preventDefault) {
+                        e.preventDefault();
                     }
-                } else if (zoomType === 'zoomOut') {
-                    if ($rootScope.matrix[0] - zoomRate > 0.1 && $rootScope.matrix[3] - zoomRate > 0.1) {
-                        $rootScope.matrix[0] -= zoomRate;
-                        $rootScope.matrix[3] -= zoomRate;
-                        $rootScope.matrix[4] += (zoomCenter.x * zoomRate);
-                        $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
+
+                    $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
+                    $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
+
+                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                    currentX = e.originalEvent.clientX;
+                    currentY = e.originalEvent.clientY;
+                    return false;
+                    // }
+                });
+                $element.bind("drop", function (e) {
+                    // if(e.shiftKey){
+                    if (e.stopPropogation) {
+                        e.stopPropogation(); // Necessary. Allows us to drop.
                     }
+                    return false;
+                    // }
+                });
+                $element.bind('mousewheel', function (mouseWheelEvent) {
+                    let zoomCenter = {
+                        'x': mouseWheelEvent.originalEvent.clientX,
+                        'y': mouseWheelEvent.originalEvent.clientY
+                    };
+                    if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
+                        zoom('zoomIn', zoomCenter);
+                    } else {
+                        zoom('zoomOut', zoomCenter);
+                    }
+
+                    mouseWheelEvent.cancelBubble = true;
+                    return false;
+                });
+
+                function zoom(zoomType, zoomCenter) {
+                    $rootScope.matrix[0] = parseFloat($rootScope.matrix[0]);	//scale-x
+                    $rootScope.matrix[3] = parseFloat($rootScope.matrix[3]);	//scale-y
+
+                    if (zoomType === 'zoomIn') {
+                        if ($rootScope.matrix[0] + zoomRate > 0.1 && $rootScope.matrix[3] + zoomRate > 0.1) {
+                            $rootScope.matrix[0] += zoomRate;
+                            $rootScope.matrix[3] += zoomRate;
+                            $rootScope.matrix[4] -= (zoomCenter.x * zoomRate);
+                            $rootScope.matrix[5] -= (zoomCenter.y * zoomRate);
+                        }
+                    } else if (zoomType === 'zoomOut') {
+                        if ($rootScope.matrix[0] - zoomRate > 0.1 && $rootScope.matrix[3] - zoomRate > 0.1) {
+                            $rootScope.matrix[0] -= zoomRate;
+                            $rootScope.matrix[3] -= zoomRate;
+                            $rootScope.matrix[4] += (zoomCenter.x * zoomRate);
+                            $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
+                        }
+                    }
+                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
                 }
+
+                theSvgElement = $element.find('#gameSVG');
                 theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+
+
             }
-
-            theSvgElement = $element.find('#gameSVG');
-            theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
-
-
-        }
-    };
-}])
+        };
+    }])
     .directive("myDirective", ['$rootScope', '$document', function ($rootScope) {
-    return {
-        restrict: "E",  // Element name: <my-directive></my-directive>
-        link: function ($scope, $element) {
-            console.log($rootScope.data.selectedIndex);
-            let lineFunction = d3.svg.line()
-                .interpolate('linear')
-                .tension(Math.random())
-                .x(function (d) {
-                    return d.x;
-                })
-                .y(function (d) {
-                    return d.y;
-                });
-
-
-            let svg = d3.select('my-directive')
-                .append('svg')
-                .attr('id', 'gameSVG')
-                .attr('width', '100%')
-                .attr('height', $scope.windowHeight)
-                .style('margin-left', '1%');
-
-            let storyLEntity = svg.append('g')
-                .attr('id', 'storyLEntity')
-                .attr('ng-if', 'data.selectedIndex === 4');
-
-            let playerNames = storyLEntity.append('g')
-                .attr('id', 'playerName')
-                .selectAll('text')
-                .data($rootScope.sortedList)
-                .enter()
-                .append('text')
-                .attr('x', '0')
-                .attr('y', function (d) {
-                    return $rootScope.sortedY[d];
-                })
-                .text(function (d) {
-                    return d;
-                })
-                .style('font-family', 'Arial');
-
-
-            let paths = svg.append('g')
-                .attr('id', 'storyLine')
-                .selectAll('g')
-                .data($rootScope.sortedList)
-                .enter()
-                .append('g')
-                .attr('id', function (d) {
-                    return d;
-                })
-                .append('path')
-                .attr("d", function (d) {
-                    return lineFunction($rootScope.storyLineDrawData[d].points);
-                })
-                .attr('stroke', function (d) {
-                    return d3.rgb($rootScope.storyLineDrawData[d].color);
-                })
-                .attr("stroke-width", function (d) {
-                    return d3.rgb($rootScope.storyLineDrawData[d].width);
-                })
-                .attr('stroke-linecap', 'round')
-                .attr('fill', 'none');
-
-            let narr = d3.layout.narrative();
-            svg.append('g')
-                .attr('id', 'narrative');
-
-            let zoomRate = 0.1;
-            let theSvgElement;
-            let currentX = 0, currentY = 0;
-
-
-            angular.element($element).attr("draggable", "true");
-            $element.bind("dragstart", function (e) {
-                // if(e.shiftKey){
-                currentX = e.originalEvent.clientX;
-                currentY = e.originalEvent.clientY;
-                // }
-            });
-            $element.bind("dragover", function (e) {
-                // if(e.shiftKey){
-                if (e.preventDefault) {
-                    e.preventDefault();
-                }
-
-                $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
-                $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
-
-                theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
-                currentX = e.originalEvent.clientX;
-                currentY = e.originalEvent.clientY;
-                return false;
-                // }
-            });
-            $element.bind("drop", function (e) {
-                // if(e.shiftKey){
-                if (e.stopPropogation) {
-                    e.stopPropogation(); // Necessary. Allows us to drop.
-                }
-                return false;
-                // }
-            });
-            $element.bind('mousewheel', function (mouseWheelEvent) {
-                let zoomCenter = {
-                    'x': mouseWheelEvent.originalEvent.clientX,
-                    'y': mouseWheelEvent.originalEvent.clientY
-                };
-                if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
-                    zoom('zoomIn', zoomCenter);
-                } else {
-                    zoom('zoomOut', zoomCenter);
-                }
-
-                mouseWheelEvent.cancelBubble = true;
-                return false;
-            });
-
-            function zoom(zoomType, zoomCenter) {
-                $rootScope.matrix[0] = parseFloat($rootScope.matrix[0]);	//scale-x
-                $rootScope.matrix[3] = parseFloat($rootScope.matrix[3]);	//scale-y
-
-                if (zoomType === 'zoomIn') {
-                    if ($rootScope.matrix[0] + zoomRate > 0.1 && $rootScope.matrix[3] + zoomRate > 0.1) {
-                        $rootScope.matrix[0] += zoomRate;
-                        $rootScope.matrix[3] += zoomRate;
-                        $rootScope.matrix[4] -= (zoomCenter.x * zoomRate);
-                        $rootScope.matrix[5] -= (zoomCenter.y * zoomRate);
-                    }
-                } else if (zoomType === 'zoomOut') {
-                    if ($rootScope.matrix[0] - zoomRate > 0.1 && $rootScope.matrix[3] - zoomRate > 0.1) {
-                        $rootScope.matrix[0] -= zoomRate;
-                        $rootScope.matrix[3] -= zoomRate;
-                        $rootScope.matrix[4] += (zoomCenter.x * zoomRate);
-                        $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
-                    }
-                }
-                theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
-            }
-
-            function svgInitialize() {
-                theSvgElement = $element.find('#gameSVG');
-                theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
-            }
-
-            svgInitialize();
-
-
-        }
-    };
-}])
-    .directive("storyLine", ['$rootScope', '$document', function ($rootScope) {
-    return {
-        restrict: "E",  // Element name: <my-directive></my-directive>
-        link: function ($scope, $element) {
-            console.log($rootScope.data.selectedIndex);
-            let lineFunction = d3.svg.line()
-                .interpolate('bundle')
-                .tension(Math.random())
-                .x(function (d) {
-                    return d.x;
-                })
-                .y(function (d) {
-                    return d.y;
-                });
-
-
-            let svg = d3.select('story-line')
-                .append('svg')
-                .attr('id', 'gameSVG')
-                .attr('width', '100%')
-                .attr('height', $scope.windowHeight)
-                .style('margin-left', '1%');
-
-            let storyLEntity = svg.append('g')
-                .attr('id', 'storyLEntity')
-                .attr('ng-if', 'data.selectedIndex === 5');
-
-            let playerNames = storyLEntity.append('g')
-                .attr('id', 'playerName')
-                .selectAll('text')
-                .data($rootScope.storyLine.ps)
-                .enter()
-                .append('text')
-                .attr('x', '0')
-                .attr('y', function (d) {
-                    return $rootScope.storyLine.pre[d].startY;
-                })
-                .text(function (d) {
-                    return $rootScope.storyLine.pre[d].name;
-                })
-                .style('font-family', 'Arial')
-                .style('fill', function (d) {
-                    return $rootScope.storyLine.pre[d].color;
-                });
-
-
-            let paths = svg.append('g')
-                .attr('id', 'storyLine')
-                .selectAll('g')
-                .data($rootScope.storyLine.ps)
-                .enter()
-                .append('g')
-                .attr('id', function (d) {
-                    return d;
-                })
-                .append('path')
-                .attr("d", function (d) {
-                    return lineFunction($rootScope.storyLine.draw[d]);
-                })
-                .attr('stroke', function (d) {
-                    return d3.rgb($rootScope.storyLine.pre[d].color);
-                })
-                .attr("stroke-width", function (d) {
-                    return 2;
-                })
-                .attr('stroke-linecap', 'round')
-                .attr('fill', 'none');
-
-
-            let zoomRate = 0.1;
-            let theSvgElement;
-            let currentX = 0, currentY = 0;
-
-
-            angular.element($element).attr("draggable", "true");
-            $element.bind("dragstart", function (e) {
-                // if(e.shiftKey){
-                currentX = e.originalEvent.clientX;
-                currentY = e.originalEvent.clientY;
-                // }
-            });
-            $element.bind("dragover", function (e) {
-                // if(e.shiftKey){
-                if (e.preventDefault) {
-                    e.preventDefault();
-                }
-
-                $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
-                $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
-
-                theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
-                currentX = e.originalEvent.clientX;
-                currentY = e.originalEvent.clientY;
-                return false;
-                // }
-            });
-            $element.bind("drop", function (e) {
-                // if(e.shiftKey){
-                if (e.stopPropogation) {
-                    e.stopPropogation(); // Necessary. Allows us to drop.
-                }
-                return false;
-                // }
-            });
-            $element.bind('mousewheel', function (mouseWheelEvent) {
-                let zoomCenter = {
-                    'x': mouseWheelEvent.originalEvent.clientX,
-                    'y': mouseWheelEvent.originalEvent.clientY
-                };
-                if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
-                    zoom('zoomIn', zoomCenter);
-                } else {
-                    zoom('zoomOut', zoomCenter);
-                }
-
-                mouseWheelEvent.cancelBubble = true;
-                return false;
-            });
-
-            function zoom(zoomType, zoomCenter) {
-                $rootScope.matrix[0] = parseFloat($rootScope.matrix[0]);	//scale-x
-                $rootScope.matrix[3] = parseFloat($rootScope.matrix[3]);	//scale-y
-
-                if (zoomType === 'zoomIn') {
-                    if ($rootScope.matrix[0] + zoomRate > 0.1 && $rootScope.matrix[3] + zoomRate > 0.1) {
-                        $rootScope.matrix[0] += zoomRate;
-                        $rootScope.matrix[3] += zoomRate;
-                        $rootScope.matrix[4] -= (zoomCenter.x * zoomRate);
-                        $rootScope.matrix[5] -= (zoomCenter.y * zoomRate);
-                    }
-                } else if (zoomType === 'zoomOut') {
-                    if ($rootScope.matrix[0] - zoomRate > 0.1 && $rootScope.matrix[3] - zoomRate > 0.1) {
-                        $rootScope.matrix[0] -= zoomRate;
-                        $rootScope.matrix[3] -= zoomRate;
-                        $rootScope.matrix[4] += (zoomCenter.x * zoomRate);
-                        $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
-                    }
-                }
-                theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
-            }
-
-            function svgInitialize() {
-                theSvgElement = $element.find('#gameSVG');
-                theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
-            }
-
-            svgInitialize();
-
-        }
-    };
-}])
-    .directive("storyLine2", ['$rootScope', '$document', function ($rootScope) {
-    return {
-        restrict: "E",  // Element name: <my-directive></my-directive>
-        link: function ($scope, $element) {
-            console.log($rootScope.data.selectedIndex);
-            let json = {
-                "characters": [
-                    {
-                        "id": "R2D",
-                        "name": "R2-D2",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "C3P",
-                        "name": "C-3PO",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "RO1",
-                        "name": "Rebel Officers",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "ST1",
-                        "name": "Stormtroopers",
-                        "affiliation": "dark"
-                    },
-                    {
-                        "id": "DV1",
-                        "name": "Anakin Skywalker / Darth Vader",
-                        "affiliation": "vader"
-                    },
-                    {
-                        "id": "PL1",
-                        "name": "Princess Leia Organa",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "JW1",
-                        "name": "Jawas",
-                        "affiliation": "other"
-                    },
-                    {
-                        "id": "LS1",
-                        "name": "Luke Skywalker",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "OL1",
-                        "name": "Owen Lars",
-                        "affiliation": "other"
-                    },
-                    {
-                        "id": "BL1",
-                        "name": "Beru Lars",
-                        "affiliation": "other"
-                    },
-                    {
-                        "id": "TR1",
-                        "name": "Tusken Raiders",
-                        "affiliation": "other"
-                    },
-                    {
-                        "id": "OB1",
-                        "name": "Obi-Wan Kenobi",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "GT1",
-                        "name": "General Tagge",
-                        "affiliation": "dark"
-                    },
-                    {
-                        "id": "AM1",
-                        "name": "Admiral Motti",
-                        "affiliation": "dark"
-                    },
-                    {
-                        "id": "GMT",
-                        "name": "Grand Moff Tarkin",
-                        "affiliation": "dark"
-                    },
-                    {
-                        "id": "CB1",
-                        "name": "Chewbacca",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "HS1",
-                        "name": "Han Solo",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "GR1",
-                        "name": "Greedo",
-                        "affiliation": "other"
-                    },
-                    {
-                        "id": "JTH",
-                        "name": "Jabba The Hutt",
-                        "affiliation": "other"
-                    },
-                    {
-                        "id": "GW1",
-                        "name": "General Willard",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "GJD",
-                        "name": "General Jan Dodonna",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "JV1",
-                        "name": "Jon 'Dutch' Vander",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "WA1",
-                        "name": "Wedge Antilles",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "BD2",
-                        "name": "Biggs Darklighter",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "GD1",
-                        "name": "Garven Dreis",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "JP1",
-                        "name": "Jek Porkins",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "DT1",
-                        "name": "Dex Tiree",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "DK1",
-                        "name": "Davish Krail",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "TN1",
-                        "name": "Theron Nett",
-                        "affiliation": "light"
-                    },
-                    {
-                        "id": "PN1",
-                        "name": "Puck Naeco",
-                        "affiliation": "light"
-                    }
-                ],
-                "scenes": [
-                    [
-                        "R2D",
-                        "C3P",
-                        "DV1",
-                        "ST1",
-                        "RO1"
-                    ],
-                    [
-                        "R2D",
-                        "C3P",
-                        "DV1",
-                        "PL1"
-                    ],
-                    [
-                        "DV1",
-                        "PL1"
-                    ],
-                    [
-                        "R2D",
-                        "C3P"
-                    ],
-                    [
-                        "R2D",
-                        "C3P",
-                        "ST1",
-                        "JW1"
-                    ],
-                    [
-                        "R2D",
-                        "C3P",
-                        "LS1",
-                        "OL1",
-                        "BL1",
-                        "JW1"
-                    ],
-                    [
-                        "R2D",
-                        "C3P",
-                        "LS1"
-                    ],
-                    [
-                        "LS1",
-                        "OL1",
-                        "BL1"
-                    ],
-                    [
-                        "LS1",
-                        "C3P",
-                        "OL1",
-                        "BL1",
-                        ""
-                    ],
-                    [
-                        "LS1",
-                        "C3P",
-                        "R2D",
-                        "TR1"
-                    ],
-                    [
-                        "LS1",
-                        "OB1",
-                        "R2D",
-                        "C3P",
-                        "TR1"
-                    ],
-                    [
-                        "LS1",
-                        "OB1",
-                        "R2D",
-                        "C3P"
-                    ],
-                    [
-                        "LS1",
-                        "OB1",
-                        "R2D",
-                        "C3P"
-                    ],
-                    [
-                        "GT1",
-                        "AM1",
-                        "DV1",
-                        "GMT"
-                    ],
-                    [
-                        "LS1",
-                        "OB1",
-                        "R2D",
-                        "C3P",
-                        "OL1",
-                        "BL1"
-                    ],
-                    [
-                        "DV1",
-                        "PL1"
-                    ],
-                    [
-                        "LS1",
-                        "OB1",
-                        "R2D",
-                        "C3P"
-                    ],
-                    [
-                        "LS1",
-                        "OB1",
-                        "R2D",
-                        "C3P"
-                    ],
-                    [
-                        "LS1",
-                        "OB1",
-                        "R2D",
-                        "C3P",
-                        "CB1"
-                    ],
-                    [
-                        "LS1",
-                        "OB1",
-                        "CB1",
-                        "HS1"
-                    ],
-                    [
-                        "HS1",
-                        "GR1"
-                    ],
-                    [
-                        "DV1",
-                        "GMT",
-                        "GT1",
-                        "AM1",
-                        "R2D",
-                        "LS1",
-                        "OB1",
-                        "C3P"
-                    ],
-                    [
-                        "HS1",
-                        "CB1",
-                        "JTH"
-                    ],
-                    [
-                        "LS1",
-                        "OB1",
-                        "R2D",
-                        "C3P",
-                        "HS1",
-                        "CB1",
-                        "ST1"
-                    ],
-                    [
-                        "GMT",
-                        "DV1",
-                        "PL1",
-                        "AMI"
-                    ],
-                    [
-                        "LS1",
-                        "OB1",
-                        "R2D",
-                        "C3P",
-                        "HS1",
-                        "CB1",
-                        "GMT",
-                        "DV1",
-                        ""
-                    ],
-                    [
-                        "HS1",
-                        "CB1",
-                        "LS1",
-                        "OB1",
-                        "ST1"
-                    ],
-                    [
-                        "DV1",
-                        "GMT"
-                    ],
-                    [
-                        "DV1",
-                        "ST1",
-                        "LS1",
-                        "HS1",
-                        "OB1",
-                        "CB1",
-                        "R2D",
-                        "C3P"
-                    ],
-                    [
-                        "LS1",
-                        "HS1",
-                        "OB1",
-                        "CB1",
-                        "R2D",
-                        "C3P",
-                        "ST1"
-                    ],
-                    [
-                        "LS1",
-                        "HS1",
-                        "OB1",
-                        "CB1",
-                        "DV1"
-                    ],
-                    [
-                        "LS1",
-                        "HS1",
-                        "CB1",
-                        "PL1",
-                        "ST1"
-                    ],
-                    [
-                        "DV1",
-                        "GMT"
-                    ],
-                    [
-                        "HS1",
-                        "LS1",
-                        "PL1",
-                        "CB1",
-                        "C3P",
-                        "R2D"
-                    ],
-                    [
-                        "LS1",
-                        "HS1",
-                        "PL1",
-                        "CB1"
-                    ],
-                    [
-                        "LS1",
-                        "HS1",
-                        "PL1",
-                        "CB1",
-                        "C3P",
-                        "R2D",
-                        "ST1"
-                    ],
-                    [
-                        "OB1",
-                        "LS1",
-                        "HS1",
-                        "PL1",
-                        "CB1",
-                        "ST1"
-                    ],
-                    [
-                        "LS1",
-                        "PL1",
-                        "HS1",
-                        "CB1",
-                        "R2D",
-                        "C3P",
-                        "OB1",
-                        "ST1"
-                    ],
-                    [
-                        "LS1",
-                        "PL1"
-                    ],
-                    [
-                        "DV1",
-                        "LS1",
-                        "PL1",
-                        "HS1",
-                        "CB1",
-                        "R2D",
-                        "C3P",
-                        "OB1",
-                        "ST1"
-                    ],
-                    [
-                        "DV1",
-                        "LS1",
-                        "PL1",
-                        "HS1",
-                        "CB1",
-                        "R2D",
-                        "C3P",
-                        "OB1",
-                        "ST1"
-                    ],
-                    [
-                        "LS1",
-                        "HS1",
-                        "PL1",
-                        "CB1",
-                        "C3P",
-                        "R2D"
-                    ],
-                    [
-                        "DV1",
-                        "GMT"
-                    ],
-                    [
-                        "DV1",
-                        "GMT",
-                        "HS1",
-                        "LS1",
-                        "PL1",
-                        "CB1"
-                    ],
-                    [
-                        "LS1",
-                        "PL1",
-                        "HS1",
-                        "CB1",
-                        "R2D",
-                        "C3P",
-                        "RO1",
-                        "GW1"
-                    ],
-                    [
-                        "DV1",
-                        "GMT"
-                    ],
-                    [
-                        "GJD",
-                        "PL1",
-                        "LS1",
-                        "HS1",
-                        "CB1",
-                        "RO1",
-                        "JV1",
-                        "WA1"
-                    ],
-                    [
-                        "DV1",
-                        "GMT"
-                    ],
-                    [
-                        "HS1",
-                        "CB1",
-                        "LS1",
-                        "C3P",
-                        "RO1"
-                    ],
-                    [
-                        "LS1",
-                        "PL1",
-                        "R2D",
-                        "C3P",
-                        "BD2",
-                        "RO1",
-                        "GD1"
-                    ],
-                    [
-                        "PL1",
-                        "C3P",
-                        "LS1",
-                        "BD2",
-                        "JP1",
-                        "GJD",
-                        "WA1",
-                        "R2D",
-                        "GD1"
-                    ],
-                    [
-                        "DV1"
-                    ],
-                    [
-                        "LS1",
-                        "GJD",
-                        "WA1",
-                        "BD2",
-                        "PL1",
-                        "C3P",
-                        "PN1",
-                        "TN1",
-                        "DK1",
-                        "JV1",
-                        "DT1",
-                        "GD1"
-                    ],
-                    [
-                        "LS1",
-                        "HS1",
-                        "DV1",
-                        "CB1",
-                        "PL1",
-                        "C3P",
-                        "GJD"
-                    ],
-                    [
-                        "PL1",
-                        "HS1",
-                        "LS1",
-                        "C3P",
-                        "CB1",
-                        "R2D",
-                        "RO1"
-                    ],
-                    [
-                        "PL1",
-                        "HS1",
-                        "LS1",
-                        "C3P",
-                        "CB1",
-                        "R2D",
-                        "RO1",
-                        "GJD"
-                    ]
-                ]
-            };
-
-            let scenes = wrangle($rootScope.storyLine2);
-            let sceneWidth = 10;
-            let labelSize = [150,15];
-            d3.svg.line()
-                .interpolate('linear');
-            let svg = d3.select('story-line2')
-                .append('svg')
-                .attr('id', 'narrative-chart')
-                .attr('width', scenes.length * 10 * 4)
-                .attr('height', 1600);
-            // Calculate the actual width of every character label.
-            scenes.forEach(function(scene){
-                scene.characters.forEach(function(character) {
-                    svg.append('text')
-                        .attr('opacity',0)
-                        .attr('class', 'temp')
-                        .text(character.name);
-                    character.width = 100;
-                });
-            });
-            svg.selectAll('text.temp').remove();
-
-            // Do the layout
-            let narrative = d3.layout.narrative()
-                .scenes(scenes)
-                .size([scenes.length * 10 * 4, 1600])
-                .pathSpace(20)
-                .groupMargin(10)
-                .labelSize([150,15])
-                .scenePadding([5,5,5,5])
-                .labelPosition('left')
-                .layout();
-
-            // Get the extent so we can re-size the SVG appropriately.
-            svg.attr('height', narrative.extent()[1]);
-            // Draw the scenes
-            svg.selectAll('.scene').data(narrative.scenes()).enter()
-                .append('g').attr('class', 'scene')
-                .attr('transform', function(d){
-                    var x,y;
-                    x = Math.round(d.x)+0.5;
-                    y = Math.round(d.y)+0.5;
-                    return 'translate('+[x,y]+')';
-                })
-                .append('rect')
-                .attr('width', sceneWidth)
-                .attr('height', function(d){
-                    return d.height;
-                })
-                .attr('y', 0)
-                .attr('x', 0)
-                .attr('rx', 3)
-                .attr('ry', 3)
-                .attr('stroke', '#000')
-                .style('fill', 'none');
-
-            // Draw appearances
-            svg.selectAll('.scene')
-                .selectAll('.appearance')
-                .data(function(d){
-                return d.appearances;
-            })
-                .enter().append('circle')
-                .attr('cx', function(d){
-                    return d.x;
-                })
-                .attr('cy', function(d){
-                    return d.y;
-                })
-                .attr('r', function(){
-                    return 2;
-                });
-
-            // Draw links
-            svg.selectAll('.link').data(narrative.links()).enter()
-                .append('path')
-                .attr('d', narrative.link())
-                .attr('stroke', function (d) {
-                    return d.character.affiliation;
-                })
-                .attr('stroke-width', 2)
-                .style('fill', 'none');
-
-            // Draw intro nodes
-            svg.selectAll('.intro').data(narrative.introductions())
-                .enter().call(function(s){
-
-                let g = s.append('g').attr('class', 'intro');
-
-                g.append('rect')
-                    .attr('y', -4)
-                    .attr('x', -4)
-                    .attr('width', 4)
-                    .attr('height', 8);
-
-                let text = g.append('g').attr('class','text');
-
-                // Apppend two actual 'text' nodes to fake an 'outside' outline.
-                text.append('text');
-                text.append('text').attr('class', 'color');
-
-                g.attr('transform', function(d){
-                    var x,y;
-                    x = Math.round(d.x);
-                    y = Math.round(d.y);
-                    return 'translate(' + [x,y] + ')';
-                });
-
-                g.selectAll('text')
-                    .attr('text-anchor', 'end')
-                    .attr('y', '4px')
-                    .attr('x', '-8px')
-                    .text(function(d){ return d.character.name; })
-                    .style('font-family', 'Arial')
-                    .style('fill', function (d) {
-                        return d.character.affiliation;
+        return {
+            restrict: "E",  // Element name: <my-directive></my-directive>
+            link: function ($scope, $element) {
+                console.log($rootScope.data.selectedIndex);
+                let lineFunction = d3.svg.line()
+                    .interpolate('linear')
+                    .tension(Math.random())
+                    .x(function (d) {
+                        return d.x;
+                    })
+                    .y(function (d) {
+                        return d.y;
                     });
 
-            });
 
-        }
-    };
-}]);
+                let svg = d3.select('my-directive')
+                    .append('svg')
+                    .attr('id', 'gameSVG')
+                    .attr('width', '100%')
+                    .attr('height', $scope.windowHeight)
+                    .style('margin-left', '1%');
+
+                let storyLEntity = svg.append('g')
+                    .attr('id', 'storyLEntity')
+                    .attr('ng-if', 'data.selectedIndex === 4');
+
+                let playerNames = storyLEntity.append('g')
+                    .attr('id', 'playerName')
+                    .selectAll('text')
+                    .data($rootScope.sortedList)
+                    .enter()
+                    .append('text')
+                    .attr('x', '0')
+                    .attr('y', function (d) {
+                        return $rootScope.sortedY[d];
+                    })
+                    .text(function (d) {
+                        return d;
+                    })
+                    .style('font-family', 'Arial');
+
+
+                let paths = svg.append('g')
+                    .attr('id', 'storyLine')
+                    .selectAll('g')
+                    .data($rootScope.sortedList)
+                    .enter()
+                    .append('g')
+                    .attr('id', function (d) {
+                        return d;
+                    })
+                    .append('path')
+                    .attr("d", function (d) {
+                        return lineFunction($rootScope.storyLineDrawData[d].points);
+                    })
+                    .attr('stroke', function (d) {
+                        return d3.rgb($rootScope.storyLineDrawData[d].color);
+                    })
+                    .attr("stroke-width", function (d) {
+                        return d3.rgb($rootScope.storyLineDrawData[d].width);
+                    })
+                    .attr('stroke-linecap', 'round')
+                    .attr('fill', 'none');
+
+                let narr = d3.layout.narrative();
+                svg.append('g')
+                    .attr('id', 'narrative');
+
+                let zoomRate = 0.1;
+                let theSvgElement;
+                let currentX = 0, currentY = 0;
+
+
+                angular.element($element).attr("draggable", "true");
+                $element.bind("dragstart", function (e) {
+                    // if(e.shiftKey){
+                    currentX = e.originalEvent.clientX;
+                    currentY = e.originalEvent.clientY;
+                    // }
+                });
+                $element.bind("dragover", function (e) {
+                    // if(e.shiftKey){
+                    if (e.preventDefault) {
+                        e.preventDefault();
+                    }
+
+                    $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
+                    $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
+
+                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                    currentX = e.originalEvent.clientX;
+                    currentY = e.originalEvent.clientY;
+                    return false;
+                    // }
+                });
+                $element.bind("drop", function (e) {
+                    // if(e.shiftKey){
+                    if (e.stopPropogation) {
+                        e.stopPropogation(); // Necessary. Allows us to drop.
+                    }
+                    return false;
+                    // }
+                });
+                $element.bind('mousewheel', function (mouseWheelEvent) {
+                    let zoomCenter = {
+                        'x': mouseWheelEvent.originalEvent.clientX,
+                        'y': mouseWheelEvent.originalEvent.clientY
+                    };
+                    if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
+                        zoom('zoomIn', zoomCenter);
+                    } else {
+                        zoom('zoomOut', zoomCenter);
+                    }
+
+                    mouseWheelEvent.cancelBubble = true;
+                    return false;
+                });
+
+                function zoom(zoomType, zoomCenter) {
+                    $rootScope.matrix[0] = parseFloat($rootScope.matrix[0]);	//scale-x
+                    $rootScope.matrix[3] = parseFloat($rootScope.matrix[3]);	//scale-y
+
+                    if (zoomType === 'zoomIn') {
+                        if ($rootScope.matrix[0] + zoomRate > 0.1 && $rootScope.matrix[3] + zoomRate > 0.1) {
+                            $rootScope.matrix[0] += zoomRate;
+                            $rootScope.matrix[3] += zoomRate;
+                            $rootScope.matrix[4] -= (zoomCenter.x * zoomRate);
+                            $rootScope.matrix[5] -= (zoomCenter.y * zoomRate);
+                        }
+                    } else if (zoomType === 'zoomOut') {
+                        if ($rootScope.matrix[0] - zoomRate > 0.1 && $rootScope.matrix[3] - zoomRate > 0.1) {
+                            $rootScope.matrix[0] -= zoomRate;
+                            $rootScope.matrix[3] -= zoomRate;
+                            $rootScope.matrix[4] += (zoomCenter.x * zoomRate);
+                            $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
+                        }
+                    }
+                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                }
+
+                function svgInitialize() {
+                    theSvgElement = $element.find('#gameSVG');
+                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                }
+
+                svgInitialize();
+
+
+            }
+        };
+    }])
+    .directive("storyLine", ['$rootScope', '$document', function ($rootScope) {
+        return {
+            restrict: "E",  // Element name: <my-directive></my-directive>
+            link: function ($scope, $element) {
+                console.log($rootScope.data.selectedIndex);
+                let lineFunction = d3.svg.line()
+                    .interpolate('bundle')
+                    .tension(Math.random())
+                    .x(function (d) {
+                        return d.x;
+                    })
+                    .y(function (d) {
+                        return d.y;
+                    });
+
+
+                let svg = d3.select('story-line')
+                    .append('svg')
+                    .attr('id', 'gameSVG')
+                    .attr('width', '100%')
+                    .attr('height', $scope.windowHeight)
+                    .style('margin-left', '1%');
+
+                let storyLEntity = svg.append('g')
+                    .attr('id', 'storyLEntity')
+                    .attr('ng-if', 'data.selectedIndex === 5');
+
+                let playerNames = storyLEntity.append('g')
+                    .attr('id', 'playerName')
+                    .selectAll('text')
+                    .data($rootScope.storyLine.ps)
+                    .enter()
+                    .append('text')
+                    .attr('x', '0')
+                    .attr('y', function (d) {
+                        return $rootScope.storyLine.pre[d].startY;
+                    })
+                    .text(function (d) {
+                        return $rootScope.storyLine.pre[d].name;
+                    })
+                    .style('font-family', 'Arial')
+                    .style('fill', function (d) {
+                        return $rootScope.storyLine.pre[d].color;
+                    });
+
+
+                let paths = svg.append('g')
+                    .attr('id', 'storyLine')
+                    .selectAll('g')
+                    .data($rootScope.storyLine.ps)
+                    .enter()
+                    .append('g')
+                    .attr('id', function (d) {
+                        return d;
+                    })
+                    .append('path')
+                    .attr("d", function (d) {
+                        return lineFunction($rootScope.storyLine.draw[d]);
+                    })
+                    .attr('stroke', function (d) {
+                        return d3.rgb($rootScope.storyLine.pre[d].color);
+                    })
+                    .attr("stroke-width", function (d) {
+                        return 2;
+                    })
+                    .attr('stroke-linecap', 'round')
+                    .attr('fill', 'none');
+
+
+                let zoomRate = 0.1;
+                let theSvgElement;
+                let currentX = 0, currentY = 0;
+
+
+                angular.element($element).attr("draggable", "true");
+                $element.bind("dragstart", function (e) {
+                    // if(e.shiftKey){
+                    currentX = e.originalEvent.clientX;
+                    currentY = e.originalEvent.clientY;
+                    // }
+                });
+                $element.bind("dragover", function (e) {
+                    // if(e.shiftKey){
+                    if (e.preventDefault) {
+                        e.preventDefault();
+                    }
+
+                    $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
+                    $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
+
+                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                    currentX = e.originalEvent.clientX;
+                    currentY = e.originalEvent.clientY;
+                    return false;
+                    // }
+                });
+                $element.bind("drop", function (e) {
+                    // if(e.shiftKey){
+                    if (e.stopPropogation) {
+                        e.stopPropogation(); // Necessary. Allows us to drop.
+                    }
+                    return false;
+                    // }
+                });
+                $element.bind('mousewheel', function (mouseWheelEvent) {
+                    let zoomCenter = {
+                        'x': mouseWheelEvent.originalEvent.clientX,
+                        'y': mouseWheelEvent.originalEvent.clientY
+                    };
+                    if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
+                        zoom('zoomIn', zoomCenter);
+                    } else {
+                        zoom('zoomOut', zoomCenter);
+                    }
+
+                    mouseWheelEvent.cancelBubble = true;
+                    return false;
+                });
+
+                function zoom(zoomType, zoomCenter) {
+                    $rootScope.matrix[0] = parseFloat($rootScope.matrix[0]);	//scale-x
+                    $rootScope.matrix[3] = parseFloat($rootScope.matrix[3]);	//scale-y
+
+                    if (zoomType === 'zoomIn') {
+                        if ($rootScope.matrix[0] + zoomRate > 0.1 && $rootScope.matrix[3] + zoomRate > 0.1) {
+                            $rootScope.matrix[0] += zoomRate;
+                            $rootScope.matrix[3] += zoomRate;
+                            $rootScope.matrix[4] -= (zoomCenter.x * zoomRate);
+                            $rootScope.matrix[5] -= (zoomCenter.y * zoomRate);
+                        }
+                    } else if (zoomType === 'zoomOut') {
+                        if ($rootScope.matrix[0] - zoomRate > 0.1 && $rootScope.matrix[3] - zoomRate > 0.1) {
+                            $rootScope.matrix[0] -= zoomRate;
+                            $rootScope.matrix[3] -= zoomRate;
+                            $rootScope.matrix[4] += (zoomCenter.x * zoomRate);
+                            $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
+                        }
+                    }
+                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                }
+
+                function svgInitialize() {
+                    theSvgElement = $element.find('#gameSVG');
+                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                }
+
+                svgInitialize();
+
+            }
+        };
+    }])
+    .directive("storyLine2", ['$rootScope', '$document', function ($rootScope) {
+        return {
+            restrict: "E",  // Element name: <my-directive></my-directive>
+            link: function ($scope, $element) {
+                console.log($rootScope.data.selectedIndex);
+                let json = {
+                    "characters": [
+                        {
+                            "id": "R2D",
+                            "name": "R2-D2",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "C3P",
+                            "name": "C-3PO",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "RO1",
+                            "name": "Rebel Officers",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "ST1",
+                            "name": "Stormtroopers",
+                            "affiliation": "dark"
+                        },
+                        {
+                            "id": "DV1",
+                            "name": "Anakin Skywalker / Darth Vader",
+                            "affiliation": "vader"
+                        },
+                        {
+                            "id": "PL1",
+                            "name": "Princess Leia Organa",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "JW1",
+                            "name": "Jawas",
+                            "affiliation": "other"
+                        },
+                        {
+                            "id": "LS1",
+                            "name": "Luke Skywalker",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "OL1",
+                            "name": "Owen Lars",
+                            "affiliation": "other"
+                        },
+                        {
+                            "id": "BL1",
+                            "name": "Beru Lars",
+                            "affiliation": "other"
+                        },
+                        {
+                            "id": "TR1",
+                            "name": "Tusken Raiders",
+                            "affiliation": "other"
+                        },
+                        {
+                            "id": "OB1",
+                            "name": "Obi-Wan Kenobi",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "GT1",
+                            "name": "General Tagge",
+                            "affiliation": "dark"
+                        },
+                        {
+                            "id": "AM1",
+                            "name": "Admiral Motti",
+                            "affiliation": "dark"
+                        },
+                        {
+                            "id": "GMT",
+                            "name": "Grand Moff Tarkin",
+                            "affiliation": "dark"
+                        },
+                        {
+                            "id": "CB1",
+                            "name": "Chewbacca",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "HS1",
+                            "name": "Han Solo",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "GR1",
+                            "name": "Greedo",
+                            "affiliation": "other"
+                        },
+                        {
+                            "id": "JTH",
+                            "name": "Jabba The Hutt",
+                            "affiliation": "other"
+                        },
+                        {
+                            "id": "GW1",
+                            "name": "General Willard",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "GJD",
+                            "name": "General Jan Dodonna",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "JV1",
+                            "name": "Jon 'Dutch' Vander",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "WA1",
+                            "name": "Wedge Antilles",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "BD2",
+                            "name": "Biggs Darklighter",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "GD1",
+                            "name": "Garven Dreis",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "JP1",
+                            "name": "Jek Porkins",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "DT1",
+                            "name": "Dex Tiree",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "DK1",
+                            "name": "Davish Krail",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "TN1",
+                            "name": "Theron Nett",
+                            "affiliation": "light"
+                        },
+                        {
+                            "id": "PN1",
+                            "name": "Puck Naeco",
+                            "affiliation": "light"
+                        }
+                    ],
+                    "scenes": [
+                        [
+                            "R2D",
+                            "C3P",
+                            "DV1",
+                            "ST1",
+                            "RO1"
+                        ],
+                        [
+                            "R2D",
+                            "C3P",
+                            "DV1",
+                            "PL1"
+                        ],
+                        [
+                            "DV1",
+                            "PL1"
+                        ],
+                        [
+                            "R2D",
+                            "C3P"
+                        ],
+                        [
+                            "R2D",
+                            "C3P",
+                            "ST1",
+                            "JW1"
+                        ],
+                        [
+                            "R2D",
+                            "C3P",
+                            "LS1",
+                            "OL1",
+                            "BL1",
+                            "JW1"
+                        ],
+                        [
+                            "R2D",
+                            "C3P",
+                            "LS1"
+                        ],
+                        [
+                            "LS1",
+                            "OL1",
+                            "BL1"
+                        ],
+                        [
+                            "LS1",
+                            "C3P",
+                            "OL1",
+                            "BL1",
+                            ""
+                        ],
+                        [
+                            "LS1",
+                            "C3P",
+                            "R2D",
+                            "TR1"
+                        ],
+                        [
+                            "LS1",
+                            "OB1",
+                            "R2D",
+                            "C3P",
+                            "TR1"
+                        ],
+                        [
+                            "LS1",
+                            "OB1",
+                            "R2D",
+                            "C3P"
+                        ],
+                        [
+                            "LS1",
+                            "OB1",
+                            "R2D",
+                            "C3P"
+                        ],
+                        [
+                            "GT1",
+                            "AM1",
+                            "DV1",
+                            "GMT"
+                        ],
+                        [
+                            "LS1",
+                            "OB1",
+                            "R2D",
+                            "C3P",
+                            "OL1",
+                            "BL1"
+                        ],
+                        [
+                            "DV1",
+                            "PL1"
+                        ],
+                        [
+                            "LS1",
+                            "OB1",
+                            "R2D",
+                            "C3P"
+                        ],
+                        [
+                            "LS1",
+                            "OB1",
+                            "R2D",
+                            "C3P"
+                        ],
+                        [
+                            "LS1",
+                            "OB1",
+                            "R2D",
+                            "C3P",
+                            "CB1"
+                        ],
+                        [
+                            "LS1",
+                            "OB1",
+                            "CB1",
+                            "HS1"
+                        ],
+                        [
+                            "HS1",
+                            "GR1"
+                        ],
+                        [
+                            "DV1",
+                            "GMT",
+                            "GT1",
+                            "AM1",
+                            "R2D",
+                            "LS1",
+                            "OB1",
+                            "C3P"
+                        ],
+                        [
+                            "HS1",
+                            "CB1",
+                            "JTH"
+                        ],
+                        [
+                            "LS1",
+                            "OB1",
+                            "R2D",
+                            "C3P",
+                            "HS1",
+                            "CB1",
+                            "ST1"
+                        ],
+                        [
+                            "GMT",
+                            "DV1",
+                            "PL1",
+                            "AMI"
+                        ],
+                        [
+                            "LS1",
+                            "OB1",
+                            "R2D",
+                            "C3P",
+                            "HS1",
+                            "CB1",
+                            "GMT",
+                            "DV1",
+                            ""
+                        ],
+                        [
+                            "HS1",
+                            "CB1",
+                            "LS1",
+                            "OB1",
+                            "ST1"
+                        ],
+                        [
+                            "DV1",
+                            "GMT"
+                        ],
+                        [
+                            "DV1",
+                            "ST1",
+                            "LS1",
+                            "HS1",
+                            "OB1",
+                            "CB1",
+                            "R2D",
+                            "C3P"
+                        ],
+                        [
+                            "LS1",
+                            "HS1",
+                            "OB1",
+                            "CB1",
+                            "R2D",
+                            "C3P",
+                            "ST1"
+                        ],
+                        [
+                            "LS1",
+                            "HS1",
+                            "OB1",
+                            "CB1",
+                            "DV1"
+                        ],
+                        [
+                            "LS1",
+                            "HS1",
+                            "CB1",
+                            "PL1",
+                            "ST1"
+                        ],
+                        [
+                            "DV1",
+                            "GMT"
+                        ],
+                        [
+                            "HS1",
+                            "LS1",
+                            "PL1",
+                            "CB1",
+                            "C3P",
+                            "R2D"
+                        ],
+                        [
+                            "LS1",
+                            "HS1",
+                            "PL1",
+                            "CB1"
+                        ],
+                        [
+                            "LS1",
+                            "HS1",
+                            "PL1",
+                            "CB1",
+                            "C3P",
+                            "R2D",
+                            "ST1"
+                        ],
+                        [
+                            "OB1",
+                            "LS1",
+                            "HS1",
+                            "PL1",
+                            "CB1",
+                            "ST1"
+                        ],
+                        [
+                            "LS1",
+                            "PL1",
+                            "HS1",
+                            "CB1",
+                            "R2D",
+                            "C3P",
+                            "OB1",
+                            "ST1"
+                        ],
+                        [
+                            "LS1",
+                            "PL1"
+                        ],
+                        [
+                            "DV1",
+                            "LS1",
+                            "PL1",
+                            "HS1",
+                            "CB1",
+                            "R2D",
+                            "C3P",
+                            "OB1",
+                            "ST1"
+                        ],
+                        [
+                            "DV1",
+                            "LS1",
+                            "PL1",
+                            "HS1",
+                            "CB1",
+                            "R2D",
+                            "C3P",
+                            "OB1",
+                            "ST1"
+                        ],
+                        [
+                            "LS1",
+                            "HS1",
+                            "PL1",
+                            "CB1",
+                            "C3P",
+                            "R2D"
+                        ],
+                        [
+                            "DV1",
+                            "GMT"
+                        ],
+                        [
+                            "DV1",
+                            "GMT",
+                            "HS1",
+                            "LS1",
+                            "PL1",
+                            "CB1"
+                        ],
+                        [
+                            "LS1",
+                            "PL1",
+                            "HS1",
+                            "CB1",
+                            "R2D",
+                            "C3P",
+                            "RO1",
+                            "GW1"
+                        ],
+                        [
+                            "DV1",
+                            "GMT"
+                        ],
+                        [
+                            "GJD",
+                            "PL1",
+                            "LS1",
+                            "HS1",
+                            "CB1",
+                            "RO1",
+                            "JV1",
+                            "WA1"
+                        ],
+                        [
+                            "DV1",
+                            "GMT"
+                        ],
+                        [
+                            "HS1",
+                            "CB1",
+                            "LS1",
+                            "C3P",
+                            "RO1"
+                        ],
+                        [
+                            "LS1",
+                            "PL1",
+                            "R2D",
+                            "C3P",
+                            "BD2",
+                            "RO1",
+                            "GD1"
+                        ],
+                        [
+                            "PL1",
+                            "C3P",
+                            "LS1",
+                            "BD2",
+                            "JP1",
+                            "GJD",
+                            "WA1",
+                            "R2D",
+                            "GD1"
+                        ],
+                        [
+                            "DV1"
+                        ],
+                        [
+                            "LS1",
+                            "GJD",
+                            "WA1",
+                            "BD2",
+                            "PL1",
+                            "C3P",
+                            "PN1",
+                            "TN1",
+                            "DK1",
+                            "JV1",
+                            "DT1",
+                            "GD1"
+                        ],
+                        [
+                            "LS1",
+                            "HS1",
+                            "DV1",
+                            "CB1",
+                            "PL1",
+                            "C3P",
+                            "GJD"
+                        ],
+                        [
+                            "PL1",
+                            "HS1",
+                            "LS1",
+                            "C3P",
+                            "CB1",
+                            "R2D",
+                            "RO1"
+                        ],
+                        [
+                            "PL1",
+                            "HS1",
+                            "LS1",
+                            "C3P",
+                            "CB1",
+                            "R2D",
+                            "RO1",
+                            "GJD"
+                        ]
+                    ]
+                };
+
+                let scenes = wrangle($rootScope.storyLine2);
+                let sceneWidth = 10;
+                let Canvas = {width: 0, height: 0};
+                Canvas.width = scenes.length * sceneWidth * 4;
+                Canvas.height = 1600;
+                let labelSize = [150, 15];
+                d3.svg.line()
+                    .interpolate('linear');
+                let svg = d3.select('story-line2')
+                    .append('svg')
+                    .attr('id', 'narrative-chart')
+                    .attr('width', Canvas.width + 100)
+                    .attr('height', Canvas.height + 100);
+
+                // Calculate the actual width of every character label.
+                scenes.forEach(function (scene) {
+                    scene.characters.forEach(function (character) {
+                        svg.append('text')
+                            .attr('opacity', 0)
+                            .attr('class', 'temp')
+                            .text(character.name);
+                        character.width = 100;
+                    });
+                });
+                svg.selectAll('text.temp').remove();
+
+                // Do the layout
+                let narrative = d3.layout.narrative()
+                    .scenes(scenes)
+                    .size([Canvas.width, Canvas.height])
+                    .pathSpace(20)
+                    .groupMargin(10)
+                    .labelSize(labelSize)
+                    .scenePadding([0, sceneWidth / 2, 0, sceneWidth / 2])
+                    .labelPosition('left')
+                    .layout();
+
+                // Get the extent so we can re-size the SVG appropriately.
+                svg.attr('height', narrative.extent()[1]);
+
+                // Draw links
+                svg.selectAll('.link').data(narrative.links()).enter()
+                    .append('path')
+                    .attr('d', narrative.link())
+                    .attr('stroke', function (d) {
+                        return d.character.affiliation;
+                    })
+                    .attr('stroke-width', 2)
+                    .style('fill', 'none');
+
+                // Draw the scenes
+                svg.selectAll('.scene').data(narrative.scenes()).enter()
+                    .append('g').attr('class', 'scene')
+                    .attr('transform', function (d) {
+                        var x, y;
+                        x = Math.round(d.x) + 0.5;
+                        y = Math.round(d.y) + 0.5;
+                        return 'translate(' + [x, y] + ')';
+                    })
+                    .append('rect')
+                    .attr('width', sceneWidth)
+                    .attr('height', function (d) {
+                        return d.height;
+                    })
+                    .attr('rx', 3)
+                    .attr('ry', 3)
+                    .attr('stroke', '#000')
+                    .style('fill', 'none');
+
+                // Draw appearances
+                svg.selectAll('.scene')
+                    .selectAll('.appearance')
+                    .data(function (d) {
+                        return d.appearances;
+                    }).enter()
+                    .append('circle')
+                    .attr('cx', function (d) {
+                        return d.x;
+                    })
+                    .attr('cy', function (d) {
+                        return d.y;
+                    })
+                    .attr('r', function () {
+                        return 2;
+                    });
+
+
+                // Draw intro nodes
+                svg.selectAll('.intro').data(narrative.introductions())
+                    .enter().call(function (s) {
+
+                    let g = s.append('g').attr('class', 'intro');
+
+                    g.append('rect')
+                        .attr('y', -4)
+                        .attr('x', -4)
+                        .attr('width', 4)
+                        .attr('height', 8);
+
+                    let text = g.append('g').attr('class', 'text');
+
+                    // Apppend two actual 'text' nodes to fake an 'outside' outline.
+                    text.append('text');
+                    text.append('text').attr('class', 'color');
+
+                    g.attr('transform', function (d) {
+                        var x, y;
+                        x = Math.round(d.x);
+                        y = Math.round(d.y);
+                        return 'translate(' + [x, y] + ')';
+                    });
+
+                    g.selectAll('text')
+                        .attr('text-anchor', 'end')
+                        .attr('y', '4px')
+                        .attr('x', '-8px')
+                        .text(function (d) {
+                            return d.character.name;
+                        })
+                        .style('font-family', 'Arial')
+                        .style('fill', function (d) {
+                            return d.character.affiliation;
+                        });
+
+                });
+
+            }
+        };
+    }]);
 
 function eventWeight(actType, position) {
     let result = 0;
@@ -1981,20 +1987,25 @@ function eventWeight(actType, position) {
     }
     return result;
 }
+
 function wrangle(data) {
 
     let charactersMap = {};
 
-    return data.scenes.map(function(scene){
-        return {characters: scene.map(function(id){
+    return data.scenes.map(function (scene) {
+        return {
+            characters: scene.map(function (id) {
                 return characterById(id);
-            }).filter(function(d) { return (d); })};
+            }).filter(function (d) {
+                return (d);
+            })
+        };
     });
 
     // Helper to get characters by ID from the raw data
     function characterById(id) {
         charactersMap = charactersMap || {};
-        charactersMap[id] = charactersMap[id] || data.characters.find(function(character){
+        charactersMap[id] = charactersMap[id] || data.characters.find(function (character) {
             return character.id === id;
         });
         return charactersMap[id];
