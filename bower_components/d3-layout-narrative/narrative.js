@@ -770,7 +770,7 @@ function computeSceneCharacters() {
 	//
 	// TODO: this could probably be more efficient (maybe with an index https://gist.github.com/AshKyd/adc7fb024787bd543fc5)
 	function filterAppearances(appearance){
-		var counts, keep;
+		let counts, keep;
 
 		counts = appearances.reduce(function(c, a){
 
@@ -816,7 +816,7 @@ function computeSceneCharacters() {
 //
 // Cluster characters based on their co-occurence in scenes
 function computeCharacterGroups() {
-	var nodes, edges, clusters, partitioner, groupsMap, initGroups;
+	let nodes, edges, clusters, partitioner, groupsMap, initGroups;
 
 	// An array of character indexes.
 	nodes = characters.map(function(d,i){return i;});
@@ -866,7 +866,7 @@ function computeCharacterGroups() {
 	groups = [];
 	groupsMap = {};
 	characters.forEach(function(character, i){
-		var groupId, group;
+		let groupId, group;
 		groupId = clusters[i];
 		group = groupsMap[groupId];
 		if (!group) {
@@ -899,12 +899,12 @@ function computeCharacterGroups() {
 // *Note:* "median" here is a mistake, it should be mode.
 function setSceneGroups() {
 	scenes.forEach(function(scene){
-		var groupCounts, groupCountsMap, medianGroup;
+		let groupCounts, groupCountsMap, medianGroup;
 
 		groupCounts = [];
 		groupCountsMap = {};
 		scene.appearances.forEach(function(appearance){
-			var count, index;
+			let count, index;
 
 			index = groups.indexOf(appearance.character.group);
 			count = groupCountsMap[index];
@@ -936,7 +936,7 @@ function setSceneGroups() {
 // scenes belonging to that group.
 function computeGroupAppearances() {
 	scenes.forEach(function(scene){
-		var characters;
+		let characters;
 		characters = scene.appearances.map(function(a){
 			return a.character;
 		});
@@ -981,7 +981,7 @@ function sortGroups() {
 //
 // Compute the actual min and max y-positions of each group.
 function computeGroupPositions() {
-	var max;
+	let max;
 	max = 0;
 	groups.forEach(function(group){
 		group.min = max;
@@ -996,7 +996,7 @@ function computeGroupPositions() {
 // Compute the position of each character within its group.
 function computeCharacterGroupPositions() {
 	characters.forEach(function(character){
-		var sum, count;
+		let sum, count;
 		sum = count = 0;
 		character.appearances.forEach(function(appearance) {
 			count++;
@@ -1007,7 +1007,7 @@ function computeCharacterGroupPositions() {
 
 	groups.forEach(function(group){
 		group.characters.sort(function(a,b){
-			var diff;
+			let diff;
 			// Average scene position.
 			diff = a.averageScenePosition - b.averageScenePosition;
 			if (diff !== 0) {
@@ -1027,7 +1027,7 @@ function computeCharacterGroupPositions() {
 function sortGroupAppearances() {
 	groups.forEach(function(group){
 		group.appearances.sort(function(a,b){
-			var diff;
+			let diff;
 
 			// Try simple group order.
 			diff = a.group.order-b.group.order;
@@ -1073,10 +1073,10 @@ function computeAppearancePositions() {
 	scenes.forEach(function(scene){
 
 		scene.appearances.sort(function(a,b){
-			var diff;
+			let diff;
 
 			// Try simple group order.
-			diff = a.character.group.order-b.character.group.order;
+			diff = a.character.group.order - b.character.group.order;
 			if (diff !== 0) {
 				return diff;
 			}
@@ -1111,7 +1111,7 @@ function computeAppearancePositions() {
 function computeScenePositions() {
 
 	scenes.forEach(function(scene) {
-		var sum, avg, appearances;
+		let sum, avg, appearances;
 
 		scene.height = characterGroupHeight(scene.appearances.length) + scenePadding[0] + scenePadding[2];
 		scene.width = scenePadding[1] + scenePadding[3];
@@ -1209,7 +1209,7 @@ function createIntroductionNodes() {
 // scenes or each other.
 function computeIntroductionPositions() {
 
-	var collidables, intros;
+	let collidables, intros;
 
 	// Get a list of things introductions can collide with.
 	collidables = introductions.concat(scenes);
@@ -1229,7 +1229,7 @@ function computeIntroductionPositions() {
 	// Resolve collisions with horizontal layout.
 	function resolveCollisionsHorizontal(introduction){
 
-		var moveOptions, collisionBounds, introBounds, move, _y, collisions, movable;
+		let moveOptions, collisionBounds, introBounds, move, _y, collisions, movable;
 
 		// Get the full list of items this introduction collides with
 		collisions = collidesWith(introduction);
@@ -1293,7 +1293,7 @@ function computeIntroductionPositions() {
 	// Resolve collisions with vertical layout.
 	function resolveCollisionsVertical(introduction){
 
-		var moveOptions, collisionBounds, introBounds, move, _y, collisions, movable;
+		let moveOptions, collisionBounds, introBounds, move, _y, collisions, movable;
 
 		// Get the full list of items this introduction collides with
 		collisions = collidesWith(introduction);
@@ -1361,7 +1361,7 @@ function computeIntroductionPositions() {
 
 	// Create a bounding box around a collection of nodes.
 	function bBox(arr) {
-		var x0,x1,y0,y1;
+		let x0,x1,y0,y1;
 		x0 = d3.min(arr, function(d){
 			return d.bounds()[0][0];
 		});
@@ -1379,9 +1379,9 @@ function computeIntroductionPositions() {
 
 	// Gets a list of all other nodes that this introduction collides with.
 	function collidesWith(introduction) {
-		var i, ii, collisions;
+		let i, ii, collisions;
 		collisions = [];
-		for (i=0,ii=collidables.length;i<ii;i++) {
+		for (i=0, ii=collidables.length; i<ii; i++) {
 			if (introduction !== collidables[i] && collides(introduction.bounds(), collidables[i].bounds())) {
 				collisions.push(collidables[i]);
 			}
@@ -1411,7 +1411,7 @@ function createLinks() {
 	links = [];
 
 	characters.forEach(function(character){
-		var i;
+		let i;
 
 		// Links to intro nodes.
 		links.push({
@@ -1421,7 +1421,7 @@ function createLinks() {
 		});
 
 		// Standard appearance links.
-		for (i=1;i<character.appearances.length;i++) {
+		for (i =1 ; i<character.appearances.length; i++) {
 			links.push({
 				character: character,
 				source: character.appearances[i-1],
