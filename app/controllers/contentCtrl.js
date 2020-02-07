@@ -1330,12 +1330,15 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     })
                     .attr('stroke-width', 2)
                     .style('fill', 'none')
-                    .on("mouseover",function(d,i){
-                        d3.selectAll('path').attr('opacity',0.1);
-                        d3.selectAll('.link' + d.character.id).attr('opacity',1.0);
+                    .on("mouseover", function(d){
+                        d3.selectAll('path')
+                            .attr('opacity',0.1);
+                        d3.selectAll('.link' + d.character.id)
+                            .attr('opacity',1.0);
                     })
-                    .on("mouseout",function(d,i){
-                        d3.selectAll('path').attr('opacity',1.0);
+                    .on("mouseout", function(){
+                        d3.selectAll('path')
+                            .attr('opacity',1.0);
                     });
 
 
