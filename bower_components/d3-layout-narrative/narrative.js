@@ -28,18 +28,18 @@ d3.layout.narrative = function(){
 function jLouvain() {
 
 	// Constants
-	var __PASS_MAX = -1;
-	var __MIN 	 = 0.0000001;
+	const __PASS_MAX = -1;
+	const __MIN = 0.0000001;
 
 	// Local vars
-	var original_graph_nodes;
-	var original_graph_edges;
-	var original_graph = {};
-	var partition_init;
+	let original_graph_nodes;
+	let original_graph_edges;
+	let original_graph = {};
+	let partition_init;
 
 	// Helpers
 	function make_set(array){
-		var set = {};
+		const set = {};
 		array.forEach(function(d){
 			set[d] = true;
 		});
@@ -47,8 +47,8 @@ function jLouvain() {
 	}
 
 	function obj_values(obj){
-		 var vals = [];
-		 for( var key in obj ) {
+		const vals = [];
+		for(let key in obj ) {
 			 if ( obj.hasOwnProperty(key) ) {
 				 vals.push(obj[key]);
 			 }
@@ -57,10 +57,10 @@ function jLouvain() {
 	}
 
 	function get_degree_for_node(graph, node){
-		var neighbours = graph._assoc_mat[node] ? Object.keys(graph._assoc_mat[node]) : [];
-		var weight = 0;
+		const neighbours = graph._assoc_mat[node] ? Object.keys(graph._assoc_mat[node]) : [];
+		let weight = 0;
 		neighbours.forEach(function(neighbour){
-			var value = graph._assoc_mat[node][neighbour] || 1;
+			let value = graph._assoc_mat[node][neighbour] || 1;
 			if(node === neighbour) {
 				value *= 2;
 			}
@@ -74,7 +74,7 @@ function jLouvain() {
 			return [];
 		}
 
-		var neighbours = Object.keys(graph._assoc_mat[node]);
+		const neighbours = Object.keys(graph._assoc_mat[node]);
 		return neighbours;
 	}
 
@@ -84,7 +84,7 @@ function jLouvain() {
 	}
 
 	function get_graph_size(graph){
-		var size = 0;
+		let size = 0;
 		graph.edges.forEach(function(edge){
 			size += edge.weight;
 		});
@@ -94,9 +94,9 @@ function jLouvain() {
 	function add_edge_to_graph(graph, edge){
 		update_assoc_mat(graph, edge);
 
-		var edge_index = graph.edges.map(function(d){
-			return d.source+'_'+d.target;
-		}).indexOf(edge.source+'_'+edge.target);
+		const edge_index = graph.edges.map(function (d) {
+			return d.source + '_' + d.target;
+		}).indexOf(edge.source + '_' + edge.target);
 
 		if(edge_index !== -1) {
 			graph.edges[edge_index].weight = edge.weight;
@@ -106,7 +106,7 @@ function jLouvain() {
 	}
 
 	function make_assoc_mat(edge_list){
-		var mat = {};
+		const mat = {};
 		edge_list.forEach(function(edge){
 			mat[edge.source] = mat[edge.source] || {};
 			mat[edge.source][edge.target] = edge.weight;
@@ -129,9 +129,9 @@ function jLouvain() {
 			return obj;
 		}
 
-		var temp = obj.constructor();
+		const temp = obj.constructor();
 
-		for(var key in obj) {
+		for(let key in obj) {
 			temp[key] = clone(obj[key]);
 		}
 		return temp;
@@ -150,7 +150,7 @@ function jLouvain() {
 		if (typeof part === 'undefined'){
 			graph.nodes.forEach(function(node,i){
 				status.nodes_to_com[node] = i;
-				var deg = get_degree_for_node(graph, node);
+				const deg = get_degree_for_node(graph, node);
 				if (deg < 0) {
 					throw 'Bad graph type, use positive weights!';
 				}
@@ -161,16 +161,16 @@ function jLouvain() {
 			});
 		} else {
 			graph.nodes.forEach(function(node){
-				var com = part[node];
+				const com = part[node];
 				status.nodes_to_com[node] = com;
-				var deg = get_degree_for_node(graph, node);
+				const deg = get_degree_for_node(graph, node);
 				status.degrees[com] = (status.degrees[com] || 0) + deg;
 				status.gdegrees[node] = deg;
-				var inc = 0.0;
+				let inc = 0.0;
 
-				var neighbours  = get_neighbours_of_node(graph, node);
+				const neighbours = get_neighbours_of_node(graph, node);
 				neighbours.forEach(function(neighbour){
-					var weight = graph._assoc_mat[node][neighbour];
+					const weight = graph._assoc_mat[node][neighbour];
 					if (weight <= 0) {
 						throw "Bad graph type, use positive weights";
 					}
@@ -189,13 +189,13 @@ function jLouvain() {
 	}
 
 	function __modularity(status){
-		var links = status.total_weight;
-		var result = 0.0;
-		var communities = make_set(obj_values(status.nodes_to_com));
+		const links = status.total_weight;
+		let result = 0.0;
+		const communities = make_set(obj_values(status.nodes_to_com));
 
 		communities.forEach(function(com){
-			var in_degree = status.internals[com] || 0 ;
-			var degree = status.degrees[com] || 0 ;
+			const in_degree = status.internals[com] || 0;
+			const degree = status.degrees[com] || 0;
 			if (links > 0) {
 				result = result + in_degree / links - Math.pow((degree / (2.0*links)), 2);
 			}
@@ -207,13 +207,13 @@ function jLouvain() {
 		// compute the communities in the neighb. of the node, with the graph given by
 		// node_to_com
 
-		var weights = {};
-		var neighboorhood = get_neighbours_of_node(graph, node);//make iterable;
+		const weights = {};
+		const neighboorhood = get_neighbours_of_node(graph, node);//make iterable;
 
 		neighboorhood.forEach(function(neighbour){
 			if (neighbour !== node) {
-				var weight = graph._assoc_mat[node][neighbour] || 1;
-				var neighbourcom = status.nodes_to_com[neighbour];
+				const weight = graph._assoc_mat[node][neighbour] || 1;
+				const neighbourcom = status.nodes_to_com[neighbour];
 				weights[neighbourcom] = (weights[neighbourcom] || 0) + weight;
 			}
 		});
@@ -236,13 +236,13 @@ function jLouvain() {
 	}
 
 	function __renumber(dict){
-		var count = 0;
-		var ret = clone(dict); //deep copy :)
-		var new_values = {};
-		var dict_keys = Object.keys(dict);
+		let count = 0;
+		const ret = clone(dict); //deep copy :)
+		const new_values = {};
+		const dict_keys = Object.keys(dict);
 		dict_keys.forEach(function(key){
-			var value = dict[key];
-			var new_value = (typeof new_values[value] === 'undefined') ? -1 : new_values[value];
+			const value = dict[key];
+			let new_value = (typeof new_values[value] === 'undefined') ? -1 : new_values[value];
 			if (new_value === -1) {
 				new_values[value] = count;
 				new_value = count;
@@ -255,7 +255,7 @@ function jLouvain() {
 
 	function __one_level(graph, status){
 		//Compute one level of the Communities Dendogram.
-		var modif = true,
+		let modif = true,
 			nb_pass_done = 0,
 			cur_mod = __modularity(status),
 			new_mod = cur_mod;
@@ -273,16 +273,16 @@ function jLouvain() {
 		}
 
 		function eachNode(node) {
-			var com_node = status.nodes_to_com[node];
-			var degc_totw = (status.gdegrees[node] || 0) / (status.total_weight * 2.0);
-			var neigh_communities = __neighcom(node, graph, status);
+			const com_node = status.nodes_to_com[node];
+			const degc_totw = (status.gdegrees[node] || 0) / (status.total_weight * 2.0);
+			const neigh_communities = __neighcom(node, graph, status);
 			__remove(node, com_node, (neigh_communities[com_node] || 0.0), status);
-			var best_com = com_node;
-			var best_increase = 0;
-			var neigh_communities_entries = Object.keys(neigh_communities);//make iterable;
+			let best_com = com_node;
+			let best_increase = 0;
+			const neigh_communities_entries = Object.keys(neigh_communities);//make iterable;
 
 			neigh_communities_entries.forEach(function(com){
-				var incr = neigh_communities[com] - (status.degrees[com] || 0.0) * degc_totw;
+				const incr = neigh_communities[com] - (status.degrees[com] || 0.0) * degc_totw;
 				if (incr > best_increase){
 					best_increase = incr;
 					best_com = com;
@@ -298,32 +298,32 @@ function jLouvain() {
 	}
 
 	function induced_graph(partition, graph){
-		var ret = {nodes:[], edges:[], _assoc_mat: {}};
-		var w_prec, weight;
+		const ret = {nodes: [], edges: [], _assoc_mat: {}};
+		let w_prec, weight;
 		//add nodes from partition values
-		var partition_values = obj_values(partition);
+		const partition_values = obj_values(partition);
 		ret.nodes = ret.nodes.concat(make_set(partition_values)); //make set
 		graph.edges.forEach(function(edge){
 			weight = edge.weight || 1;
-			var com1 = partition[edge.source];
-			var com2 = partition[edge.target];
+			const com1 = partition[edge.source];
+			const com2 = partition[edge.target];
 			w_prec = (get_edge_weight(ret, com1, com2) || 0);
-			var new_weight = (w_prec + weight);
+			const new_weight = (w_prec + weight);
 			add_edge_to_graph(ret, {'source': com1, 'target': com2, 'weight': new_weight});
 		});
 		return ret;
 	}
 
 	function partition_at_level(dendogram, level){
-		var partition = clone(dendogram[0]);
-		for(var i = 1; i < level + 1; i++ ) {
+		const partition = clone(dendogram[0]);
+		for( var i = 1; i < level + 1; i++ ) {
 			Object.keys(partition).forEach(eachKey);
 		}
 		return partition;
 
 		function eachKey(key){
-			var node = key;
-			var com  = partition[key];
+			const node = key;
+			const com = partition[key];
 			partition[node] = dendogram[i][com];
 		}
 	}
@@ -332,23 +332,23 @@ function jLouvain() {
 	function generate_dendogram(graph, part_init){
 
 		if (graph.edges.length === 0) {
-			var part = {};
+			const part = {};
 			graph.nodes.forEach(function(node){
 				part[node] = node;
 			});
 			return part;
 		}
-		var status = {};
+		const status = {};
 
 		init_status(original_graph, status, part_init);
-		var mod = __modularity(status);
-		var status_list = [];
+		let mod = __modularity(status);
+		const status_list = [];
 		__one_level(original_graph, status);
-		var new_mod = __modularity(status);
-		var partition = __renumber(status.nodes_to_com);
+		let new_mod = __modularity(status);
+		let partition = __renumber(status.nodes_to_com);
 		status_list.push(partition);
 		mod = new_mod;
-		var current_graph = induced_graph(partition, original_graph);
+		let current_graph = induced_graph(partition, original_graph);
 		init_status(current_graph, status);
 
 		while (true){
@@ -369,8 +369,8 @@ function jLouvain() {
 		return status_list;
 	}
 
-	var core = function(){
-		var dendogram = generate_dendogram(original_graph, partition_init);
+	const core = function () {
+		const dendogram = generate_dendogram(original_graph, partition_init);
 		return partition_at_level(dendogram, dendogram.length - 1);
 	};
 
@@ -388,7 +388,7 @@ function jLouvain() {
 
 		if (arguments.length > 0) {
 			original_graph_edges = edgs;
-			var assoc_mat = make_assoc_mat(edgs);
+			const assoc_mat = make_assoc_mat(edgs);
 			original_graph = { 'nodes': original_graph_nodes,
 							   'edges': original_graph_edges,
 							   '_assoc_mat': assoc_mat };
@@ -407,7 +407,7 @@ function jLouvain() {
 }
 
 // Define all the variables.
-var narrative,
+let narrative,
 	scenes,	characters, introductions, links,
 	size, orientation, pathSpace, scale,
 	labelSize, labelPosition, groupMargin, scenePadding,
@@ -506,7 +506,7 @@ narrative.orientation = function(_) {
 // run.
 narrative.extent = function(){
 	return scenes.concat(introductions).reduce(function(max, d){
-		var bounds = d.bounds();
+		const bounds = d.bounds();
 		if (bounds[1][1] > max[1]) {
 			max[1] = bounds[1][1];
 		}
@@ -620,7 +620,7 @@ narrative.links = function() {
 // an `x` and `y` property. In the context of the narrative chart these are
 // either character apperance or introduction nodes.
 narrative.link = function() {
-	var curvature = 0.5;
+	let curvature = 0.5;
 
 	// ### Link path
 	//
@@ -630,7 +630,7 @@ narrative.link = function() {
 	// displaying the narrative chart. It accepts an object and returns a path
 	// string linking the two.
 	function link(d) {
-		var x0,x1,y0,y1,cx0,cy0,cx1,cy1,ci;
+		let x0, x1, y0, y1, cx0, cy0, cx1, cy1, ci;
 
 		// Set path end positions.
 		x0 = (d.source.scene) ? d.source.scene.x + d.source.x : d.source.x;
@@ -728,7 +728,7 @@ return narrative;
 // and scenes with fewer than two characters.
 function computeSceneCharacters() {
 
-	var appearances, finished;
+	let appearances, finished;
 
 	// Create a map of scenes to characters (i.e. appearances).
 	appearances = [];
@@ -837,7 +837,7 @@ function computeCharacterGroups() {
 	// Consolidate edges into a unique set of relationships with a weighting
 	// based on how often they appear together.
 	edges = edges.reduce(function(result, edge) {
-		var resultEdge;
+		let resultEdge;
 
 		resultEdge = result.filter(function(resultEdge){
 			return (resultEdge.target === edge[0] || resultEdge.target === edge[1]) &&
@@ -880,7 +880,7 @@ function computeCharacterGroups() {
 
 	// Creates a single link between each pair of characters in a scene.
 	function sceneEdges(list) {
-		var i, j, matrix;
+		let i, j, matrix;
 		matrix = [];
 		for (i=list.length;i--;){
 			for (j=i;j--;){
@@ -954,7 +954,7 @@ function computeGroupAppearances() {
 // the extremes of the array. The centre most group should be the group which
 // is least often the median group of a scene.
 function sortGroups() {
-	var alt, sortedGroups, group, i;
+	let alt, sortedGroups, group, i;
 
 	// First sort by the group's medianCount property (the number of times the
 	// group is the median group in a scene).
@@ -1054,7 +1054,7 @@ function sortGroupAppearances() {
 //
 // TODO: support dates
 function computeSceneTiming() {
-	var duration = 1;
+	let duration = 1;
 	scenes.forEach(function(scene){
 		scene.start = scene.start || duration;
 		scene.duration = scene.duration || 1;
@@ -1147,7 +1147,7 @@ function computeScenePositions() {
 // Create a collection of character 'introduction' nodes. These are nodes which
 // are displayed before the first appearance of each character.
 function createIntroductionNodes() {
-	var appearances;
+	let appearances;
 
 	appearances = characters.map(function(character){
 		return character.appearances[0];
@@ -1156,7 +1156,7 @@ function createIntroductionNodes() {
 	introductions = [];
 	appearances.forEach(function(appearance){
 
-		var introduction, x, y;
+		let introduction, x, y;
 
 		// Create the introduction object.
 		introduction = {
