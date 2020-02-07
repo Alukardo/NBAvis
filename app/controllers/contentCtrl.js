@@ -1842,7 +1842,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         .attr('opacity',0)
                         .attr('class', 'temp')
                         .text(character.name);
-                    character.width = 10;
+                    character.width = 100;
                 });
             });
             svg.selectAll('text.temp').remove();
