@@ -279,13 +279,13 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 if (player['team'] === $scope.game['homeId']) {
                     temp.affiliation = 'home';
                     temp.color = $scope.teamColor.home;
-                    temp.initialgroup = 1;
+                    if (player['starter'] === true)  temp.initialgroup = 1; else temp.initialgroup = 0;
                     if (player['starter'] === true) init.home.relations.push(temp.id);
                 }
                 if (player['team'] === $scope.game['awayId']) {
                     temp.affiliation = 'away';
                     temp.color = $scope.teamColor.away;
-                    temp.initialgroup = 2;
+                    if (player['starter'] === true)  temp.initialgroup = 2; else temp.initialgroup = 0;
                     if (player['starter'] === true) init.away.relations.push(temp.id);
                 }
 
@@ -1330,12 +1330,15 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     })
                     .attr('stroke-width', 2)
                     .style('fill', 'none')
-                    .on("mouseover",function(d,i){
-                        d3.selectAll('path').attr('opacity',0.1);
-                        d3.selectAll('.link' + d.character.id).attr('opacity',1.0);
+                    .on("mouseover", function(d){
+                        d3.selectAll('path')
+                            .attr('opacity',0.1);
+                        d3.selectAll('.link' + d.character.id)
+                            .attr('opacity',1.0);
                     })
-                    .on("mouseout",function(d,i){
-                        d3.selectAll('path').attr('opacity',1.0);
+                    .on("mouseout", function(){
+                        d3.selectAll('path')
+                            .attr('opacity',1.0);
                     });
 
 
