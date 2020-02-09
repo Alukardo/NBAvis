@@ -270,22 +270,27 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     $rootScope.storyLine.draw[p.id].push({x: x, y: y});
                 });
             });
+
+            // Story Lines 2
             let init = {home: {relations: [], duration: 0}, away: {relations: [], duration: 0}};
-            angular.forEach($sessionStorage.playerData, function (player) {
-                let temp = {id: '', name: '', affiliation: '', color: '', initialgroup: 0};
+            angular.forEach($sessionStorage.playerData, function (player, i) {
+                let temp = {id: '', name: '', width: 0, affiliation: '', color: '', initialgroup: 0};
                 temp.id = player['imgAlias'];
                 temp.name = player['firstName'] + ' ' + player['lastName'];
+                temp.width = temp.name.length * 10;
 
                 if (player['team'] === $scope.game['homeId']) {
                     temp.affiliation = 'home';
                     temp.color = $scope.teamColor.home;
-                    if (player['starter'] === true)  temp.initialgroup = 1; else temp.initialgroup = 0;
+                    temp.initialgroup = 1;
+                    // if (player['starter'] === true)  temp.initialgroup = 1; else temp.initialgroup = 0;
                     if (player['starter'] === true) init.home.relations.push(temp.id);
                 }
                 if (player['team'] === $scope.game['awayId']) {
                     temp.affiliation = 'away';
                     temp.color = $scope.teamColor.away;
-                    if (player['starter'] === true)  temp.initialgroup = 2; else temp.initialgroup = 0;
+                    temp.initialgroup = 2;
+                    // if (player['starter'] === true)  temp.initialgroup = 2; else temp.initialgroup = 0;
                     if (player['starter'] === true) init.away.relations.push(temp.id);
                 }
 
@@ -297,6 +302,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             angular.forEach($scope.rawData, function (quarter) {
                 angular.forEach(quarter, function (minute) {
                     angular.forEach(minute, function (event) {
+                        let start  = preEvent !== null ? preEvent['timeOffset'] : 0;
                         let players = event['players'];
                         let temps = [];
                         angular.forEach(players, function (player) {
@@ -304,7 +310,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         });
                         if (temps.length > 1) {
                             let duration = (preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset']) + 1;
-                            $rootScope.storyLine2.scenes.push({relations: temps, duration: duration});
+                            $rootScope.storyLine2.scenes.push({relations: temps, start: start, duration: duration});
                             preEvent = event;
                         }
                     });
@@ -1295,7 +1301,6 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             .attr('opacity', 0)
                             .attr('class', 'temp')
                             .text(character.name);
-                        character.width = 100;
                     });
                 });
                 svg.selectAll('text.temp').remove();
@@ -1304,7 +1309,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let narrative = d3.layout.narrative()
                     .scenes(scenes)
                     .size([Canvas.width, Canvas.height])
-                    .pathSpace(10)
+                    .pathSpace(20)
                     .groupMargin(10)
                     .labelSize(labelSize)
                     .scenePadding([0, sceneWidth / 2, 0, sceneWidth / 2])
@@ -1470,7 +1475,10 @@ function wrangle(data) {
             }).filter(function (d) {
                 return (d);
             }),
-            duration: scene.duration
+            start: scene.start,
+            duration: scene.duration,
+            x:scene.x,
+            y:scene.y
         };
     });
 
