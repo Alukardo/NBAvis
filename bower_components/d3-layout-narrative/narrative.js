@@ -1096,6 +1096,7 @@ d3.layout.narrative = function(){
 					appearance.y = scenePadding[0];
 					appearance.x = characterPosition(i) + scenePadding[3];
 				} else {
+
 					appearance.y = characterPosition(i) + scenePadding[0];
 					appearance.x = scenePadding[3];
 				}
@@ -1113,8 +1114,8 @@ d3.layout.narrative = function(){
 		scenes.forEach(function(scene) {
 			let sum, avg, appearances;
 
-			scene.height = characterGroupHeight(scene.appearances.length) + scenePadding[0] + scenePadding[2];
 			scene.width = scenePadding[1] + scenePadding[3];
+			scene.height = characterGroupHeight(scene.appearances.length) + scenePadding[0] + scenePadding[2];
 
 			appearances = scene.appearances.filter(function(appearance){
 				return appearance.character.group !== scene.group;
