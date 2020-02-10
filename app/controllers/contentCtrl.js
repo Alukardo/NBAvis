@@ -272,7 +272,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             });
 
             // Story Lines 2
-            let init = {home: {relations: [], duration: 0}, away: {relations: [], duration: 0}};
+            let init = {home: {relations: [], duration: 0}, away: {relations: [], duration: 0.01}};
             angular.forEach($sessionStorage.playerData, function (player, i) {
                 let temp = {id: '', name: '', width: 0, affiliation: '', color: '', initialgroup: 0};
                 temp.id = player['imgAlias'];
@@ -283,13 +283,15 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     temp.affiliation = 'home';
                     temp.color = $scope.teamColor.home;
                     temp.initialgroup = 1;
-                    if (player['starter'] === true) init.home.relations.push(temp.id);
+                    //if (player['starter'] === true)
+                        init.home.relations.push(temp.id);
                 }
                 if (player['team'] === $scope.game['awayId']) {
                     temp.affiliation = 'away';
                     temp.color = $scope.teamColor.away;
-                    temp.initialgroup = 2;
-                    if (player['starter'] === true) init.away.relations.push(temp.id);
+                    temp.initialgroup = 1;
+                    //if (player['starter'] === true)
+                        init.away.relations.push(temp.id);
                 }
 
                 $rootScope.storyLine2.characters.push(temp);
@@ -1331,17 +1333,20 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .attr('stroke', function (d) {
                         return d.character.color;
                     })
-                    .attr('stroke-width', 2)
+                    .attr('stroke-width', 1.5)
                     .style('fill', 'none')
                     .on("mouseover", function(d){
-                        d3.selectAll('path')
-                            .attr('opacity',0.1);
-                        d3.selectAll('.link' + d.character.id)
-                            .attr('opacity',1.0);
+                        svg.selectAll('path').attr('opacity',0.1);
+                        svg.select('g.intros').selectAll('text').attr('opacity',0.1);
+                        svg.select('g.intros').selectAll('rect').attr('opacity',0.1);
+                        svg.selectAll('.link' + d.character.id).attr('opacity',1.0);
+                        svg.selectAll('g.intro' + d.character.id).selectAll('rect').attr('opacity',1.0);
+                        svg.selectAll('g.intro' + d.character.id).selectAll('text').attr('opacity',1.0);
                     })
                     .on("mouseout", function(){
-                        d3.selectAll('path')
-                            .attr('opacity',1.0);
+                        svg.selectAll('path').attr('opacity',1.0);
+                        svg.select('g.intros').selectAll('text').attr('opacity',1.0);
+                        svg.select('g.intros').selectAll('rect').attr('opacity',1.0);
                     });
 
 
@@ -1391,7 +1396,9 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .selectAll('.intro').data(narrative.introductions()).enter()
                     .call(function (s) {
 
-                    let g = s.append('g').attr('class', 'intro');
+                    let g = s.append('g').attr('class', function(d) {
+                        return 'intro' + d.character.id;
+                    });
 
                     g.append('rect')
                         .attr('y', -4)
