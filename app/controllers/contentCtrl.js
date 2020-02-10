@@ -283,14 +283,12 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     temp.affiliation = 'home';
                     temp.color = $scope.teamColor.home;
                     temp.initialgroup = 1;
-                    // if (player['starter'] === true)  temp.initialgroup = 1; else temp.initialgroup = 0;
                     if (player['starter'] === true) init.home.relations.push(temp.id);
                 }
                 if (player['team'] === $scope.game['awayId']) {
                     temp.affiliation = 'away';
                     temp.color = $scope.teamColor.away;
                     temp.initialgroup = 2;
-                    // if (player['starter'] === true)  temp.initialgroup = 2; else temp.initialgroup = 0;
                     if (player['starter'] === true) init.away.relations.push(temp.id);
                 }
 
@@ -1310,7 +1308,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .scenes(scenes)
                     .size([Canvas.width, Canvas.height])
                     .pathSpace(20)
-                    .groupMargin(10)
+                    .groupMargin(0)
                     .labelSize(labelSize)
                     .scenePadding([0, sceneWidth / 2, 0, sceneWidth / 2])
                     .labelPosition('left')
