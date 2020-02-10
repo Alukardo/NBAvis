@@ -288,7 +288,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 if (player['team'] === $scope.game['awayId']) {
                     temp.affiliation = 'away';
                     temp.color = $scope.teamColor.away;
-                    temp.initialgroup = 2;
+                    temp.initialgroup = 1;
                     if (player['starter'] === true) init.away.relations.push(temp.id);
                 }
 
