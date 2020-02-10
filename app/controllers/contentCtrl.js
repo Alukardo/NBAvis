@@ -1399,7 +1399,10 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         .attr('y', -4)
                         .attr('x', -4)
                         .attr('width', 4)
-                        .attr('height', 8);
+                        .attr('height', 8)
+                        .style('fill', function (d) {
+                            return d.character.color;
+                        });
 
                     let text = g.append('g').attr('class', 'text');
 
@@ -1408,7 +1411,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     text.append('text').attr('class', 'color');
 
                     g.attr('transform', function (d) {
-                        var x, y;
+                        let x, y;
                         x = Math.round(d.x);
                         y = Math.round(d.y);
                         return 'translate(' + [x, y] + ')';
