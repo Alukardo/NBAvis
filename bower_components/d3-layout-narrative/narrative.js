@@ -821,14 +821,12 @@ d3.layout.narrative = function(){
 		// An array of character indexes.
 		nodes = characters.map(function(d,i){return i;});
 
-		initGroups = {};
-		characters.forEach(function(d,i){
+		initGroups = characters.reduce(function(g,d,i){
 			if (d.initialgroup) {
-				initGroups[i] = d.initialgroup;
-			}else{
-				initGroups[i] = 0;
+				g[i] = +d.initialgroup;
 			}
-			});
+			return g;
+		},{});
 
 		// Calculate the edges based on a character's involvement in scenes.
 		edges = [];
@@ -860,12 +858,9 @@ d3.layout.narrative = function(){
 		partitioner = jLouvain().nodes(nodes).edges(edges);
 
 		if (initGroups) {
-			clusters = initGroups;
-			//partitioner.partition_init(initGroups);
-		}else{
-			clusters = partitioner();
+			partitioner.partition_init(initGroups);
 		}
-
+		clusters = partitioner();
 
 		// Put all characters in groups with bi-directional reference.
 		groups = [];
