@@ -1030,7 +1030,7 @@ d3.layout.narrative = function(){
 				let diff;
 
 				// Try simple group order.
-				diff = a.group.order-b.group.order;
+				diff = a.group.order - b.group.order;
 				if (diff !== 0) {
 					return diff;
 				}
@@ -1042,7 +1042,7 @@ d3.layout.narrative = function(){
 				}
 
 				// Array position.
-				return characters.indexOf(a)-characters.indexOf(b);
+				return characters.indexOf(a) - characters.indexOf(b);
 			});
 		});
 	}
