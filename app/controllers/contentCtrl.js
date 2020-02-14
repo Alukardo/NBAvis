@@ -16,6 +16,20 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             }
             return tempCompareColor;
         };
+        $scope.predictSide = function (teamId) {
+            let predict = {teamM: '', color: '', group: 0};
+            if (teamId === $scope.game['homeId']) {
+                predict.teamM = 'home';
+                predict.color = $scope.teamColor.home;
+                predict.group = 0;
+            }
+            if (teamId === $scope.game['awayId']) {
+                predict.teamM = 'away';
+                predict.color = $scope.teamColor.away;
+                predict.group = 1;
+            }
+            return predict;
+        };
 
 
         $scope.init = function () {
@@ -113,9 +127,9 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 $scope.rawData = $sessionStorage.rawData;
                 $scope.rawPlayerData = $sessionStorage.playerData;
                 $sessionStorage.playerData.forEach(function (player) {
-                        let playerName = player['firstName'] + ' ' + player['lastName'];
-                        $rootScope.playerInfo[playerName] = player;
-                    });
+                    let playerName = player['firstName'] + ' ' + player['lastName'];
+                    $rootScope.playerInfo[playerName] = player;
+                });
                 ngProgress.complete();
                 $scope.loadFlag = 1;
                 return $scope.generateData();
@@ -183,9 +197,9 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             });
 
             let pIndex = {home: 0, away: 0};
-            angular.forEach($sessionStorage.playerData, function (player) {
+            $sessionStorage.playerData.forEach(function (player) {
                 let playerName = player['firstName'] + ' ' + player['lastName'];
-                let playerId = player['imgAlias'];
+                let playerId = player['id'];
                 if (player['team'] === $scope.game['homeId']) {
                     $rootScope.storyLine.pre[playerId] = {
                         name: playerName,
@@ -226,7 +240,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         let temp = [];
                         angular.forEach($sessionStorage.playerData, function (player) {
                             let playerName = player['firstName'] + ' ' + player['lastName'];
-                            let playerId = player['imgAlias'];
+                            let playerId = player['id'];
                             let position = 0;
                             if (event['players'][0].id.toString() === playerId) position = 1;
                             if (event['players'][1].id.toString() === playerId) position = 2;
@@ -263,7 +277,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     });
                 });
             });
-            angular.forEach($rootScope.storyLine.data, function (record) {
+            $rootScope.storyLine.data.forEach(function (record) {
                 angular.forEach(record, function (p) {
                     let x = $rootScope.storyLine.pre[p.id].startX + p.offsetX;
                     let y = $rootScope.storyLine.pre[p.id].startY + p.offsetY * 20 - 5;
@@ -272,50 +286,39 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             });
 
             // Story Lines 2
-            let init = {home: {relations: [], duration: 0}, away: {relations: [], duration: 0.01}};
-            angular.forEach($sessionStorage.playerData, function (player, i) {
-                let temp = {id: '', name: '', width: 0, affiliation: '', color: '', initialgroup: 0};
-                temp.id = player['imgAlias'];
+            $sessionStorage.playerData.forEach(function (player) {
+                let temp = { id: '', name: '', width: 0, affiliation: '', color: '', initialgroup: 0 };
+                temp.id = player['id'].toString();
                 temp.name = player['firstName'] + ' ' + player['lastName'];
                 temp.width = temp.name.length * 10;
+                temp.affiliation = $scope.predictSide(player['team']).teamM;
+                temp.color = $scope.predictSide(player['team']).color;
+                temp.initialgroup = $scope.predictSide(player['team']).group + 1;
+                $rootScope.storyLine2.characters[temp.id] = temp;
 
-                if (player['team'] === $scope.game['homeId']) {
-                    temp.affiliation = 'home';
-                    temp.color = $scope.teamColor.home;
-                    temp.initialgroup = 1;
-                    //if (player['starter'] === true)
-                        init.home.relations.push(temp.id);
-                }
-                if (player['team'] === $scope.game['awayId']) {
-                    temp.affiliation = 'away';
-                    temp.color = $scope.teamColor.away;
-                    temp.initialgroup = 1;
-                    //if (player['starter'] === true)
-                        init.away.relations.push(temp.id);
-                }
-
-                $rootScope.storyLine2.characters.push(temp);
             });
-            $rootScope.storyLine2.scenes.push(init.home);
-            $rootScope.storyLine2.scenes.push(init.away);
             let preEvent = null;
-            angular.forEach($scope.rawData, function (quarter) {
-                angular.forEach(quarter, function (minute) {
-                    angular.forEach(minute, function (event) {
-                        let start  = preEvent !== null ? preEvent['timeOffset'] : 0;
-                        let players = event['players'];
-                        let temps = [];
-                        angular.forEach(players, function (player) {
-                            if (player.id !== 0) temps.push(player.id.toString());
+            $scope.rawData.forEach(function (quarter) {
+                quarter.forEach(function (minute) {
+                    minute.forEach(function (event) {
+                        let scene = {id : 0, characters : [], start: 0, duration: 0};
+                        let players = event['players'].filter(function (player) {
+                            return player.id !== 0 && player.name !== null;
                         });
-                        if (temps.length > 1) {
-                            let duration = (preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset']) + 1;
-                            $rootScope.storyLine2.scenes.push({relations: temps, start: start, duration: duration});
+                        if (players.length > 1) {
+                            scene.id = event.eventId;
+                            players.forEach(function (player) {
+                                scene.characters.push($rootScope.storyLine2.characters[player.id.toString()]);
+                            });
+                            scene.start = preEvent !== null ? preEvent['timeOffset'] : 0;
+                            scene.duration = (preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset']) + 1;
+                            $rootScope.storyLine2.scenes.push(scene);
                             preEvent = event;
                         }
                     });
                 });
             });
+
             return $scope.generateDrawData();
         };
         $scope.generateDrawData = function () {
@@ -737,16 +740,16 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
             let tempAwaySortedY = $scope.halfHeightY - $rootScope.factor.y * 35,
                 tempHomeSortedY = $scope.halfHeightY + $rootScope.factor.y * 5;
-                $rootScope.sortedList.forEach(function (play) {
-                    if ($rootScope.playerInfo[play]['team'] === $scope.game['homeId']) {
-                        $rootScope.sortedY[play] = tempHomeSortedY;
-                        tempHomeSortedY += $rootScope.factor.y * 3;
-                    }
-                    if ($rootScope.playerInfo[play]['team'] === $scope.game['awayId']) {
-                        $rootScope.sortedY[play] = tempAwaySortedY;
-                        tempAwaySortedY += $rootScope.factor.y * 3;
-                    }
-                });
+            $rootScope.sortedList.forEach(function (play) {
+                if ($rootScope.playerInfo[play]['team'] === $scope.game['homeId']) {
+                    $rootScope.sortedY[play] = tempHomeSortedY;
+                    tempHomeSortedY += $rootScope.factor.y * 3;
+                }
+                if ($rootScope.playerInfo[play]['team'] === $scope.game['awayId']) {
+                    $rootScope.sortedY[play] = tempAwaySortedY;
+                    tempAwaySortedY += $rootScope.factor.y * 3;
+                }
+            });
         };
         $scope.calculateCross = function (tempPositionList) {
             let totalCross = 0;
@@ -1280,7 +1283,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             restrict: "E",  // Element name: <my-directive></my-directive>
             link: function ($scope, $element) {
                 console.log($rootScope.data.selectedIndex);
-                let scenes = wrangle($rootScope.storyLine2);
+                let scenes = $rootScope.storyLine2.scenes;
                 let sceneWidth = 10;
                 let Canvas = {width: 0, height: 0};
                 Canvas.width = scenes.length * sceneWidth * 4;
@@ -1290,6 +1293,12 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let svg = d3.select('story-line2')
                     .append('svg')
                     .attr('id', 'narrative-chart')
+                    .attr('transform', function (d) {
+                        let x, y;
+                        x = 5;
+                        y = 5;
+                        return 'translate(' + [x, y] + ')';
+                    })
                     .attr('width', Canvas.width + 100)
                     .attr('height', Canvas.height + 100);
 
@@ -1310,7 +1319,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .scenes(scenes)
                     .size([Canvas.width, Canvas.height])
                     .pathSpace(20)
-                    .groupMargin(0)
+                    .groupMargin(10)
                     .labelSize(labelSize)
                     .scenePadding([0, sceneWidth / 2, 0, sceneWidth / 2])
                     .labelPosition('left')
@@ -1321,12 +1330,14 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
 
                 // Draw links
-                let Clinks =d3.nest().key(function(d) { return d.character.id;}).entries(narrative.links());
+                let Clinks = d3.nest().key(function (d) {
+                    return d.character.id;
+                }).entries(narrative.links());
 
                 svg.append('g').attr('class', 'links')
                     .selectAll('.link').data(narrative.links()).enter()
                     .append('path')
-                    .attr('class',function(d) {
+                    .attr('class', function (d) {
                         return 'link' + d.character.id;
                     })
                     .attr('d', narrative.link())
@@ -1335,18 +1346,18 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     })
                     .attr('stroke-width', 1.5)
                     .style('fill', 'none')
-                    .on("mouseover", function(d){
-                        svg.selectAll('path').attr('opacity',0.1);
-                        svg.select('g.intros').selectAll('text').attr('opacity',0.1);
-                        svg.select('g.intros').selectAll('rect').attr('opacity',0.1);
-                        svg.selectAll('.link' + d.character.id).attr('opacity',1.0);
-                        svg.selectAll('g.intro' + d.character.id).selectAll('rect').attr('opacity',1.0);
-                        svg.selectAll('g.intro' + d.character.id).selectAll('text').attr('opacity',1.0);
+                    .on("mouseover", function (d) {
+                        svg.selectAll('path').attr('opacity', 0.1);
+                        svg.select('g.intros').selectAll('text').attr('opacity', 0.1);
+                        svg.select('g.intros').selectAll('rect').attr('opacity', 0.1);
+                        svg.selectAll('.link' + d.character.id).attr('opacity', 1.0);
+                        svg.selectAll('g.intro' + d.character.id).selectAll('rect').attr('opacity', 1.0);
+                        svg.selectAll('g.intro' + d.character.id).selectAll('text').attr('opacity', 1.0);
                     })
-                    .on("mouseout", function(){
-                        svg.selectAll('path').attr('opacity',1.0);
-                        svg.select('g.intros').selectAll('text').attr('opacity',1.0);
-                        svg.select('g.intros').selectAll('rect').attr('opacity',1.0);
+                    .on("mouseout", function () {
+                        svg.selectAll('path').attr('opacity', 1.0);
+                        svg.select('g.intros').selectAll('text').attr('opacity', 1.0);
+                        svg.select('g.intros').selectAll('rect').attr('opacity', 1.0);
                     });
 
 
@@ -1370,7 +1381,23 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .attr('rx', 3)
                     .attr('ry', 3)
                     .attr('stroke', '#000')
-                    .style('fill', 'none');
+                    .style('fill', '#ffffff')
+                    .on("mouseover", function (d) {
+                        svg.selectAll('path').attr('opacity', 0.1);
+                        svg.select('g.intros').selectAll('text').attr('opacity', 0.1);
+                        svg.select('g.intros').selectAll('rect').attr('opacity', 0.1);
+                        d.characters.forEach(function (c) {
+                            svg.selectAll('.link' + c.id).attr('opacity', 1.0);
+                            svg.selectAll('g.intro' + c.id).selectAll('rect').attr('opacity', 1.0);
+                            svg.selectAll('g.intro' + c.id).selectAll('text').attr('opacity', 1.0);
+                        })
+
+                    })
+                    .on("mouseout", function () {
+                        svg.selectAll('path').attr('opacity', 1.0);
+                        svg.select('g.intros').selectAll('text').attr('opacity', 1.0);
+                        svg.select('g.intros').selectAll('rect').attr('opacity', 1.0);
+                    });
 
 
                 // Draw appearances
@@ -1396,45 +1423,45 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .selectAll('.intro').data(narrative.introductions()).enter()
                     .call(function (s) {
 
-                    let g = s.append('g').attr('class', function(d) {
-                        return 'intro' + d.character.id;
-                    });
-
-                    g.append('rect')
-                        .attr('y', -4)
-                        .attr('x', -4)
-                        .attr('width', 4)
-                        .attr('height', 8)
-                        .style('fill', function (d) {
-                            return d.character.color;
+                        let g = s.append('g').attr('class', function (d) {
+                            return 'intro' + d.character.id;
                         });
 
-                    let text = g.append('g').attr('class', 'text');
+                        g.append('rect')
+                            .attr('y', -4)
+                            .attr('x', -4)
+                            .attr('width', 4)
+                            .attr('height', 8)
+                            .style('fill', function (d) {
+                                return d.character.color;
+                            });
 
-                    // Apppend two actual 'text' nodes to fake an 'outside' outline.
-                    text.append('text');
-                    text.append('text').attr('class', 'color');
+                        let text = g.append('g').attr('class', 'text');
 
-                    g.attr('transform', function (d) {
-                        let x, y;
-                        x = Math.round(d.x);
-                        y = Math.round(d.y);
-                        return 'translate(' + [x, y] + ')';
-                    });
+                        // Apppend two actual 'text' nodes to fake an 'outside' outline.
+                        text.append('text');
+                        text.append('text').attr('class', 'color');
 
-                    g.selectAll('text')
-                        .attr('text-anchor', 'end')
-                        .attr('y', '4px')
-                        .attr('x', '-8px')
-                        .text(function (d) {
-                            return d.character.name;
-                        })
-                        .style('font-family', 'Arial')
-                        .style('fill', function (d) {
-                            return d.character.color;
+                        g.attr('transform', function (d) {
+                            let x, y;
+                            x = Math.round(d.x);
+                            y = Math.round(d.y);
+                            return 'translate(' + [x, y] + ')';
                         });
 
-                });
+                        g.selectAll('text')
+                            .attr('text-anchor', 'end')
+                            .attr('y', '4px')
+                            .attr('x', '-8px')
+                            .text(function (d) {
+                                return d.character.name;
+                            })
+                            .style('font-family', 'Arial')
+                            .style('fill', function (d) {
+                                return d.character.color;
+                            });
+
+                    });
 
             }
         };
@@ -1471,32 +1498,4 @@ function eventWeight(actType, position) {
         }
     }
     return result;
-}
-function wrangle(data) {
-
-    let charactersMap = {};
-
-    return data.scenes.map(function (scene) {
-        return {
-            characters: scene.relations.map(function (id) {
-                return characterById(id);
-            }).filter(function (d) {
-                return (d);
-            }),
-            start: scene.start,
-            duration: scene.duration,
-            x:scene.x,
-            y:scene.y
-        };
-    });
-
-    // Helper to get characters by ID from the raw data
-    function characterById(id) {
-        charactersMap = charactersMap || {};
-        charactersMap[id] = charactersMap[id] || data.characters.find(function (character) {
-            return character.id === id;
-        });
-        return charactersMap[id];
-    }
-
 }
