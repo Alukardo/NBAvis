@@ -286,22 +286,24 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             });
 
             // Story Lines 2
+            let preEvent = null;
+            let playerStatus = {};
             $sessionStorage.playerData.forEach(function (player) {
-                let temp = { id: '', name: '', width: 0, affiliation: '', color: '', initialgroup: 0 };
+                let temp = { id: '', name: '', width: 0, affiliation: '', color: '', initialgroup: 0};
                 temp.id = player['id'].toString();
                 temp.name = player['firstName'] + ' ' + player['lastName'];
                 temp.width = temp.name.length * 10;
                 temp.affiliation = $scope.predictSide(player['team']).teamM;
                 temp.color = $scope.predictSide(player['team']).color;
-                temp.initialgroup = $scope.predictSide(player['team']).group + 1;
+                temp.initialgroup = $scope.predictSide(player['team']).group;
+                playerStatus[temp.id] = player['starter'];
                 $rootScope.storyLine2.characters[temp.id] = temp;
 
             });
-            let preEvent = null;
             $scope.rawData.forEach(function (quarter) {
                 quarter.forEach(function (minute) {
                     minute.forEach(function (event) {
-                        let scene = {id : 0, characters : [], start: 0, duration: 0};
+                        let scene = {id : 0, characters : [], start: 0, duration: 0, status:{}};
                         let players = event['players'].filter(function (player) {
                             return player.id !== 0 && player.name !== null;
                         });
@@ -309,7 +311,12 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             scene.id = event.eventId;
                             players.forEach(function (player) {
                                 scene.characters.push($rootScope.storyLine2.characters[player.id.toString()]);
+                                scene.status[player.id.toString()] = (playerStatus[player.id.toString()]);
                             });
+                            if(event['event_type'] === 8){
+                                playerStatus[players[0].id.toString()] = false;
+                                playerStatus[players[1].id.toString()] = true;
+                            }
                             scene.start = preEvent !== null ? preEvent['timeOffset'] : 0;
                             scene.duration = (preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset']) + 1;
                             $rootScope.storyLine2.scenes.push(scene);
@@ -1288,7 +1295,6 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let Canvas = {width: 0, height: 0};
                 Canvas.width = scenes.length * sceneWidth * 4;
                 Canvas.height = 1600;
-                let labelSize = [150, 15];
 
                 let svg = d3.select('story-line2')
                     .append('svg')
@@ -1319,8 +1325,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .scenes(scenes)
                     .size([Canvas.width, Canvas.height])
                     .pathSpace(20)
-                    .groupMargin(10)
-                    .labelSize(labelSize)
+                    .groupMargin(30)
+                    .labelSize([150, 15])
                     .scenePadding([0, sceneWidth / 2, 0, sceneWidth / 2])
                     .labelPosition('left')
                     .layout();
@@ -1344,8 +1350,11 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .attr('stroke', function (d) {
                         return d.character.color;
                     })
-                    .attr('stroke-width', 1.5)
-                    .style('fill', 'none')
+                    .attr('stroke-dasharray', function (d){
+                        return d.target.scene.status[d.character.id]? "": "1,4";
+                    })
+                    .attr('stroke-width', 2)
+                    .attr('fill', 'none')
                     .on("mouseover", function (d) {
                         svg.selectAll('path').attr('opacity', 0.1);
                         svg.select('g.intros').selectAll('text').attr('opacity', 0.1);
@@ -1381,7 +1390,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .attr('rx', 3)
                     .attr('ry', 3)
                     .attr('stroke', '#000')
-                    .style('fill', '#ffffff')
+                    .attr('fill', '#ffffff')
                     .on("mouseover", function (d) {
                         svg.selectAll('path').attr('opacity', 0.1);
                         svg.select('g.intros').selectAll('text').attr('opacity', 0.1);
@@ -1432,7 +1441,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             .attr('x', -4)
                             .attr('width', 4)
                             .attr('height', 8)
-                            .style('fill', function (d) {
+                            .attr('fill', function (d) {
                                 return d.character.color;
                             });
 
@@ -1456,8 +1465,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             .text(function (d) {
                                 return d.character.name;
                             })
-                            .style('font-family', 'Arial')
-                            .style('fill', function (d) {
+                            .attr('font-family', 'Arial')
+                            .attr('fill', function (d) {
                                 return d.character.color;
                             });
 

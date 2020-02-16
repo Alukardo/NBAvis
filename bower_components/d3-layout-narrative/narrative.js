@@ -620,7 +620,7 @@ d3.layout.narrative = function(){
 // an `x` and `y` property. In the context of the narrative chart these are
 // either character apperance or introduction nodes.
 	narrative.link = function() {
-		let curvature = 0.5;
+		let curvature = 0.9;
 
 		// ### Link path
 		//
@@ -821,8 +821,8 @@ d3.layout.narrative = function(){
 		nodes = characters.map(function(d,i){return i;});
 
 		initGroups = characters.reduce(function(g,d,i){
-			if (d.initialgroup) {
-				g[i] = +d.initialgroup;
+			if (d.initialgroup !== undefined) {
+				g[i] = d.initialgroup;
 			}
 			return g;
 		},{});
@@ -856,10 +856,13 @@ d3.layout.narrative = function(){
 		// Generate the groups.
 		partitioner = jLouvain().nodes(nodes).edges(edges);
 
-		if (initGroups) {
+		if (initGroups.length === 0) {
 			partitioner.partition_init(initGroups);
+			clusters = partitioner();
+		}else{
+			clusters = initGroups;
 		}
-		clusters = partitioner();
+
 
 		// Put all characters in groups with bi-directional reference.
 		groups = [];
@@ -1154,6 +1157,10 @@ d3.layout.narrative = function(){
 			return character.appearances[0];
 		});
 
+		let appearanceMin = appearances.reduce((a, b) => {
+			return a.scene.x < b.scene.x ? a : b}
+		);
+
 		introductions = [];
 		appearances.forEach(function(appearance){
 
@@ -1177,7 +1184,7 @@ d3.layout.narrative = function(){
 				// }
 			} else {
 
-				x = appearance.scene.x - 0.5 * scale;
+				x = appearanceMin.scene.x - 0.5 * scale;
 				y = appearance.scene.y + appearance.y;
 
 				// Move x-axis position to the dedicated label space if it makes sense.
