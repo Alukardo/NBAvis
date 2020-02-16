@@ -988,7 +988,6 @@ d3.layout.narrative = function(){
 		groups.forEach(function(group){
 			group.min = max;
 			group.max = max = characterGroupHeight(group.appearances.length) + group.min;
-			//roup.max = max = characterGroupHeight(group.characters.length) + group.min;
 			max += groupMargin;
 		});
 	}

@@ -295,7 +295,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 temp.width = temp.name.length * 10;
                 temp.affiliation = $scope.predictSide(player['team']).teamM;
                 temp.color = $scope.predictSide(player['team']).color;
-                temp.initialgroup = $scope.predictSide(player['team']).group;
+                //temp.initialgroup = $scope.predictSide(player['team']).group;
                 playerStatus[temp.id] = player['starter'];
                 $rootScope.storyLine2.characters[temp.id] = temp;
 
@@ -1324,8 +1324,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let narrative = d3.layout.narrative()
                     .scenes(scenes)
                     .size([Canvas.width, Canvas.height])
-                    .pathSpace(20)
-                    .groupMargin(30)
+                    .pathSpace(40)
+                    .groupMargin(80)
                     .labelSize([150, 15])
                     .scenePadding([0, sceneWidth / 2, 0, sceneWidth / 2])
                     .labelPosition('left')
