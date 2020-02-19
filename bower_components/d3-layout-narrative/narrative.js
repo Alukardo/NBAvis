@@ -745,7 +745,7 @@ d3.layout.narrative = function(){
 				character._height = character.height || false;
 
 				// Add this appearance to the map.
-				appearances.push({character: character, scene: scene});
+				appearances.push({id: character.id + "-" + scene.id , character: character, scene: scene});
 
 				// Setup some properties on the character and scene that we'll need later.
 				scene.appearances = [];
@@ -1076,7 +1076,6 @@ d3.layout.narrative = function(){
 
 			scene.appearances.sort(function(a,b){
 				let diff;
-
 				// Try simple group order.
 				diff = a.character.group.order - b.character.group.order;
 				if (diff !== 0) {
@@ -1088,7 +1087,6 @@ d3.layout.narrative = function(){
 				if (diff !== 0) {
 					return diff;
 				}
-
 				// All else failing use main characters array order to keep things consistent.
 				return characters.indexOf(a.character)-characters.indexOf(b.character);
 			});
@@ -1096,10 +1094,9 @@ d3.layout.narrative = function(){
 			scene.appearances.forEach(function(appearance,i) {
 				if (orientation === 'vertical') {
 					appearance.y = scenePadding[0];
-					appearance.x = characterPosition(i) + scenePadding[3];
+					appearance.x = 0.3 * characterPosition(i) + scenePadding[3];
 				} else {
-
-					appearance.y = characterPosition(i) + scenePadding[0];
+					appearance.y = 0.3 * characterPosition(i) + scenePadding[0];
 					appearance.x = scenePadding[3];
 				}
 			});
@@ -1117,7 +1114,7 @@ d3.layout.narrative = function(){
 			let sum, avg, appearances;
 
 			scene.width = scenePadding[1] + scenePadding[3];
-			scene.height = characterGroupHeight(scene.appearances.length) + scenePadding[0] + scenePadding[2];
+			scene.height = 0.3 * characterGroupHeight(scene.appearances.length) + scenePadding[0] + scenePadding[2];
 
 			appearances = scene.appearances.filter(function(appearance){
 				return appearance.character.group !== scene.group;
@@ -1175,7 +1172,7 @@ d3.layout.narrative = function(){
 			if (orientation === 'vertical') {
 
 				x = appearance.scene.x + appearance.x;
-				y = appearance.scene.y - 0.5 * scale;
+				y = appearanceMin.scene.y - 0.5 * scale;
 
 				// Move x-axis position to the dedicated label space if it makes sense.
 				// if (x-labelSize[0] < labelSize[0]) {
@@ -1419,9 +1416,10 @@ d3.layout.narrative = function(){
 
 		characters.forEach(function(character){
 			let i;
+			let linkGroup = {id: character.id, links:[]};
 
 			// Links to intro nodes.
-			links.push({
+			linkGroup.links.push({
 				character: character,
 				source: character.introduction,
 				target: character.appearances[0]
@@ -1429,12 +1427,13 @@ d3.layout.narrative = function(){
 
 			// Standard appearance links.
 			for (i =1 ; i<character.appearances.length; i++) {
-				links.push({
+				linkGroup.links.push({
 					character: character,
 					source: character.appearances[i-1],
 					target: character.appearances[i]
 				});
 			}
+			links.push(linkGroup);
 		});
 	}
 
