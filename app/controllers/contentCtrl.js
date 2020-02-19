@@ -1481,9 +1481,9 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 svg.select('g.intros').selectAll("[id = \"" + d.character.id + "\"]").attr('opacity', 1.0);
                                 let preUrl = "https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/";
                                 tooltip.offset([-10,0]);
-                                tooltip.html("<div  class = 'row' width='260px' style='background: #dddddd'>" +
-                                    "<span  width='50%' style='background: "+d.character.color+"'><img width='130px' src='" + preUrl + d.character.id+".png"+ "'></span><br>" +
-                                    "<span  width='50%'>1111111</span>"+ "</div>").show();
+                                tooltip.html("<div  class = 'row' style='background: #dddddd'>" +
+                                    "<img style='background: "+d.character.color+"' width='130px' src='" + preUrl + d.character.id+".png"+ "'><br>" +
+                                    "<span>1111111</span></div>").show();
                             })
                             .on("mouseout", function () {
                                 svg.select('g.links').selectAll('g').attr('opacity', 1.0);
