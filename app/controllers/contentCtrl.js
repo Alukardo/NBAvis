@@ -303,12 +303,13 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             $scope.rawData.forEach(function (quarter) {
                 quarter.forEach(function (minute) {
                     minute.forEach(function (event) {
-                        let scene = {id: 0, characters: [], start: 0, duration: 0, status: {}};
+                        let scene = {id: 0, characters: [], start: 0, duration: 0, type : 0, status: {}};
                         let players = event['players'].filter(function (player) {
                             return player.id !== 0 && player.name !== null;
                         });
                         if (players.length > 1) {
                             scene.id = event.eventId;
+                            scene.type = event['event_type'];
                             players.forEach(function (player) {
                                 scene.characters.push($rootScope.storyLine2.characters[player.id.toString()]);
                                 scene.status[player.id.toString()] = (playerStatus[player.id.toString()]);
@@ -1307,7 +1308,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .attr('width', Canvas.width + 100)
                     .attr('height', Canvas.height + 100);
 
-                let tooltip = d3.tip().attr("class", "d3-tip");
+                let tooltip = d3.tip().attr("class", "d3-tip")
+                    .style('box-sizing','content-box');
 
                 svg.call(tooltip);
 
@@ -1360,14 +1362,22 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .attr('stroke-width', 2)
                     .attr('fill', 'none')
                     .on("mouseover", function (d) {
-                        svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
                         svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
                         svg.select('g.links').selectAll("[id =\""+ d.character.id+"\"]").attr('opacity', 1.0);
+
+                        svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
                         svg.select('g.intros').selectAll("[id = \"" + d.character.id + "\"]").attr('opacity', 1.0);
+
+                        svg.select('g.scenes').selectAll("g.scene").attr('opacity', 0.1);
+                        d.character.appearances.forEach(function (c) {
+                            let id = c.scene.id;
+                            svg.select('g.scenes').selectAll("[id =\""+ id+"\"]").attr('opacity', 1.0);
+                        });
                     })
                     .on("mouseout", function () {
                         svg.select('g.links').selectAll('g').attr('opacity', 1.0);
                         svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
+                        svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
                     })
                 ;
 
@@ -1399,18 +1409,26 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .on("mouseover", function (d) {
                         svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
                         svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                        svg.select('g.scenes').selectAll("g.scene").attr('opacity', 0.1);
                         d.characters.forEach(function (c) {
                             svg.select('g.links').selectAll("[id = \"" + c.id + "\"]").attr('opacity', 1.0);
                             svg.select('g.intros').selectAll("[id = \"" + c.id + "\"]").attr('opacity', 1.0);
+                            c.appearances.forEach(function (e) {
+                                let id = e.scene.id;
+                                svg.select('g.scenes').selectAll("[id =\""+ id+"\"]").attr('opacity', 1.0);
+                            });
                         });
                         tooltip.offset([-10, 0]);
-                        tooltip.html("scene: " + d.id).show();
+                        tooltip.html("<div >id:" + d.id + ".type:"+ d.type +"</div>").show();
                     })
                     .on("mouseout", function () {
                         svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
                         svg.select('g.links').selectAll('g.character').attr('opacity', 1.0);
+                        svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
                         tooltip.hide();
                     });
+
+
 
 
                 // Draw appearances
@@ -1475,9 +1493,15 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 return d.character.color;
                             })
                             .on("mouseover", function (d) {
-                                svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
+                                svg.select('g.scenes').selectAll("g.scene").attr('opacity', 0.1);
+                                d.character.appearances.forEach(function (c) {
+                                    let id = c.scene.id;
+                                    svg.select('g.scenes').selectAll("[id =\""+ id+"\"]").attr('opacity', 1.0);
+                                });
+
                                 svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
                                 svg.select('g.links').selectAll("[id =\""+ d.character.id+"\"]").attr('opacity', 1.0);
+                                svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
                                 svg.select('g.intros').selectAll("[id = \"" + d.character.id + "\"]").attr('opacity', 1.0);
                                 let preUrl = "https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/";
                                 tooltip.offset([-10,0]);
@@ -1486,6 +1510,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                     "<span>1111111</span></div>").show();
                             })
                             .on("mouseout", function () {
+                                svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
                                 svg.select('g.links').selectAll('g').attr('opacity', 1.0);
                                 svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
                                 tooltip.hide();
