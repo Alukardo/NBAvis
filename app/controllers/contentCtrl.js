@@ -289,7 +289,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             let preEvent = null;
             let playerStatus = {};
             $sessionStorage.playerData.forEach(function (player) {
-                let temp = {id: '', name: '', width: 0, affiliation: '', color: '', initialgroup: 0};
+                let temp = {id: '', name: '', width: 0, affiliation: '', color: '', initialgroup: undefined};
                 temp.id = player['id'].toString();
                 temp.name = player['firstName'] + ' ' + player['lastName'];
                 temp.width = temp.name.length * 10;

@@ -901,7 +901,7 @@ d3.layout.narrative = function(){
 // *Note:* "median" here is a mistake, it should be mode.
 	function setSceneGroups() {
 		scenes.forEach(function(scene){
-			let groupCounts, groupCountsMap, medianGroup;
+			let groupCounts, groupCountsMap, modeGroup;
 
 			groupCounts = [];
 			groupCountsMap = {};
@@ -912,7 +912,7 @@ d3.layout.narrative = function(){
 				count = groupCountsMap[index];
 
 				if (!count) {
-					count = {groupIndex: index, count: 0};
+					count = { groupIndex: index, count: 0 };
 					groupCountsMap[index] = count;
 					groupCounts.push(count);
 				}
@@ -923,11 +923,11 @@ d3.layout.narrative = function(){
 				return a.count-b.count;
 			});
 
-			medianGroup = groups[groupCounts.pop().groupIndex];
+			modeGroup = groups[groupCounts.pop().groupIndex];
 			// While we're here record how many scenes this group is the modal group for.
-			medianGroup.medianCount = medianGroup.medianCount || 0;
-			medianGroup.medianCount++;
-			scene.group = medianGroup;
+			modeGroup.modeCount = modeGroup.modeCount || 0;
+			modeGroup.modeCount++;
+			scene.group = modeGroup;
 		});
 	}
 
@@ -958,10 +958,10 @@ d3.layout.narrative = function(){
 	function sortGroups() {
 		let alt, sortedGroups, group, i;
 
-		// First sort by the group's medianCount property (the number of times the
+		// First sort by the group's modeCount property (the number of times the
 		// group is the median group in a scene).
 		groups.sort(function(a,b){
-			return b.medianCount-a.medianCount;
+			return b.modeCount-a.modeCount;
 		});
 
 		// Specify order property and shuffle out groups into an ordered array.
