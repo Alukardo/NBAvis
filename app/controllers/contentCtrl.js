@@ -299,7 +299,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         let players = event['players'].filter(function (player) {
                             return player.id !== null && player.name !== null && player.team !== null;
                         });
-                        if (players.length > 0) {
+                        if (players.length > 1) {
                             scene.id = event.eventId;
                             scene.type = event['event_type'];
                             players.forEach(function (player) {
