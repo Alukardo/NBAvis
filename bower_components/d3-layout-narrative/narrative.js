@@ -474,6 +474,15 @@ d3.layout.narrative = function(){
 		return narrative;
 	};
 
+// Scale
+	narrative.scale = function(_) {
+		if (!arguments.length) {
+			return scale;
+		}
+		scale = _;
+		return narrative;
+	};
+
 // Orientation
 // -----------
 //

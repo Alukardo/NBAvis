@@ -936,17 +936,17 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     // }
                 });
                 $element.bind('mousewheel', function (mouseWheelEvent) {
-                    let zoomCenter = {
-                        'x': mouseWheelEvent.originalEvent.clientX,
-                        'y': mouseWheelEvent.originalEvent.clientY
-                    };
-                    if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
-                        zoom('zoomIn', zoomCenter);
-                    } else {
-                        zoom('zoomOut', zoomCenter);
-                    }
-
-                    mouseWheelEvent.cancelBubble = true;
+                    // let zoomCenter = {
+                    //     'x': mouseWheelEvent.originalEvent.clientX,
+                    //     'y': mouseWheelEvent.originalEvent.clientY
+                    // };
+                    // if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
+                    //     zoom('zoomIn', zoomCenter);
+                    // } else {
+                    //     zoom('zoomOut', zoomCenter);
+                    // }
+                    //
+                    // mouseWheelEvent.cancelBubble = true;
                     return false;
                 });
 
@@ -1331,7 +1331,26 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 // Get the extent so we can re-size the SVG appropriately.
                 svg.attr('height', narrative.extent()[1] + 100);
 
-                // Get Quarter Line Info
+                // Quarter
+                //let PointH = {x: ,y:};
+                let min = narrative.introductions()[0].y;
+                let max = narrative.introductions()[0].y;
+                narrative.introductions().forEach(function (d) {
+                    if(d.y < min) min =d.y;
+                    if(d.y > max) max =d.y;
+                });
+
+                $rootScope.eventData.forEach(function (event) {
+                    if(event['event_type'] === 13){
+                        svg.append("line")
+                            .attr("x1", 150 + event['timeOffset'] * narrative.scale())
+                            .attr("y1", min)
+                            .attr("x2", 150 + event['timeOffset'] * narrative.scale())
+                            .attr("y2", max)
+                            .attr("stroke", "black")
+                            .attr("stroke-width", "2px");
+                    }
+                });
 
 
                 // Draw links
