@@ -51,6 +51,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             $rootScope.quarterDrawData = [];
 
             $rootScope.quarterEmpty = [];
+            $rootScope.quarterGap = 50;
 
             $rootScope.minuteScore = [];
             $rootScope.minuteOriginDrawData = [];
@@ -299,9 +300,24 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         let players = event['players'].filter(function (player) {
                             return player.id !== null && player.name !== null && player.team !== null;
                         });
+                        if (event['event_type'] === 13){
+                            angular.forEach($sessionStorage.playerData, function (player) {
+                                let  scene = {id: 0, quarter: 0, characters: [], start: 0, duration: 0, type: 0, status: {}};
+                                scene.id = event.eventId;
+                                scene.type = event['event_type'];
+                                scene.quarter = event['quarterId'] - 1;
+                                scene.characters.push($rootScope.storyLine2.characters[player.id]);
+                                scene.status = deepCopy(playerStatus);
+                                scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 0.5) * $rootScope.quarterGap : 0;
+                                scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
+                                $rootScope.storyLine2.scenes.push(scene);
+                            });
+                            preEvent = event;
+                        }
                         if (players.length > 1) {
                             scene.id = event.eventId;
                             scene.type = event['event_type'];
+                            scene.quarter = event['quarterId'] - 1;
                             players.forEach(function (player) {
                                 scene.characters.push($rootScope.storyLine2.characters[player.id]);
                                 scene.status = deepCopy(playerStatus);
@@ -310,8 +326,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 playerStatus[players[0].id.toString()] = false;
                                 playerStatus[players[1].id.toString()] = true;
                             }
-                            scene.start = preEvent !== null ? preEvent['timeOffset'] : 0;
-                            scene.duration = (preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset']) + 1;
+                            scene.start = preEvent !== null ? preEvent['timeOffset'] + scene.quarter * $rootScope.quarterGap : 0;
+                            scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
                             $rootScope.storyLine2.scenes.push(scene);
                             preEvent = event;
                         }
@@ -1333,24 +1349,24 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
                 // Quarter
                 //let PointH = {x: ,y:};
-                let min = narrative.introductions()[0].y;
-                let max = narrative.introductions()[0].y;
-                narrative.introductions().forEach(function (d) {
-                    if(d.y < min) min =d.y;
-                    if(d.y > max) max =d.y;
-                });
-
-                $rootScope.eventData.forEach(function (event) {
-                    if(event['event_type'] === 13){
-                        svg.append("line")
-                            .attr("x1", 150 + event['timeOffset'] * narrative.scale())
-                            .attr("y1", min)
-                            .attr("x2", 150 + event['timeOffset'] * narrative.scale())
-                            .attr("y2", max)
-                            .attr("stroke", "black")
-                            .attr("stroke-width", "2px");
-                    }
-                });
+                // let min = narrative.introductions()[0].y;
+                // let max = narrative.introductions()[0].y;
+                // narrative.introductions().forEach(function (d) {
+                //     if(d.y < min) min =d.y;
+                //     if(d.y > max) max =d.y;
+                // });
+                //
+                // $rootScope.eventData.forEach(function (event) {
+                //     if(event['event_type'] === 13){
+                //         svg.append("line")
+                //             .attr("x1", 150 + event['timeOffset'] * narrative.scale())
+                //             .attr("y1", min)
+                //             .attr("x2", 150 + event['timeOffset'] * narrative.scale())
+                //             .attr("y2", max)
+                //             .attr("stroke", "black")
+                //             .attr("stroke-width", "2px");
+                //     }
+                // });
 
 
                 // Draw links
@@ -1420,6 +1436,12 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .attr('rx', 3)
                     .attr('ry', 3)
                     .attr('stroke', '#000')
+                    .attr('opacity', function (d) {
+                        if (d.type === 13)
+                            return  0;
+                        else
+                            return  1;
+                    })
                     .attr('fill', '#ffffff')
                     .on("mouseover", function (d) {
                         svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
@@ -1457,8 +1479,20 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .attr('cy', function (d) {
                         return d.y;
                     })
-                    .attr('r', function () {
-                        return 2;
+                    .attr('r', function (d) {
+                        if(d.scene.type ===13)
+                            return 4;
+                        else
+                            return 2;
+                    })
+                    .attr('fill', function (d) {
+                        if(d.scene.type ===13)
+                            return '#444444';
+                        else
+                            return d.character.color;
+                    })
+                    .attr('stroke', function (d) {
+                        return d.character.color;
                     });
 
 
@@ -1473,7 +1507,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             });
 
                         g.append('rect')
-                            .attr('y', -4)
+                            .attr('y', -4.5)
                             .attr('x', -4)
                             .attr('width', 4)
                             .attr('height', 8)
