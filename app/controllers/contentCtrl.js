@@ -285,7 +285,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             let playerStatus = {};
             angular.forEach($sessionStorage.playerData, function (player) {
                 let temp = {id: '', name: '', width: 0, affiliation: '', color: ''};
-                temp.id = player['id'].toString();
+                temp.id = player['id'];
                 temp.name = player['firstName'] + ' ' + player['lastName'];
                 temp.width = temp.name.length * 10;
                 temp.affiliation = $scope.predictSide(player['team']).teamM;
@@ -301,9 +301,10 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             return player.id !== null && player.name !== null && player.team !== null;
                         });
                         if (event['event_type'] === 13){
+                            let i = 0;
                             angular.forEach($sessionStorage.playerData, function (player) {
                                 let  scene = {id: 0, quarter: 0, characters: [], start: 0, duration: 0, type: 0, status: {}};
-                                scene.id = event.eventId;
+                                scene.id = event.eventId + '-' + (i++).toString();
                                 scene.type = event['event_type'];
                                 scene.quarter = event['quarterId'] - 1;
                                 scene.characters.push($rootScope.storyLine2.characters[player.id]);
@@ -323,8 +324,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 scene.status = deepCopy(playerStatus);
                             });
                             if (event['event_type'] === 8) {
-                                playerStatus[players[0].id.toString()] = false;
-                                playerStatus[players[1].id.toString()] = true;
+                                playerStatus[players[0].id] = false;
+                                playerStatus[players[1].id] = true;
                             }
                             scene.start = preEvent !== null ? preEvent['timeOffset'] + scene.quarter * $rootScope.quarterGap : 0;
                             scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
@@ -1487,7 +1488,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     })
                     .attr('fill', function (d) {
                         if(d.scene.type ===13)
-                            return '#444444';
+                            return '#a5a5a5';
                         else
                             return d.character.color;
                     })
