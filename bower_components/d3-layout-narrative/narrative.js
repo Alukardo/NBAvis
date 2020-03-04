@@ -897,10 +897,10 @@ d3.layout.narrative = function () {
         partitioner = jLouvain().nodes(nodes).edges(edges);
 
         if (initGroups.length === undefined) {
-            partitioner.partition_init(initGroups);
             clusters = partitioner();
         } else {
-            clusters = initGroups;
+            clusters = partitioner.partition_init(initGroups);
+            //clusters = initGroups;
         }
 
 
@@ -951,7 +951,7 @@ d3.layout.narrative = function () {
                 return a.count - b.count;
             });
 
-            modeGroup = groups[groupCounts.pop().groupIndex];
+            modeGroup = groups[groupCounts.shift().groupIndex]; // shift() groupId depends 1st player
             // While we're here record how many scenes this group is the modal group for.
             modeGroup.modeCount = modeGroup.modeCount || 0;
             modeGroup.modeCount++;

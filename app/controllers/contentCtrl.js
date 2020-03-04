@@ -1320,8 +1320,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let narrative = d3.layout.narrative();
                 narrative.scenes(scenes);
                 narrative.size([Canvas.width, Canvas.height]);
-                narrative.pathSpace(50);
-                narrative.groupMargin(30);
+                narrative.pathSpace(40);
+                narrative.groupMargin(0);
                 narrative.labelSize([150, 15]);
                 narrative.scenePadding([0, 5, 0, 5]);
                 narrative.labelPosition('left');
@@ -1565,7 +1565,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 tooltip.html("<div  class = 'row' style='background: #dddddd'>" +
                                     "<table>" +
                                     "<tr><td align ='center'><img style='background: " + d.character.color + "' width='130px' src='" + preUrl + d.character.id + ".png" + "'></td></tr>" +
-                                    "<tr><td align ='center'>1111111</td></tr>" +
+                                    "<tr><td align ='center'>" + d.character.group.id + "</td></tr>" +
                                     "</table></div>").show();
                             })
                             .on("mouseout", function () {
