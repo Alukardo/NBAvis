@@ -1335,7 +1335,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 svg.attr('id', 'narrative-chart');
                 svg.attr('transform', function (d) {
                     let x = 10;
-                    let y = 15;
+                    let y = 50;
                     return 'translate(' + [x, y] + ')';
                 });
                 svg.attr('width', narrative.extent()[0] + 50) ;
@@ -1443,7 +1443,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .attr('ry', 3)
                     .attr('stroke', '#000')
                     .attr('opacity', function (d) {
-                        if (d.type === 13)
+                        if (d.appearances.length === 1)
                             return 0;
                         else
                             return 1;
@@ -1463,8 +1463,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         });
                         tooltip.offset([-10, 0]);
                         tooltip.html("<div ><table>" +
-                            "<tr><td align ='right'>id:</td><td align ='left'>" + d.id + "</td></tr>" +
-                            "<tr><td align ='right'>type:</td><td align ='left'>" + d.type + "</td></tr>" +
+                            "<tr><td width='50px' align ='left'>id:" + d.id + "</td></tr>" +
+                            "<tr><td align ='left'>type:" + d.type + "</td></tr>" +
                             "</table></div>");
                         tooltip.show();
                     })
