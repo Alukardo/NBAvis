@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>wasm_example</title>
+    <script src="http://d3js.org/d3.v5.js"></script>
+    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+</head>
+<body>
+<script type="text/javascript" src="r2e.js"></script>
+<script>
+
+    //emcc input_2darray.cpp -s "EXPORTED_FUNCTIONS=['_getArray']" -s "EXTRA_EXPORTED_RUNTIME_METHODS=['ccall','cwrap']" -o input_2darray.js
+    //emrun --no_browser --port 8000 .
+    let max_value;
+    let min_value;
+    let svg;
+    let row_number = 0;
+    let col_number = 0;
+    let data = [];
+    let rowProxData = [];
+
+    let colProxData = [];
+    let row_name = [];
+    let col_name = [];
+    let hasRowName = true;
+    let hasColName = true;
+    let url = "iris.csv";
+
+    Module['onRuntimeInitialized'] = onRuntimeInitialized;
+
+    // 釋放一塊wasm記憶體
+    function freeHeap(heapBytes) {
+        Module._free(heapBytes.byteOffset);
+    }
+
+    function onRuntimeInitialized() {
+
+        d3.csv(url)
+            .then(function (dataset) {
+
+                row_number = dataset.length;
+                if (hasColName)
+                    col_number = dataset.columns.length - 1;
+                else
+                    col_number = dataset.columns.length;
+
+                console.log("col_number:" + dataset.columns.length);
+
+
+                for (let i = 0; i < row_number; i++) {
+                    row_name.push(dataset[i].name);
+                }
+                for (let i = 0; i < col_number; i++) {
+                    col_name.push(dataset.columns[i]);
+                    console.log(dataset.columns[i]);
+                }
+
+                for (let i = 0; i < row_number; i++) {
+                    let tempData = [];
+                    for (let j = 0; j < col_number; j++) {
+                        tempData.push(Object.values(dataset[i])[j]);
+                    }
+                    data.push(tempData);
+                }
+
+                console.log(row_number);
+                console.log(col_number);
+
+                //compute Euclidean distance matrix for rows
+                for (let i = 0; i < row_number; i++) {
+                    rowProxData[i] = [];
+                    for (let j = 0; j < row_number; j++) {
+                        rowProxData[i][j] = 0.0;
+                    }
+                }
+
+                for (let i = 0; i < row_number; i++) {
+                    for (let j = 0; j < row_number; j++) {
+                        rowProxData[i][j] = Math.sqrt(EuclideanDistance(data, i, j, col_number));
+                    }
+                }
+
+
+                //2D array to 1D array
+                let len = row_number * row_number;
+
+                let inputRowProx = new Float64Array(len);
+                for (let i = 0; i < row_number; i++) {
+                    for (let j = 0; j < row_number; j++) {
+                        inputRowProx[i * row_number + j] = rowProxData[i][j];
+                    }
+                }
+
+                let bytes_per_element = inputRowProx.BYTES_PER_ELEMENT;   // 8 bytes each element
+                console.log("bytes_per_element:" + inputRowProx.BYTES_PER_ELEMENT);
+
+                let start = 0;
+                let end = 0;
+                start = new Date().getTime();
+                // 要測試的 function 開始 =======
+
+                // alloc memory
+                let input_ptr = Module._malloc(len * bytes_per_element);
+                let output_ptr = Module._malloc(row_number * 4);
+
+                Module.HEAPF64.set(inputRowProx, input_ptr / bytes_per_element); // write WASM memory calling the set method of the Float64Array
+
+                Module.ccall(
+                    "ellipse_sort", //c++ function name
+                    null,   //output type
+                    ["number", "number", "number", "number", "number"], //input type
+                    [input_ptr, output_ptr, row_number, row_number, 0]       //input value
+                );
+
+                let output_array = new Int32Array(Module.HEAP32.buffer, output_ptr, row_number); // extract data to another JS array
+
+                // 要測試的 function 結束 =======
+                end = new Date().getTime();
+                // 計算花多久時間
+                console.log((end - start) / 1000 + "sec");
+
+                console.log(output_array);
+
+                freeHeap(input_ptr);
+                freeHeap(output_ptr);
+
+                //#########################################################
+                function EuclideanDistance(prefs, p1, p2, n) {
+                    let sum = 0;
+                    let mode = 0;
+
+                    if (mode == 0)   //for row
+                    {
+                        for (let i = 0; i < n; i++) {
+                            sum += Math.pow(parseFloat(prefs[p1][i]) - parseFloat(prefs[p2][i]), 2);
+                        }
+                    } else if (mode == 1) //for col
+                    {
+                        for (let i = 0; i < n; i++) {
+                            sum += Math.pow(parseFloat(prefs[i][p1]) - parseFloat(prefs[i][p2]), 2);
+                        }
+                    }
+                    return sum;
+                }
+
+            });
+
+
+    }
+
+
+</script>
+</body>
+</html>

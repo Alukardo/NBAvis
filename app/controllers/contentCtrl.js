@@ -300,10 +300,18 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         let players = event['players'].filter(function (player) {
                             return player.id !== null && player.name !== null && player.team !== null;
                         });
-                        if (event['event_type'] === 13){
+                        if (event['event_type'] === 13) {
                             let i = 0;
                             angular.forEach($sessionStorage.playerData, function (player) {
-                                let  scene = {id: 0, quarter: 0, characters: [], start: 0, duration: 0, type: 0, status: {}};
+                                let scene = {
+                                    id: 0,
+                                    quarter: 0,
+                                    characters: [],
+                                    start: 0,
+                                    duration: 0,
+                                    type: 0,
+                                    status: {}
+                                };
                                 scene.id = event.eventId + '-' + (i++).toString();
                                 scene.type = event['event_type'];
                                 scene.quarter = event['quarterId'] - 1;
@@ -1298,55 +1306,47 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
     .directive("storyLine2", ['$rootScope', '$document', function ($rootScope) {
         return {
             restrict: "E",  // Element name: <my-directive></my-directive>
-            link: function ($scope, $element) {
+            link: function () {
+
                 console.log($rootScope.data.selectedIndex);
+
                 let scenes = $rootScope.storyLine2.scenes;
 
-                let Canvas = {width: 0, height: 0};
-                Canvas.width = scenes.length * 10 * 4;
+                let Canvas = {};
+                Canvas.width  = scenes.length * 30;
                 Canvas.height = 1600;
 
-                let svg = d3.select('story-line2')
-                    .append('svg')
-                    .attr('id', 'narrative-chart')
-                    .attr('transform', function (d) {
-                        let x = 10;
-                        let y = 15;
-                        return 'translate(' + [x, y] + ')';
-                    })
-                    .attr('width', Canvas.width + 100)
-                    .attr('height', Canvas.height + 100);
+                // Do the layout
+                let narrative = d3.layout.narrative();
+                narrative.scenes(scenes);
+                narrative.size([Canvas.width, Canvas.height]);
+                narrative.pathSpace(50);
+                narrative.groupMargin(30);
+                narrative.labelSize([150, 15]);
+                narrative.scenePadding([0, 5, 0, 5]);
+                narrative.labelPosition('left');
+                narrative.layout();
 
-                let tooltip = d3.tip().attr("class", "d3-tip")
-                    .style('box-sizing', 'content-box');
+                let storyLine = d3.select('story-line2');
 
+                let sliderContent = storyLine.append('div');
+
+                let svg = storyLine.append('svg');
+                svg.attr('id', 'narrative-chart');
+                svg.attr('transform', function (d) {
+                    let x = 10;
+                    let y = 15;
+                    return 'translate(' + [x, y] + ')';
+                });
+                svg.attr('width', narrative.extent()[0] + 50) ;
+                svg.attr('height', narrative.extent()[1] + 50);
+
+
+                let tooltip = d3.tip();
+                tooltip.attr("class", "d3-tip");
+                tooltip.style('box-sizing', 'content-box');
                 svg.call(tooltip);
 
-                // Calculate the actual width of every character label.
-                let i = -1;
-                scenes.forEach(function (scene) {
-                    scene.characters.forEach(function (character) {
-                        svg.append('text')
-                            .attr('opacity', 0)
-                            .attr('class', 'temp')
-                            .text(character.name);
-                    });
-                });
-                svg.selectAll('text.temp').remove();
-
-                // Do the layout
-                let narrative = d3.layout.narrative()
-                    .scenes(scenes)
-                    .size([Canvas.width, Canvas.height])
-                    .pathSpace(50)
-                    .groupMargin(80)
-                    .labelSize([150, 15])
-                    .scenePadding([0, 5, 0, 5])
-                    .labelPosition('left')
-                    .layout();
-
-                // Get the extent so we can re-size the SVG appropriately.
-                svg.attr('height', narrative.extent()[1] + 100);
 
                 // Quarter
                 //let PointH = {x: ,y:};
@@ -1368,7 +1368,13 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 //             .attr("stroke-width", "2px");
                 //     }
                 // });
+                let slider = d3.slider().axis(true).min(0).max(narrative.extent()[0] / narrative.scale()/60);
+                let x = narrative.introductions()[0].x;
 
+                sliderContent.style('width', narrative.extent()[0]+ 'px');
+                sliderContent.style('margin-left', (x + 6) + 'px');
+                sliderContent.style('margin-top', '10px');
+                sliderContent.call(slider);
 
                 // Draw links
 
@@ -1410,8 +1416,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         svg.select('g.links').selectAll('g').attr('opacity', 1.0);
                         svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
                         svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
-                    })
-                ;
+                    });
 
 
                 // Draw the scenes
@@ -1439,9 +1444,9 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .attr('stroke', '#000')
                     .attr('opacity', function (d) {
                         if (d.type === 13)
-                            return  0;
+                            return 0;
                         else
-                            return  1;
+                            return 1;
                     })
                     .attr('fill', '#ffffff')
                     .on("mouseover", function (d) {
@@ -1457,7 +1462,11 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             });
                         });
                         tooltip.offset([-10, 0]);
-                        tooltip.html("<div >id:" + d.id + ".type:" + d.type + "</div>").show();
+                        tooltip.html("<div ><table>" +
+                            "<tr><td align ='right'>id:</td><td align ='left'>" + d.id + "</td></tr>" +
+                            "<tr><td align ='right'>type:</td><td align ='left'>" + d.type + "</td></tr>" +
+                            "</table></div>");
+                        tooltip.show();
                     })
                     .on("mouseout", function () {
                         svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
@@ -1481,13 +1490,13 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         return d.y;
                     })
                     .attr('r', function (d) {
-                        if(d.scene.type ===13)
+                        if (d.scene.type === 13)
                             return 4;
                         else
                             return 2;
                     })
                     .attr('fill', function (d) {
-                        if(d.scene.type ===13)
+                        if (d.scene.type === 13)
                             return '#a5a5a5';
                         else
                             return d.character.color;
@@ -1508,8 +1517,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             });
 
                         g.append('rect')
-                            .attr('y', -4.5)
                             .attr('x', -4)
+                            .attr('y', -4.5)
                             .attr('width', 4)
                             .attr('height', 8)
                             .attr('fill', function (d) {
@@ -1554,8 +1563,10 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 let preUrl = "https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/";
                                 tooltip.offset([-10, 0]);
                                 tooltip.html("<div  class = 'row' style='background: #dddddd'>" +
-                                    "<img style='background: " + d.character.color + "' width='130px' src='" + preUrl + d.character.id + ".png" + "'><br>" +
-                                    "<span>1111111</span></div>").show();
+                                    "<table>" +
+                                    "<tr><td align ='center'><img style='background: " + d.character.color + "' width='130px' src='" + preUrl + d.character.id + ".png" + "'></td></tr>" +
+                                    "<tr><td align ='center'>1111111</td></tr>" +
+                                    "</table></div>").show();
                             })
                             .on("mouseout", function () {
                                 svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
@@ -1565,7 +1576,6 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             });
 
                     });
-
 
 
             }
@@ -1604,15 +1614,16 @@ function eventWeight(actType, position) {
     }
     return result;
 }
-function deepCopy(obj){
-    let result = Array.isArray(obj)?[]:{};
-    if(obj && typeof obj === 'object'){
-        for(let key in obj){
-            if(obj.hasOwnProperty(key)){
-                if(obj[key]&&typeof obj[key]==='object'){
-                    result[key]=deepCopy(obj[key]);
-                }else{
-                    result[key]=obj[key];
+
+function deepCopy(obj) {
+    let result = Array.isArray(obj) ? [] : {};
+    if (obj && typeof obj === 'object') {
+        for (let key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                if (obj[key] && typeof obj[key] === 'object') {
+                    result[key] = deepCopy(obj[key]);
+                } else {
+                    result[key] = obj[key];
                 }
             }
         }
