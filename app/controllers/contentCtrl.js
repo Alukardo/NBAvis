@@ -284,37 +284,36 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             let preEvent = null;
             let playerStatus = {};
             angular.forEach($sessionStorage.playerData, function (player) {
-                let temp = {id: '', name: '', width: 0, affiliation: '', color: ''};
+                let temp = {id: '', name: '', width: 0, affiliation: '', color: '', initialGroup : undefined};
                 temp.id = player['id'];
                 temp.name = player['firstName'] + ' ' + player['lastName'];
                 temp.width = temp.name.length * 10;
                 temp.affiliation = $scope.predictSide(player['team']).teamM;
                 temp.color = $scope.predictSide(player['team']).color;
+                temp.initialGroup = $scope.predictSide(player['team']).group;
                 playerStatus[temp.id] = player['starter'];
                 $rootScope.storyLine2.characters[temp.id] = temp;
             });
             angular.forEach($scope.rawData, function (quarter) {
                 angular.forEach(quarter, function (minute) {
                     angular.forEach(minute, function (event) {
-                        let scene = {id: 0, characters: [], start: 0, duration: 0, type: 0, status: {}};
+                        let scene = {id: 0, quarter: 0, timeOffset:0, characters: [], start: 0, duration: 0, type: 0, status: {}, weight : 0};
                         let players = event['players'].filter(function (player) {
                             return player.id !== null && player.name !== null && player.team !== null;
                         });
+
+                        if (event['event_type'] === 10) {
+                            players.shift();
+                            players.shift();
+                        }
                         if (event['event_type'] === 13) {
                             let i = 0;
                             angular.forEach($sessionStorage.playerData, function (player) {
-                                let scene = {
-                                    id: 0,
-                                    quarter: 0,
-                                    characters: [],
-                                    start: 0,
-                                    duration: 0,
-                                    type: 0,
-                                    status: {}
-                                };
+                                let scene = {id: 0, quarter: 0, timeOffset:0, characters: [], start: 0, duration: 0, type: 0, status: {}, weight : 0};
                                 scene.id = event.eventId + '-' + (i++).toString();
                                 scene.type = event['event_type'];
                                 scene.quarter = event['quarterId'] - 1;
+                                scene.timeOffset = event['timeOffset'];
                                 scene.characters.push($rootScope.storyLine2.characters[player.id]);
                                 scene.status = deepCopy(playerStatus);
                                 scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 0.5) * $rootScope.quarterGap : 0;
@@ -327,9 +326,11 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             scene.id = event.eventId;
                             scene.type = event['event_type'];
                             scene.quarter = event['quarterId'] - 1;
-                            players.forEach(function (player) {
+                            scene.timeOffset = event['timeOffset'];
+                            players.forEach(function (player, i) {
                                 scene.characters.push($rootScope.storyLine2.characters[player.id]);
                                 scene.status = deepCopy(playerStatus);
+                                scene.weight += eventWeight(scene.type, i+1);
                             });
                             if (event['event_type'] === 8) {
                                 playerStatus[players[0].id] = false;
@@ -1312,204 +1313,320 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
                 let scenes = $rootScope.storyLine2.scenes;
 
-                let Canvas = {};
-                Canvas.width  = scenes.length * 30;
-                Canvas.height = 1600;
-
-                // Do the layout
-                let narrative = d3.layout.narrative();
-                narrative.scenes(scenes);
-                narrative.size([Canvas.width, Canvas.height]);
-                narrative.pathSpace(40);
-                narrative.groupMargin(0);
-                narrative.labelSize([150, 15]);
-                narrative.scenePadding([0, 5, 0, 5]);
-                narrative.labelPosition('left');
-                narrative.layout();
-
                 let storyLine = d3.select('story-line2');
-
-                let sliderContent = storyLine.append('div');
-
-                let svg = storyLine.append('svg');
-                svg.attr('id', 'narrative-chart');
-                svg.attr('transform', function (d) {
+                let svg = storyLine.append('svg')
+                    .attr('id', 'narrative-chart')
+                    .attr('transform', function (d) {
                     let x = 10;
                     let y = 50;
                     return 'translate(' + [x, y] + ')';
                 });
-                svg.attr('width', narrative.extent()[0] + 50) ;
-                svg.attr('height', narrative.extent()[1] + 50);
-
-
-                let tooltip = d3.tip();
-                tooltip.attr("class", "d3-tip");
-                tooltip.style('box-sizing', 'content-box');
+                let Links = svg.append('g').attr('class', 'links');
+                let Scenes = svg.append('g').attr('class', 'scenes');
+                let Intros = svg.append('g').attr('class', 'intros');
+                let tooltip = d3.tip()
+                    .attr("class", "d3-tip")
+                    .style('box-sizing', 'content-box');
                 svg.call(tooltip);
 
-
-                // Quarter
-                //let PointH = {x: ,y:};
-                // let min = narrative.introductions()[0].y;
-                // let max = narrative.introductions()[0].y;
-                // narrative.introductions().forEach(function (d) {
-                //     if(d.y < min) min =d.y;
-                //     if(d.y > max) max =d.y;
-                // });
-                //
-                // $rootScope.eventData.forEach(function (event) {
-                //     if(event['event_type'] === 13){
-                //         svg.append("line")
-                //             .attr("x1", 150 + event['timeOffset'] * narrative.scale())
-                //             .attr("y1", min)
-                //             .attr("x2", 150 + event['timeOffset'] * narrative.scale())
-                //             .attr("y2", max)
-                //             .attr("stroke", "black")
-                //             .attr("stroke-width", "2px");
-                //     }
-                // });
-                let slider = d3.slider().axis(true).min(0).max(narrative.extent()[0] / narrative.scale()/60);
-                let x = narrative.introductions()[0].x;
-
-                sliderContent.style('width', narrative.extent()[0]+ 'px');
-                sliderContent.style('margin-left', (x + 6) + 'px');
+                let sliderContent = storyLine.append('div');
+                let thresh = 1;
+                let slider = d3.slider();
+                slider.axis(true);
+                slider.min(0);
+                slider.max(100);
+                slider.value(100);
+                slider.on("slide", function(evt, value) {
+                    thresh = value / 100;
+                    console.log("thresh : " + thresh);
+                    let range = Math.floor(scenes.length * thresh);
+                    update(scenes.slice(0, range));
+                });
+                sliderContent.style('width', '1000px');
+                sliderContent.style('margin-left', '150px');
                 sliderContent.style('margin-top', '10px');
                 sliderContent.call(slider);
 
-                // Draw links
 
-                svg.append('g').attr('class', 'links')
-                    .selectAll('g').data(narrative.links()).enter()
-                    .append('g')
-                    .attr('class', 'character')
-                    .attr('id', function (d) {
-                        return d.id;
-                    })
-                    .selectAll('path').data(function (d) {
-                    return d.links;
-                })
-                    .enter()
-                    .append('path')
-                    .attr('d', narrative.link())
-                    .attr('stroke', function (d) {
-                        return d.character.color;
-                    })
-                    .attr('stroke-dasharray', function (d) {
-                        return d.target.scene.status[d.character.id] ? "" : "1,4";
-                    })
-                    .attr('stroke-width', 2)
-                    .attr('fill', 'none')
-                    .on("mouseover", function (d) {
-                        svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                        svg.select('g.links').selectAll("[id =\"" + d.character.id + "\"]").attr('opacity', 1.0);
 
-                        svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
-                        svg.select('g.intros').selectAll("[id = \"" + d.character.id + "\"]").attr('opacity', 1.0);
+                update(scenes);
 
-                        svg.select('g.scenes').selectAll("g.scene").attr('opacity', 0.1);
-                        d.character.appearances.forEach(function (c) {
-                            let id = c.scene.id;
-                            svg.select('g.scenes').selectAll("[id =\"" + id + "\"]").attr('opacity', 1.0);
+                function update(scenes) {
+                    let Canvas = {};
+                    Canvas.width  = scenes.length * 40;
+                    Canvas.height = 1600;
+
+                    let narrative = d3.layout.narrative();
+                    narrative.scenes(scenes);
+                    narrative.size([Canvas.width, Canvas.height]);
+                    narrative.pathSpace(20);
+                    narrative.groupMargin(60);
+                    narrative.labelSize([160, 15]);
+                    narrative.scenePadding([0, 5, 0, 5]);
+                    narrative.labelPosition('left');
+                    narrative.layout();
+
+                    svg.attr('width', narrative.extent()[0] + 50) ;
+                    svg.attr('height', narrative.extent()[1] + 50);
+
+                    updateLinks(narrative);
+                    updateScenes(narrative);
+                    updateNodes(narrative);
+                }
+                function updateLinks(narrative) {
+
+                    let link = Links.selectAll('g')
+                        .data(narrative.links());
+
+                    link.enter()
+                        .append('g')
+                        .attr('class', 'character')
+                        .attr('id', function (d) {
+                            return d.id;
                         });
-                    })
-                    .on("mouseout", function () {
-                        svg.select('g.links').selectAll('g').attr('opacity', 1.0);
-                        svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
-                        svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
-                    });
 
+                    link.attr('class', 'character')
+                        .attr('id', function (d) {
+                            return d.id;
+                        });
 
-                // Draw the scenes
-                svg.append('g').attr('class', 'scenes')
-                    .selectAll('.scene').data(narrative.scenes()).enter()
-                    .append('g').attr('class', 'scene')
-                    .attr('id', function (d) {
-                        return d.id;
-                    })
-                    .attr('transform', function (d) {
-                        let x, y;
-                        x = Math.round(d.x) + 0.5;
-                        y = Math.round(d.y) + 0.5;
-                        return 'translate(' + [x, y] + ')';
-                    })
-                    .append('rect')
-                    .attr('width', function (d) {
-                        return d.width;
-                    })
-                    .attr('height', function (d) {
-                        return d.height;
-                    })
-                    .attr('rx', 3)
-                    .attr('ry', 3)
-                    .attr('stroke', '#000')
-                    .attr('opacity', function (d) {
-                        if (d.appearances.length === 1)
-                            return 0;
-                        else
-                            return 1;
-                    })
-                    .attr('fill', '#ffffff')
-                    .on("mouseover", function (d) {
-                        svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
-                        svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                        svg.select('g.scenes').selectAll("g.scene").attr('opacity', 0.1);
-                        d.characters.forEach(function (c) {
-                            svg.select('g.links').selectAll("[id = \"" + c.id + "\"]").attr('opacity', 1.0);
-                            svg.select('g.intros').selectAll("[id = \"" + c.id + "\"]").attr('opacity', 1.0);
-                            c.appearances.forEach(function (e) {
-                                let id = e.scene.id;
+                    link.exit().remove();
+
+                    let segment= link.selectAll('path')
+                        .data(function (d) {
+                            return d.links;
+                        });
+
+                    segment.enter()
+                        .append('path')
+                        .attr('d', narrative.link())
+                        .attr('stroke', function (d) {
+                            return d.character.color;
+                        })
+                        .attr('stroke-dasharray', function (d) {
+                            return d.target.scene.status[d.character.id] ? "" : "1,4";
+                        })
+                        .attr('stroke-width', 2)
+                        .attr('fill', 'none')
+                        .on("mouseover", function (d) {
+                            svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                            svg.select('g.links').selectAll("[id =\"" + d.character.id + "\"]").attr('opacity', 1.0);
+
+                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
+                            svg.select('g.intros').selectAll("[id = \"" + d.character.id + "\"]").attr('opacity', 1.0);
+
+                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 0.1);
+                            d.character.appearances.forEach(function (c) {
+                                let id = c.scene.id;
                                 svg.select('g.scenes').selectAll("[id =\"" + id + "\"]").attr('opacity', 1.0);
                             });
+                        })
+                        .on("mouseout", function () {
+                            svg.select('g.links').selectAll('g').attr('opacity', 1.0);
+                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
+                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
                         });
-                        tooltip.offset([-10, 0]);
-                        tooltip.html("<div ><table>" +
-                            "<tr><td width='50px' align ='left'>id:" + d.id + "</td></tr>" +
-                            "<tr><td align ='left'>type:" + d.type + "</td></tr>" +
-                            "</table></div>");
-                        tooltip.show();
-                    })
-                    .on("mouseout", function () {
-                        svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
-                        svg.select('g.links').selectAll('g.character').attr('opacity', 1.0);
-                        svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
-                        tooltip.hide();
-                    });
 
+                    segment.attr('d', narrative.link())
+                        .attr('stroke', function (d) {
+                            return d.character.color;
+                        })
+                        .attr('stroke-dasharray', function (d) {
+                            return d.target.scene.status[d.character.id] ? "" : "1,4";
+                        })
+                        .attr('stroke-width', 2)
+                        .attr('fill', 'none')
+                        .on("mouseover", function (d) {
+                            svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                            svg.select('g.links').selectAll("[id =\"" + d.character.id + "\"]").attr('opacity', 1.0);
 
-                // Draw appearances
-                svg.selectAll('.scene')
-                    .selectAll('.appearance')
-                    .data(function (d) {
-                        return d.appearances;
-                    }).enter()
-                    .append('circle')
-                    .attr('cx', function (d) {
+                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
+                            svg.select('g.intros').selectAll("[id = \"" + d.character.id + "\"]").attr('opacity', 1.0);
+
+                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 0.1);
+                            d.character.appearances.forEach(function (c) {
+                                let id = c.scene.id;
+                                svg.select('g.scenes').selectAll("[id =\"" + id + "\"]").attr('opacity', 1.0);
+                            });
+                        })
+                        .on("mouseout", function () {
+                            svg.select('g.links').selectAll('g').attr('opacity', 1.0);
+                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
+                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
+                        });
+
+                    segment.exit().remove();
+                }
+                function updateScenes(narrative){
+                    let scene = Scenes.selectAll('.scene')
+                        .data(narrative.scenes());
+
+                    scene.enter()
+                        .append('g')
+                        .attr('class', 'scene')
+                        .attr('id', function (d) {
+                            return d.id;
+                        })
+                        .attr('transform', function (d) {
+                            let x, y;
+                            x = Math.round(d.x) + 0.5;
+                            y = Math.round(d.y) + 0.5;
+                            return 'translate(' + [x, y] + ')';
+                        })
+                        .append('rect')
+                        .attr('width', function (d) {
+                            return d.width;
+                        })
+                        .attr('height', function (d) {
+                            return d.height;
+                        })
+                        .attr('rx', 3)
+                        .attr('ry', 3)
+                        .attr('stroke', '#000')
+                        .attr('opacity', function (d) {
+                            if (d.appearances.length === 1)
+                                return 0;
+                            else
+                                return 1;
+                        })
+                        .attr('fill', '#ffffff')
+                        .on("mouseover", function (d) {
+                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
+                            svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 0.1);
+                            d.characters.forEach(function (c) {
+                                svg.select('g.links').selectAll("[id = \"" + c.id + "\"]").attr('opacity', 1.0);
+                                svg.select('g.intros').selectAll("[id = \"" + c.id + "\"]").attr('opacity', 1.0);
+                                c.appearances.forEach(function (e) {
+                                    let id = e.scene.id;
+                                    svg.select('g.scenes').selectAll("[id =\"" + id + "\"]").attr('opacity', 1.0);
+                                });
+                            });
+                            tooltip.offset([-10, 0]);
+                            tooltip.html("<div ><table>" +
+                                "<tr><td width='50px' align ='left'>id:" + d.id + "</td></tr>" +
+                                "<tr><td align ='left'>type:" + d.type + "</td></tr>" +
+                                "</table></div>");
+                            tooltip.show();
+                        })
+                        .on("mouseout", function () {
+                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
+                            svg.select('g.links').selectAll('g.character').attr('opacity', 1.0);
+                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
+                            tooltip.hide();
+                        });
+
+                    scene.attr('id', function (d) {
+                            return d.id;
+                        })
+                        .attr('transform', function (d) {
+                            let x, y;
+                            x = Math.round(d.x) + 0.5;
+                            y = Math.round(d.y) + 0.5;
+                            return 'translate(' + [x, y] + ')';
+                        })
+                        .select('rect')
+                        .attr('width', function (d) {
+                            return d.width;
+                        })
+                        .attr('height', function (d) {
+                            return d.height;
+                        })
+                        .attr('opacity', function (d) {
+                            if (d.appearances.length === 1)
+                                return 0;
+                            else
+                                return 1;
+                        })
+                        .on("mouseover", function (d) {
+                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
+                            svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 0.1);
+                            d.characters.forEach(function (c) {
+                                svg.select('g.links').selectAll("[id = \"" + c.id + "\"]").attr('opacity', 1.0);
+                                svg.select('g.intros').selectAll("[id = \"" + c.id + "\"]").attr('opacity', 1.0);
+                                c.appearances.forEach(function (e) {
+                                    let id = e.scene.id;
+                                    svg.select('g.scenes').selectAll("[id =\"" + id + "\"]").attr('opacity', 1.0);
+                                });
+                            });
+                            tooltip.offset([-10, 0]);
+                            tooltip.html("<div ><table>" +
+                                "<tr><td width='50px' align ='left'>id:" + d.id + "</td></tr>" +
+                                "<tr><td align ='left'>type:" + d.type + "</td></tr>" +
+                                "</table></div>");
+                            tooltip.show();
+                        })
+                        .on("mouseout", function () {
+                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
+                            svg.select('g.links').selectAll('g.character').attr('opacity', 1.0);
+                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
+                            tooltip.hide();
+                        });
+
+                    scene.exit().remove();
+
+                    let appearance = scene.selectAll('.appearance')
+                        .data(function (d) {
+                            return d.appearances;
+                        });
+
+                    appearance.enter()
+                        .append('circle')
+                        .attr('class', 'appearance')
+                        .attr('cx', function (d) {
+                            return d.x;
+                        })
+                        .attr('cy', function (d) {
+                            return d.y;
+                        })
+                        .attr('r', function (d) {
+                            if (d.scene.type === 13)
+                                return 4;
+                            else
+                                return 2;
+                        })
+                        .attr('fill', function (d) {
+                            if (d.scene.type === 13)
+                                return '#a5a5a5';
+                            else
+                                return d.character.color;
+                        })
+                        .attr('stroke', function (d) {
+                            return d.character.color;
+                        });
+
+                    appearance.attr('cx', function (d) {
                         return d.x;
                     })
-                    .attr('cy', function (d) {
-                        return d.y;
-                    })
-                    .attr('r', function (d) {
-                        if (d.scene.type === 13)
-                            return 4;
-                        else
-                            return 2;
-                    })
-                    .attr('fill', function (d) {
-                        if (d.scene.type === 13)
-                            return '#a5a5a5';
-                        else
+                        .attr('cy', function (d) {
+                            return d.y;
+                        })
+                        .attr('r', function (d) {
+                            if (d.scene.type === 13)
+                                return 4;
+                            else
+                                return 2;
+                        })
+                        .attr('fill', function (d) {
+                            if (d.scene.type === 13)
+                                return '#a5a5a5';
+                            else
+                                return d.character.color;
+                        })
+                        .attr('stroke', function (d) {
                             return d.character.color;
-                    })
-                    .attr('stroke', function (d) {
-                        return d.character.color;
-                    });
+                        });
+
+                    appearance.exit().remove();
 
 
-                // Draw intro nodes
-                let nodes = svg.append('g').attr('class', 'intros')
-                    .selectAll('.intro').data(narrative.introductions()).enter()
-                    .call(function (s) {
+                }
+                function updateNodes(narrative){
+                    let intro = Intros.selectAll('.intro')
+                        .data(narrative.introductions());
+                    intro.enter()
+                        .call(function (s) {
                         let g = s.append('g')
                             .attr('class', 'intro')
                             .attr('id', function (d) {
@@ -1576,6 +1693,45 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             });
 
                     });
+                   intro.call(function (s) {
+                        let g = s.attr('id', function (d) {
+                                return d.character.id;
+                            });
+
+                        g.attr('x', -4)
+                            .attr('y', -4.5)
+                            .attr('width', 4)
+                            .attr('height', 8)
+                            .attr('fill', function (d) {
+                                return d.character.color;
+                            });
+
+
+
+                        g.attr('transform', function (d) {
+                            let x, y;
+                            x = Math.round(d.x);
+                            y = Math.round(d.y);
+                            return 'translate(' + [x, y] + ')';
+                        });
+
+                        g.selectAll('text')
+                            .attr('text-anchor', 'end')
+                            .attr('y', '4px')
+                            .attr('x', '-8px')
+                            .text(function (d) {
+                                return d.character.name;
+                            })
+                            .attr('font-family', 'Arial')
+                            .attr('fill', function (d) {
+                                return d.character.color;
+                            })
+
+                    });
+                    intro.exit().remove();
+
+                }
+
 
 
             }
