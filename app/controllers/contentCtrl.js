@@ -51,7 +51,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             $rootScope.quarterDrawData = [];
 
             $rootScope.quarterEmpty = [];
-            $rootScope.quarterGap = 50;
+            $rootScope.quarterGap = 20;
 
             $rootScope.minuteScore = [];
             $rootScope.minuteOriginDrawData = [];
@@ -64,7 +64,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             $rootScope.eventData = [];
             $rootScope.playerInfo = [];
             $rootScope.storyLine = {pre: {}, data: [], ps: [], draw: {}};
-            $rootScope.storyLine2 = {"characters": [], "scenes": []};
+            $rootScope.storyLine2 = {"characters": [], "scenes": [], "charactersMap": {}};
             $rootScope.storyLineInteractionCount = [];
             $rootScope.sortedY = [];
             $rootScope.sortedList = [];
@@ -291,8 +291,11 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 temp.affiliation = $scope.predictSide(player['team']).teamM;
                 temp.color = $scope.predictSide(player['team']).color;
                 temp.initialGroup = $scope.predictSide(player['team']).group;
-                playerStatus[temp.id] = player['starter'];
-                $rootScope.storyLine2.characters[temp.id] = temp;
+                //temp.initialGroup = 0;
+                    playerStatus[temp.id] = player['starter'];
+                $rootScope.storyLine2.charactersMap[temp.id] = temp;
+                $rootScope.storyLine2.characters.push($rootScope.storyLine2.charactersMap[temp.id]);
+
             });
             angular.forEach($scope.rawData, function (quarter) {
                 angular.forEach(quarter, function (minute) {
@@ -314,7 +317,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 scene.type = event['event_type'];
                                 scene.quarter = event['quarterId'] - 1;
                                 scene.timeOffset = event['timeOffset'];
-                                scene.characters.push($rootScope.storyLine2.characters[player.id]);
+                                scene.characters.push($rootScope.storyLine2.charactersMap[player.id]);
                                 scene.status = deepCopy(playerStatus);
                                 scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 0.5) * $rootScope.quarterGap : 0;
                                 scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
@@ -328,7 +331,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             scene.quarter = event['quarterId'] - 1;
                             scene.timeOffset = event['timeOffset'];
                             players.forEach(function (player, i) {
-                                scene.characters.push($rootScope.storyLine2.characters[player.id]);
+                                scene.characters.push($rootScope.storyLine2.charactersMap[player.id]);
                                 scene.status = deepCopy(playerStatus);
                                 scene.weight += eventWeight(scene.type, i+1);
                             });
@@ -1312,7 +1315,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 console.log($rootScope.data.selectedIndex);
 
                 let scenes = $rootScope.storyLine2.scenes;
-
+                let characters = $rootScope.storyLine2.characters;
                 let storyLine = d3.select('story-line2');
                 let svg = storyLine.append('svg')
                     .attr('id', 'narrative-chart')
@@ -1321,6 +1324,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     let y = 50;
                     return 'translate(' + [x, y] + ')';
                 });
+                svg.attr('width', 2000) ;
+                svg.attr('height', 1600);
                 let Links = svg.append('g').attr('class', 'links');
                 let Scenes = svg.append('g').attr('class', 'scenes');
                 let Intros = svg.append('g').attr('class', 'intros');
@@ -1333,14 +1338,19 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let thresh = 1;
                 let slider = d3.slider();
                 slider.axis(true);
-                slider.min(0);
+                slider.min(0.1);
                 slider.max(100);
                 slider.value(100);
                 slider.on("slide", function(evt, value) {
                     thresh = value / 100;
-                    console.log("thresh : " + thresh);
-                    let range = Math.floor(scenes.length * thresh);
-                    update(scenes.slice(0, range));
+                    console.log("value : " + value);
+                    let dateSet = [];
+                    scenes.forEach(function (scene) {
+                        if(scene.timeOffset < Math.floor(scenes[scenes.length - 1]['timeOffset'] * thresh )){
+                            dateSet.push(scene);
+                        }
+                    });
+                    update(dateSet, characters);
                 });
                 sliderContent.style('width', '1000px');
                 sliderContent.style('margin-left', '150px');
@@ -1349,15 +1359,16 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
 
 
-                update(scenes);
+                update(scenes, characters);
 
-                function update(scenes) {
+                function update(scenes, characters) {
                     let Canvas = {};
                     Canvas.width  = scenes.length * 40;
                     Canvas.height = 1600;
 
                     let narrative = d3.layout.narrative();
                     narrative.scenes(scenes);
+                    narrative.characters(characters);
                     narrative.size([Canvas.width, Canvas.height]);
                     narrative.pathSpace(20);
                     narrative.groupMargin(60);
@@ -1385,8 +1396,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             return d.id;
                         });
 
-                    link.attr('class', 'character')
-                        .attr('id', function (d) {
+                    link.attr('id', function (d) {
                             return d.id;
                         });
 
@@ -1434,8 +1444,6 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         .attr('stroke-dasharray', function (d) {
                             return d.target.scene.status[d.character.id] ? "" : "1,4";
                         })
-                        .attr('stroke-width', 2)
-                        .attr('fill', 'none')
                         .on("mouseover", function (d) {
                             svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
                             svg.select('g.links').selectAll("[id =\"" + d.character.id + "\"]").attr('opacity', 1.0);
