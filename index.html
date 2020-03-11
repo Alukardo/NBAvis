@@ -39,14 +39,21 @@
 </head>
 <body layout='row'>
 <div layout="column" tabIndex="-1" role="main" flex ng-controller="globalCtrl">
-    <md-toolbar>
-        <h2 class="md-toolbar-tools">
-            <ng-md-icon icon="{{menuIcon}}" size="36" style="fill:white" options='{"rotation": "counterclock"}'
+    <md-toolbar layout="row">
+        <h2 class="md-toolbar-tools" flex="5" layout-align="center">
+            <ng-md-icon icon="{{menuIcon}}" size="26" style="fill:white" options='{"rotation": "counterclock"}'
                         ng-click="toolbarMenuClick(menuIcon)"></ng-md-icon>
+
+        </h2>
+        <h2 class="md-toolbar-tools" flex="90" layout-align="center">
             <span>Game Vis</span>
         </h2>
+        <h2 class="md-toolbar-tools" flex = "5" layout-align="right">
+            <ng-md-icon  icon="settings" size="26"  style="fill:white;" ng-click="showToolMenu()"></ng-md-icon>
+        </h2>
     </md-toolbar>
-    <md-content ui-view flex></md-content>
+    <md-content ui-view flex>
+    </md-content>
 </div>
 
 <script src='app/nbaVis.app.js'></script>

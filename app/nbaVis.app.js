@@ -42,8 +42,7 @@ app.config(['$routeProvider', '$locationProvider', '$stateProvider', '$urlRouter
     });
     $rootScope.toolbarMenuClick = function (state) {
         if (state === 'menu') {
-
-        } else if (state === 'keyboard_backspace') {
+        } else  {
             if ($rootScope.previousState === '') {
                 $state.go('schedule');
             } else {
