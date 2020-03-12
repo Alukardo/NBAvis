@@ -325,7 +325,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             });
                             preEvent = event;
                         }
-                        if (players.length >= 1) {
+                        if (players.length > 1) {
                             scene.id = event.eventId;
                             scene.type = event['event_type'];
                             scene.quarter = event['quarterId'] - 1;
