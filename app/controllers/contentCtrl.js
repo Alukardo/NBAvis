@@ -51,7 +51,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             $rootScope.quarterDrawData = [];
 
             $rootScope.quarterEmpty = [];
-            $rootScope.quarterGap = 0;
+            $rootScope.quarterGap = 20;
 
             $rootScope.minuteScore = [];
             $rootScope.minuteOriginDrawData = [];
@@ -65,7 +65,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             $rootScope.playerInfo = [];
             $rootScope.storyLine = {pre: {}, data: [], ps: [], draw: {}};
             $rootScope.storyLine2 = {'characters': [], 'scenes': [], 'charactersMap': {}};
-            $rootScope.eventEffect = {home:[], away:[]};
+            $rootScope.eventEffect = {home:[{'x': 0, 'y0': 98, 'y1':122}], away:[{'x': 0, 'y0': 74, 'y1':98}]};
             $rootScope.storyLineInteractionCount = [];
             $rootScope.sortedY = [];
             $rootScope.sortedList = [];
@@ -320,17 +320,6 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         let players = event['players'].filter(function (player) {
                             return player.id !== null && player.name !== null && player.team !== null;
                         });
-                        if (players.length > 0) {
-                            let sceneTeam = $scope.predictSide(players[0].team);
-                            let score_gap = 5 * (event['home_score'] - event['away_score']);
-                            let number_T = 50;
-                            if (event['event_type'] !== 12 && event['event_type'] !== 13){
-                                let  effect = eventEffect(event['event_type'], event['timeDuring'], sceneTeam.teamM);
-                                $rootScope.eventEffect.away.push({'x': event['timeOffset'], 'y0': number_T + 24 - score_gap, 'y1':number_T +24 + effect.away - score_gap});
-                                $rootScope.eventEffect.home.push({'x': event['timeOffset'], 'y0': number_T + 48 + 24 - score_gap - effect.home, 'y1' :number_T + 48 + 24 - score_gap});
-
-                            }
-                        }
                         if (event['event_type'] === 10) {
                             players.shift();
                             players.shift();
@@ -355,13 +344,13 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 scene.timeOffset = event['timeOffset'];
                                 scene.characters.push($rootScope.storyLine2.charactersMap[player.id]);
                                 scene.status = deepCopy(playerStatus);
-                                scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 0.5) * $rootScope.quarterGap : 0;
+                                scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 1 + 0.5) * $rootScope.quarterGap : $rootScope.quarterGap;
                                 scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
                                 $rootScope.storyLine2.scenes.push(scene);
                             });
                             preEvent = event;
                         }
-                        if (players.length >= 1) {
+                        if (players.length > 0) {
                             scene.id = event.eventId;
                             scene.type = event['event_type'];
                             scene.quarter = event['quarterId'] - 1;
@@ -375,9 +364,20 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 playerStatus[players[0].id] = false;
                                 playerStatus[players[1].id] = true;
                             }
-                            scene.start = preEvent !== null ? preEvent['timeOffset'] + scene.quarter * $rootScope.quarterGap : 0;
+                            scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap : $rootScope.quarterGap;
                             scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
                             $rootScope.storyLine2.scenes.push(scene);
+
+                            let sceneTeam = $scope.predictSide(players[0].team);
+                            let score_gap = 5 * (event['home_score'] - event['away_score']);
+                            let number_T = 50;
+                            if (event['event_type'] !== 12 && event['event_type'] !== 13){
+                                let  effect = eventEffect(event['event_type'], event['timeDuring'], sceneTeam.teamM);
+                                let  x =  scene.start + scene.duration;
+                                $rootScope.eventEffect.away.push({'x': x, 'y0': number_T + 24 - score_gap, 'y1':number_T +24 + effect.away - score_gap});
+                                $rootScope.eventEffect.home.push({'x': x, 'y0': number_T + 48 + 24 - score_gap - effect.home, 'y1' :number_T + 48 + 24 - score_gap});
+
+                            }
                             preEvent = event;
                         }
                     });
@@ -2064,7 +2064,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                         "<table><tr><td align ='center'>" +
                                         "<img  class = 'playerImg' style='background: " + d.character.color + "' src='" + preUrl + d.character.id + ".png" + "'>" +
                                         "</td></tr>" +
-                                        "<tr><td align ='center'>" + d.character.group.id + "</td></tr>" + "</table></div>").show();
+                                        "<tr><td align ='center'>" + d.character.r2eIndex + "</td></tr>" + "</table></div>").show();
                                 })
                                 .on('mouseout', function () {
                                     svg.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
