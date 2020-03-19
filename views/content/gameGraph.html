@@ -76,27 +76,27 @@
 	</g>
 	<g id="gameLogo"   ng-if="data.selectedIndex <= 2">
 		<polygon ng-attr-points="0,0 0,{{windowHeight}} 80,{{windowHeight}} 80,0" style="fill:#FFFFFF"/>
-		<image xlink:href="" ng-href="assets/images/teamLogo/{{game['awayName']}}.svg" ng-attr-x="{{Icon.away.x}}" ng-attr-y="{{Icon.away.y}}" width="75" height="75"/>
-		<image xlink:href="" ng-href="assets/images/teamLogo/{{game['homeName']}}.svg" ng-attr-x="{{Icon.home.x}}" ng-attr-y="{{Icon.home.y}}" width="75" height="75"/>
+		<image xlink:href="" ng-href="assets/images/teamLogo/{{game['awayName']}}.svg" ng-attr-x="{{Icon.away.x}}" ng-attr-y="{{Icon.away.y}}" width="75" />
+		<image xlink:href="" ng-href="assets/images/teamLogo/{{game['homeName']}}.svg" ng-attr-x="{{Icon.home.x}}" ng-attr-y="{{Icon.home.y}}" width="75" />
 	</g>
 	<g id="playerEntity" ng-if="data.selectedIndex == 3">
   		<text ng-repeat="playerName in sortedList" x="0" ng-attr-y="{{sortedY[playerName]}}">{{playerName}}</text>
   	    <path ng-repeat="playerName in sortedList" fill="white" stroke-linejoin="round" ng-attr-stroke-width="{{storyLineDrawData[playerName].width}}" ng-attr-stroke="{{storyLineDrawData[playerName].color}}" ng-attr-d="{{storyLineDrawData[playerName].path}}"></path>
 	</g>
 </svg>
-<div id="tooltip" style="display:none ;position:absolute;">
-	<div class="row">
-  		<span class="col-md-6"   style="top:15px">
-  			<img id='playerPhoto'  ng-attr-src='{{eventPlayerImg}}'  width="125px">
+<div id='tooltip' style='display:none ;position:absolute;'>
+	<div class='row'>
+  		<span class='col-md-6'   style='top:15px'>
+  			<img id='playerPhoto'  ng-attr-src='{{eventPlayerImg}}'  width='125px'>
   		</span>
-  		<span id="tooltipInfo" class="col-md-6" width="100%" style="text-align:left;">
-			<span id="tooltipTime">{{eventTime}}</span>
+  		<span id='tooltipInfo' class='col-md-6' width='100%' style='text-align:left;'>
+			<span id='tooltipTime'>{{eventTime}}</span>
 			<br >
-			<span id="tooltipPlayerName">{{eventPlayer}}</span>
+			<span id='tooltipPlayerName'>{{eventPlayer}}</span>
 			<br >
-			<span id="tooltipType">{{eventType}}</span>
+			<span id='tooltipType'>{{eventType}}</span>
 			<br >
-			<span id="tooltipPoint">{{eventPoint}}</span>
+			<span id='tooltipPoint'>{{eventPoint}}</span>
   		</span>
 	</div>
 </div>

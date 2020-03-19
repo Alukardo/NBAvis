@@ -1,10 +1,7 @@
 .teamLogo{
-	width: 96px;
-	height: 96px;
+	width: 65px;
 }
-md-grid-list {
-	margin: 8px; 
-}
+
 .gray {
 	background: #f5f5f5; 
 }
@@ -34,6 +31,10 @@ md-grid-list {
 }
 .pink {
 	background: #ff80ab; 
+}
+
+md-grid-list {
+    margin: 8px;
 }
 
 md-grid-tile {
@@ -103,4 +104,10 @@ to prevent collapsing during animation*/
   -webkit-transform:translate3d(100px, 0, 0);
   -moz-transform:translate3d(100px, 0, 0);
   transform:translate3d(100px, 0, 0);
+}
+
+.md-selectDate-tools{
+    justify-content:flex-end;
+    align-items:center;
+    width: 500px;
 }

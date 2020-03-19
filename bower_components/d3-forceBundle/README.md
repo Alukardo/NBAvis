@@ -97,7 +97,7 @@ The algorithm outputs an array of arrays of subdivision points obtained on the l
 ```	
 ### How To Plot
 Plotting can be done by using standard *d3* methods i.e. drawing lines between each of the subdivision subpoints for each the initial graph edges. Since there is no support for advanced blending modes in **SVG** yet we use the *stroke-opacity* to mark overlapping segments.
-```;javascript
+```;javascript;
 	var d3line = d3.svg.line()
 			.x(function(d){ return d.x; })
                         .y(function(d){ return d.y; })

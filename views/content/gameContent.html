@@ -1,4 +1,5 @@
 <md-tabs md-selected="data.selectedIndex">
+
 	<md-tab id="tab1" aria-controls="tab1-content" >
 		Level One
 	</md-tab>
@@ -12,20 +13,15 @@
 		Level Four
 	</md-tab>
 	<md-tab id="tab5" aria-controls="tab5-content" >
-		Level Five (use D3)
-	</md-tab>
-	<md-tab id="tab6" aria-controls="tab6-content" >
 		Story Line
 	</md-tab>
-	<md-tab id="tab7" aria-controls="tab7-content" >
+	<md-tab id="tab6" aria-controls="tab6-content" >
 		Story Line 2
 	</md-tab>
-
 
 </md-tabs>
 
 <ng-switch on="data.selectedIndex" class="tabpanel-container" >
-
 	<div role="tabpanel" id="tab1-content" aria-labelledby="tab1" ng-switch-when="0" >
 		<game-graph></game-graph>
     </div>
@@ -39,12 +35,10 @@
 		<game-graph></game-graph>
     </div>
 	<div role="tabpanel" id="tab5-content" aria-labelledby="tab5" ng-switch-when="4">
-		<my-directive></my-directive>
-	</div>
-	<div role="tabpanel" id="tab6-content" aria-labelledby="tab6" ng-switch-when="5">
 		<story-line></story-line>
 	</div>
-	<div role="tabpanel" id="tab7-content" aria-labelledby="tab7" ng-switch-when="6">
+	<div role="tabpanel" id="tab6-content" aria-labelledby="tab6" ng-switch-when="5">
 		<story-line2></story-line2>
 	</div>
+
 </ng-switch>

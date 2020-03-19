@@ -649,25 +649,47 @@ d3.layout.narrative = function () {
             x1 = (d.target.scene) ? d.target.scene.x + d.target.x : d.target.x;
             y1 = (d.target.scene) ? d.target.scene.y + d.target.y : d.target.y;
 
+            let padding = 40;
             // Set control points.
-            if (orientation === 'vertical') {
-                ci = d3.interpolateNumber(y0, y1);
-                cx0 = x0;
-                cy0 = ci(curvature);
-                cx1 = x1;
-                cy1 = ci(1 - curvature);
-            } else {
-                ci = d3.interpolateNumber(x0, x1);
-                cx0 = ci(curvature);
-                cy0 = y0;
-                cx1 = ci(1 - curvature);
-                cy1 = y1;
-            }
+            if (x1 - x0 <= padding) {
+                if (orientation === 'vertical') {
+                    ci = d3.interpolateNumber(y0, y1);
+                    cx0 = x0;
+                    cy0 = ci(curvature);
+                    cx1 = x1;
+                    cy1 = ci(1 - curvature);
+                } else {
+                    ci = d3.interpolateNumber(x0, x1);
+                    cx0 = ci(curvature);
+                    cy0 = y0;
+                    cx1 = ci(1 - curvature);
+                    cy1 = y1;
+                }
 
-            return "M" + x0 + "," + y0 +
-                "C" + cx0 + "," + cy0 +
-                " " + cx1 + "," + cy1 +
-                " " + x1 + "," + y1;
+                return "M" + x0 + "," + y0 +
+                    "C" + cx0 + "," + cy0 +
+                    " " + cx1 + "," + cy1 +
+                    " " + x1 + "," + y1;
+            } else {
+                if (orientation === 'vertical') {
+                    ci = d3.interpolateNumber(y0, y1);
+                    cx0 = x0;
+                    cy0 = ci(curvature);
+                    cx1 = x1;
+                    cy1 = ci(1 - curvature);
+                } else {
+                    ci = d3.interpolateNumber(x1 - padding, x1);
+                    cx0 = ci(curvature);
+                    cy0 = y0;
+                    cx1 = ci(1 - curvature);
+                    cy1 = y1;
+                }
+
+                return "M" + x0 + "," + y0 + "L" + (x1 - padding) + "," + y0 +
+                    "C" + cx0 + "," + cy0 +
+                    " " + cx1 + "," + cy1 +
+                    " " + x1 + "," + y1;
+            }
         }
 
         // ### Curvature
@@ -827,7 +849,7 @@ d3.layout.narrative = function () {
 //
 // Cluster characters based on their co-occurence in scenes
     function computeCharacterGroups() {
-        let nodes, edges, clusters, partition, groupsMap, initGroups;
+        let groupsMap, initGroups;
         groups = [];
         groupsMap = {};
         initGroups = totalCharacters.reduce(function (g, d, i) {
@@ -847,72 +869,6 @@ d3.layout.narrative = function () {
             }
             group.characters.push(character);
             character.group = group;
-        });
-
-        // nodes : an array of character indexes.
-        nodes = totalCharacters.map(function (d, i) {
-            return i;
-        });
-
-        // Calculate the edges based on a character's involvement in scenes.
-        edges = [];
-        scenes.forEach(function (scene) {
-            edges = edges.concat(sceneEdges(scene.appearances));
-        });
-
-        // Creates a single link between each pair of characters in a scene.
-        function sceneEdges(appearances) {
-            let i, j, matrix;
-            matrix = [];
-            for (i = appearances.length; i--;) {
-                for (j = i; j--;) {
-                    matrix.push([totalCharacters.indexOf(appearances[i].character), totalCharacters.indexOf(appearances[j].character)]);
-                }
-            }
-            return matrix;
-        }
-
-        // Consolidate edges into a unique set of relationships with a weighting
-        // based on how often they appear together.
-        edges = edges.reduce(function (result, edge) {
-            let resultEdge;
-
-            resultEdge = result.filter(function (resultEdge) {
-
-                return (resultEdge.source === edge[1] && resultEdge.target === edge[0]) || (resultEdge.source === edge[0] && resultEdge.target === edge[1]);
-            })[0] || {source: edge[0], target: edge[1], weight: 0};
-
-            resultEdge.weight++;
-
-            if (resultEdge.weight === 1) {
-                result.push(resultEdge);
-            }
-
-            return result;
-        }, []);
-
-        // 椭圆排序
-        let edgeMax = edges.reduce((edge1, edge2) => {
-            return edge1.weight > edge2.weight ? edge1 : edge2
-        }, []);
-
-        let sceneMatrix = [];
-        for (let i = 0; i < nodes.length; i++) {
-            sceneMatrix[i] = [];
-            for (let j = 0; j < nodes.length; j++) {
-                sceneMatrix[i][j] = 0.0;
-            }
-        }
-
-        edges.forEach(function (d) {
-            sceneMatrix[d.source][d.target] = d.weight.toFixed(1) / edgeMax.weight;
-            sceneMatrix[d.target][d.source] = d.weight.toFixed(1) / edgeMax.weight;
-        });
-
-        let order = r2e(sceneMatrix, nodes.length);
-
-        totalCharacters.forEach(function (d, i) {
-            d.r2eOrder = order[i];
         });
     }
 
@@ -989,31 +945,12 @@ d3.layout.narrative = function () {
 //
 // Compute the actual min and max y-positions of each group.
     function computeGroupPositions() {
-        let max = groupMargin;
+        let max = 0;
         groups.forEach(function (group) {
             group.min = max;
             max = characterGroupHeight(group.characters.length) + group.min;
             group.max = max;
             max += groupMargin;
-        });
-    }
-
-// Character group positions
-// -------------------------
-//
-// Compute the position of each character within its group.
-    function computeCharacterGroupPositions() {
-        groups.forEach(function (group) {
-            group.characters.sort(function (a, b) {
-                if(group.id % 2 === 1){
-                    return b.r2eOrder - a.r2eOrder;
-                }else{
-                    return a.r2eOrder - b.r2eOrder;
-                }
-            });
-            group.characters.forEach(function (d, i) {
-                d.groupIndex = i;
-            })
         });
     }
 
@@ -1023,10 +960,82 @@ d3.layout.narrative = function () {
 // Group appearances (`group.appearances`) is an array
 // of all characters which appear in scenes assigned to this group.
     function sortGroupAppearances() {
+
         groups.forEach(function (group) {
-            if (group.appearances === undefined) return;
-            group.appearances.sort(function (a, b) {
-                return b.r2eOrder - a.r2eOrder;
+            let nodes = group.appearances.map(function (d, i) {
+                return i;
+            });
+            let edges = [];
+            scenes.forEach(function (scene) {
+                edges = edges.concat(sceneEdges(scene.appearances, group));
+            });
+
+            function sceneEdges(appearances, group) {
+                let i, j, matrix;
+                matrix = [];
+                for (i = appearances.length; i--;) {
+                    for (j = i; j--;) {
+                        let a = group.appearances.indexOf(appearances[i].character);
+                        let b = group.appearances.indexOf(appearances[j].character);
+                        if (a !== -1 && b !== -1) matrix.push([a, b]);
+                    }
+                }
+                return matrix;
+            }
+            edges = edges.reduce(function (result, edge) {
+                let resultEdge;
+                resultEdge = result.filter(function (resultEdge) {
+                    return (resultEdge.source === edge[1] && resultEdge.target === edge[0]) || (resultEdge.source === edge[0] && resultEdge.target === edge[1]);
+                })[0] || {source: edge[0], target: edge[1], weight: 0};
+                resultEdge.weight++;
+                if (resultEdge.weight === 1) {
+                    result.push(resultEdge);
+                }
+                return result;
+            }, []);
+            let edgeAMax = edges.reduce((edge1, edge2) => {
+                return edge1.weight > edge2.weight ? edge1 : edge2
+            }, []);
+            let sceneMatrix = [];
+            for (let i = 0; i < nodes.length; i++) {
+                sceneMatrix[i] = [];
+                for (let j = 0; j < nodes.length; j++) {
+                    sceneMatrix[i][j] = 0.0;
+                }
+            }
+            edges.forEach(function (d) {
+                sceneMatrix[d.source][d.target] = d.weight.toFixed(1) / edgeAMax.weight;
+                sceneMatrix[d.target][d.source] = d.weight.toFixed(1) / edgeAMax.weight;
+            });
+            let order = r2e(sceneMatrix, nodes.length);
+            let tempAppearances = [];
+            order.forEach(function (d) {
+                tempAppearances.push(group.appearances[d]);
+            });
+            group.appearances = tempAppearances;
+        });
+
+    }
+
+// Character group positions
+// -------------------------
+//
+// Compute the position of each character within its group.
+    function computeCharacterGroupPositions() {
+        groups.forEach(function (group) {
+            group.characters.forEach(function (character) {
+                character.aOrder = group.appearances.indexOf(character);
+            });
+        });
+        groups.forEach(function (group) {
+            group.characters.sort(function (a, b) {
+                if (group.id == 0)
+                    return a.aOrder - b.aOrder;
+                else
+                    return b.aOrder - a.aOrder;
+            });
+            group.characters.forEach(function (character, i) {
+                character.cOrder = i;
             });
         });
     }
@@ -1045,7 +1054,7 @@ d3.layout.narrative = function () {
             duration += scene.duration;
         });
 
-       //scale = ((orientation === 'vertical') ? size[1] - labelSize[1] : size[0] - labelSize[0]) / duration;
+        //scale = ((orientation === 'vertical') ? size[1] - labelSize[1] : size[0] - labelSize[0]) / duration;
         scale = 2;
     }
 
@@ -1056,12 +1065,15 @@ d3.layout.narrative = function () {
     function computeScenePositions() {
 
         let prePositions = {};
+
+        let rate = 0.6;
+
         totalCharacters.forEach(function (d) {
-            prePositions[d.id] = characterPosition(d.group.characters.indexOf(d)) + d.group.min
+            prePositions[d.id] = characterPosition(d.cOrder) + d.group.min
         });
 
         scenes.forEach(function (scene) {
-            let sum, avg, appearances;
+            let sum = 0, avg, appearances;
 
             let tempAppearance = scene.appearances[0];
 
@@ -1075,32 +1087,40 @@ d3.layout.narrative = function () {
                     appearance.x = 0.6 * characterPosition(i) + scenePadding[3];
                     prePositions[appearance.character.id] = avg + appearance.x;
                 } else {
-                    appearance.y = 0.6 * characterPosition(i) + scenePadding[0];
+                    appearance.y = rate * characterPosition(i) + scenePadding[0];
                     appearance.x = scenePadding[3];
 
                 }
             });
 
             scene.width = scenePadding[1] + scenePadding[3];
-            scene.height = 0.6 * characterGroupHeight(scene.appearances.length) + scenePadding[0] + scenePadding[2];
+            scene.height = rate * characterGroupHeight(scene.appearances.length) + scenePadding[0] + scenePadding[2];
 
 
             if (scene.appearances.length >= 1) {
-                avg = characterPosition(tempAppearance.character.groupIndex) + tempAppearance.character.group.min ;
+
+                //-----1
+                avg = characterPosition(tempAppearance.character.cOrder) + tempAppearance.character.group.min;
+                //-----2
                 //avg = prePositions[tempAppearance.character.id] ;
+                //-----3
+                // scene.appearances.forEach(function (appearance) {
+                //     sum = sum + prePositions[appearance.character.id]
+                // });
+                // avg = sum / scene.appearances.length;
             }
 
             if (orientation === 'vertical') {
-                scene.x =  Math.max(0, Math.min(size[0], avg - tempAppearance.x));
-                scene.y =  Math.max(labelSize[0], Math.min(size[1], scale * scene.start + labelSize[1]));
+                scene.x = Math.max(0, Math.min(size[0], avg - tempAppearance.x));
+                scene.y = Math.max(labelSize[0], Math.min(size[1], scale * scene.start + labelSize[1]));
             } else {
-                scene.x =  Math.max(labelSize[0], Math.min(size[0], scale * scene.start + labelSize[0]));
-                scene.y =  Math.max(0, Math.min(size[1], avg - tempAppearance.y));
+                scene.x = Math.max(labelSize[0], Math.min(size[0], scale * scene.start + labelSize[0]));
+                scene.y = Math.max(0, Math.min(size[1], avg - tempAppearance.y));
             }
-            scene.appearances.forEach(function (appearance){
+            scene.appearances.forEach(function (appearance) {
                 if (orientation === 'vertical') {
                     prePositions[appearance.character.id] = scene.x + appearance.x;
-                }else{
+                } else {
                     prePositions[appearance.character.id] = scene.y + appearance.y;
                 }
             });
@@ -1116,7 +1136,7 @@ d3.layout.narrative = function () {
     function createIntroductionNodes() {
         let appearances;
 
-        appearances = characters.map(function (character) {
+        appearances = totalCharacters.map(function (character) {
             return character.appearances[0];
         });
 
@@ -1148,7 +1168,7 @@ d3.layout.narrative = function () {
             } else {
 
                 x = appearanceMin.scene.x - 0.5 * scale;
-                y = characterPosition(appearance.character.group.characters.indexOf(appearance.character)) + appearance.character.group.min;
+                y = characterPosition(appearance.character.cOrder) + appearance.character.group.min;
                 //y = appearance.scene.y + appearance.y;
 
                 // Move x-axis position to the dedicated label space if it makes sense.

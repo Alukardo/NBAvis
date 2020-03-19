@@ -40,7 +40,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             $rootScope.menuIcon = 'arrow_back';
             $rootScope.quarterSelected = false;
             $rootScope.minuteSelected = false;
-            $rootScope.data.selectedIndex = 0;
+            $rootScope.data.selectedIndex = undefined;
 
             $rootScope.aggregate.unit = 0;
             $rootScope.aggregate.value = 0;
@@ -51,7 +51,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             $rootScope.quarterDrawData = [];
 
             $rootScope.quarterEmpty = [];
-            $rootScope.quarterGap = 20;
+            $rootScope.quarterGap = 0;
 
             $rootScope.minuteScore = [];
             $rootScope.minuteOriginDrawData = [];
@@ -64,7 +64,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             $rootScope.eventData = [];
             $rootScope.playerInfo = [];
             $rootScope.storyLine = {pre: {}, data: [], ps: [], draw: {}};
-            $rootScope.storyLine2 = {"characters": [], "scenes": [], "charactersMap": {}};
+            $rootScope.storyLine2 = {'characters': [], 'scenes': [], 'charactersMap': {}};
+            $rootScope.eventEffect = {home:[], away:[]};
             $rootScope.storyLineInteractionCount = [];
             $rootScope.sortedY = [];
             $rootScope.sortedList = [];
@@ -122,7 +123,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         console.log('contentCtrl.loadContentData.getGameBoxData Failed');
                         ngProgress.complete();
                     });
-                console.log("# loadContentData  ");
+                console.log('# loadContentData  ');
             } else {
                 ngProgress.start();
                 $scope.rawData = $sessionStorage.rawData;
@@ -201,6 +202,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             let preOffsetX = -1;
             let pIndex = {home: 0, away: 0};
             let Index = {home: 0, away: 0};
+
             angular.forEach($sessionStorage.playerData, function (player) {
                 let playerName = player['firstName'] + ' ' + player['lastName'];
                 let playerId = player['id'];
@@ -272,11 +274,14 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     });
                 });
             });
+
             angular.forEach($rootScope.storyLine.data, function (record) {
                 angular.forEach(record, function (p) {
                     let x = $rootScope.storyLine.pre[p.id].startX + p.offsetX;
-                    let y = $rootScope.storyLine.pre[p.id].startY + p.offsetY * 20 - 5;
-                    $rootScope.storyLine.draw[p.id].push({x: x, y: y});
+                    let y = $rootScope.storyLine.pre[p.id].startY + p.offsetY * 10 - 5;
+                    let y0 = y;
+                    let y1 = $rootScope.storyLine.pre[p.id].startY + 10;
+                    $rootScope.storyLine.draw[p.id].push({'x': x, 'y': y, 'y0': y0, 'y1': y1});
                 });
             });
 
@@ -284,15 +289,15 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             let preEvent = null;
             let playerStatus = {};
             angular.forEach($sessionStorage.playerData, function (player) {
-                let temp = {id: '', name: '', width: 0, affiliation: '', color: '', initialGroup : undefined};
+                let temp = {id: '', name: '', width: 0, affiliation: '', color: '', initialGroup: undefined};
                 temp.id = player['id'];
                 temp.name = player['firstName'] + ' ' + player['lastName'];
                 temp.width = temp.name.length * 10;
                 temp.affiliation = $scope.predictSide(player['team']).teamM;
                 temp.color = $scope.predictSide(player['team']).color;
                 temp.initialGroup = $scope.predictSide(player['team']).group;
-                //temp.initialGroup = 0;
-                    playerStatus[temp.id] = player['starter'];
+
+                playerStatus[temp.id] = player['starter'];
                 $rootScope.storyLine2.charactersMap[temp.id] = temp;
                 $rootScope.storyLine2.characters.push($rootScope.storyLine2.charactersMap[temp.id]);
 
@@ -300,11 +305,32 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             angular.forEach($scope.rawData, function (quarter) {
                 angular.forEach(quarter, function (minute) {
                     angular.forEach(minute, function (event) {
-                        let scene = {id: 0, quarter: 0, timeOffset:0, characters: [], start: 0, duration: 0, type: 0, status: {}, weight : 0};
+                        //console.log(event['eventId'] + " # " + event['event_type'] + " : " + event['timeDuring']);
+                        let scene = {
+                            id: 0,
+                            quarter: 0,
+                            timeOffset: 0,
+                            characters: [],
+                            start: 0,
+                            duration: 0,
+                            type: 0,
+                            status: {},
+                            weight: 0
+                        };
                         let players = event['players'].filter(function (player) {
                             return player.id !== null && player.name !== null && player.team !== null;
                         });
+                        if (players.length > 0) {
+                            let sceneTeam = $scope.predictSide(players[0].team);
+                            let score_gap = 5 * (event['home_score'] - event['away_score']);
+                            let number_T = 50;
+                            if (event['event_type'] !== 12 && event['event_type'] !== 13){
+                                let  effect = eventEffect(event['event_type'], event['timeDuring'], sceneTeam.teamM);
+                                $rootScope.eventEffect.away.push({'x': event['timeOffset'], 'y0': number_T + 24 - score_gap, 'y1':number_T +24 + effect.away - score_gap});
+                                $rootScope.eventEffect.home.push({'x': event['timeOffset'], 'y0': number_T + 48 + 24 - score_gap - effect.home, 'y1' :number_T + 48 + 24 - score_gap});
 
+                            }
+                        }
                         if (event['event_type'] === 10) {
                             players.shift();
                             players.shift();
@@ -312,7 +338,17 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         if (event['event_type'] === 13) {
                             let i = 0;
                             angular.forEach($sessionStorage.playerData, function (player) {
-                                let scene = {id: 0, quarter: 0, timeOffset:0, characters: [], start: 0, duration: 0, type: 0, status: {}, weight : 0};
+                                let scene = {
+                                    id: 0,
+                                    quarter: 0,
+                                    timeOffset: 0,
+                                    characters: [],
+                                    start: 0,
+                                    duration: 0,
+                                    type: 0,
+                                    status: {},
+                                    weight: 0
+                                };
                                 scene.id = event.eventId + '-' + (i++).toString();
                                 scene.type = event['event_type'];
                                 scene.quarter = event['quarterId'] - 1;
@@ -325,7 +361,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             });
                             preEvent = event;
                         }
-                        if (players.length > 1) {
+                        if (players.length >= 1) {
                             scene.id = event.eventId;
                             scene.type = event['event_type'];
                             scene.quarter = event['quarterId'] - 1;
@@ -333,7 +369,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             players.forEach(function (player, i) {
                                 scene.characters.push($rootScope.storyLine2.charactersMap[player.id]);
                                 scene.status = deepCopy(playerStatus);
-                                scene.weight += eventWeight(scene.type, i+1);
+                                scene.weight += eventWeight(scene.type, i + 1);
                             });
                             if (event['event_type'] === 8) {
                                 playerStatus[players[0].id] = false;
@@ -579,7 +615,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 $rootScope.playDrawData.push(tempPlayDrawData);
             });
 
-            console.log("# storyLine start .");
+            console.log('# storyLine start .');
 
             $scope.interactionCountCalculation();
 
@@ -654,10 +690,18 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 tempPathObj.points.push({x: tempEndX, y: tempOrgY});
                 $rootScope.storyLineDrawData[playerName] = tempPathObj;
             }
+
+
+
             $rootScope.quarterOriginDrawData = $rootScope.quarterDrawData;
             $rootScope.minuteOriginDrawData = $rootScope.minuteDrawData;
             $rootScope.playOriginDrawData = $rootScope.playDrawData;
             $rootScope.storyLineOriginDrawData = $rootScope.storyLineDrawData;
+
+            $rootScope.dataGeneration = true;
+            $rootScope.data.selectedIndex = 0;
+
+
         };
         $scope.interactionCountCalculation = function () {
             let tempInteractionCountArray = [];
@@ -826,6 +870,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             }
         });
 
+
         $scope.quarterMouseover = function (index, event) {
             // $('#levelOneAway').children('polygon').eq(index).siblings('polygon').css('opacity', 0.1);
             // $('#levelOneAway').children('polygon').eq(index).siblings('polygon').css('opacity', 0.1);
@@ -934,14 +979,14 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let currentX = 0, currentY = 0;
 
                 $rootScope.matrix = [1, 0, 0, 1, 0, 0];
-                angular.element($element).attr("draggable", "true");
-                $element.bind("dragstart", function (e) {
+                angular.element($element).attr('draggable', 'true');
+                $element.bind('dragstart', function (e) {
                     // if(e.shiftKey){
                     currentX = e.originalEvent.clientX;
                     currentY = e.originalEvent.clientY;
                     // }
                 });
-                $element.bind("dragover", function (e) {
+                $element.bind('dragover', function (e) {
                     // if(e.shiftKey){
                     if (e.preventDefault) {
                         e.preventDefault();
@@ -950,13 +995,13 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
                     $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
 
-                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
                     currentX = e.originalEvent.clientX;
                     currentY = e.originalEvent.clientY;
                     return false;
                     // }
                 });
-                $element.bind("drop", function (e) {
+                $element.bind('drop', function (e) {
                     // if(e.shiftKey){
                     if (e.stopPropogation) {
                         e.stopPropogation(); // Necessary. Allows us to drop.
@@ -965,17 +1010,17 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     // }
                 });
                 $element.bind('mousewheel', function (mouseWheelEvent) {
-                    // let zoomCenter = {
-                    //     'x': mouseWheelEvent.originalEvent.clientX,
-                    //     'y': mouseWheelEvent.originalEvent.clientY
-                    // };
-                    // if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
-                    //     zoom('zoomIn', zoomCenter);
-                    // } else {
-                    //     zoom('zoomOut', zoomCenter);
-                    // }
-                    //
-                    // mouseWheelEvent.cancelBubble = true;
+                    let zoomCenter = {
+                        'x': mouseWheelEvent.originalEvent.clientX,
+                        'y': mouseWheelEvent.originalEvent.clientY
+                    };
+                    if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
+                        zoom('zoomIn', zoomCenter);
+                    } else {
+                        zoom('zoomOut', zoomCenter);
+                    }
+
+                    mouseWheelEvent.cancelBubble = true;
                     return false;
                 });
 
@@ -998,19 +1043,393 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
                         }
                     }
-                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
                 }
 
                 theSvgElement = $element.find('#gameSVG');
-                theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
 
 
             }
         };
     }])
-    .directive("myDirective", ['$rootScope', '$document', function ($rootScope) {
+    .directive('first', ['$rootScope', '$document', function ($rootScope) {
         return {
-            restrict: "E",  // Element name: <my-directive></my-directive>
+            restrict: 'E',  // Element name: <my-graph></my-graph>
+            link: function ($scope) {
+                console.log('index :' + $rootScope.data.selectedIndex);
+                let svg = d3.select('first').append('svg').attr('class', 'gameSVG');
+                let gameLogo = svg.append('g').attr('class', 'gameLogo');
+                let quarters = svg.append('g').attr('class', 'quarters');
+                let minutes = svg.append('g').attr('class', 'minutes');
+                let plays = svg.append('g').attr('class', 'plays');
+                svg.call(tooltip);
+                update($rootScope.data.selectedIndex + 1);
+
+                function update(index) {
+                    initialization(svg);
+                    updateLogo($scope.Icon);
+                    if (index == 1) {
+                        updateQuarters($rootScope.quarterDrawData, index);
+                    }
+                    if (index == 2) {
+                        updateQuarters($rootScope.quarterDrawData, index);
+                        updateMinutes($rootScope.minuteDrawData, index);
+                    }
+                    if (index == 3) {
+                        updateQuarters($rootScope.quarterDrawData, index);
+                        updateMinutes($rootScope.minuteDrawData, index);
+                        updatePlays($rootScope.playDrawData, index);
+                    }
+                }
+
+                function initialization(svg) {
+                    svg.attr('width', '100%');
+                    svg.attr('height', $scope.windowHeight);
+                    svg.style('margin-left', '1%');
+                }
+
+                function updateLogo(iconData) {
+                    let homeIcon = gameLogo.append('image').attr('class', 'homeIcon');
+                    let awayIcon = gameLogo.append('image').attr('class', 'awayIcon');
+                    homeIcon.attr('href', 'assets/images/teamLogo/' + $scope.game['homeName'] + '.svg');
+                    homeIcon.attr('width', '75').attr('x', iconData.home.x).attr('y', iconData.home.y);
+                    awayIcon.attr('href', 'assets/images/teamLogo/' + $scope.game['awayName'] + '.svg');
+                    awayIcon.attr('width', '75').attr('x', iconData.away.x).attr('y', iconData.away.y);
+                }
+
+                function updateQuarters(quarterData, index) {
+                    let quarter = quarters.selectAll('g.quarter').data(quarterData);
+                    let enter = quarter.enter().append('g').attr('class', 'quarter').call(function (s) {
+                        s.attr('id', function (d, i) {
+                            return i;
+                        });
+                        s.attr('opacity', function (d) {
+                            if ($rootScope.quarterSelected && !d.home.isSelected) {
+                                return 0.1;
+                            } else {
+                                return 1.0;
+                            }
+                        });
+
+                        let quarterH = s.append('polygon').attr('class', 'quarterH');
+                        let quarterA = s.append('polygon').attr('class', 'quarterA');
+                        quarterH.attr('points', function (d) {
+                            let points = [];
+                            points.push([d.home.bottomLeft.x, d.home.bottomLeft.y]);
+                            points.push([d.home.upLeft.x, d.home.upLeft.y]);
+                            points.push([d.home.upRight.x, d.home.upRight.y]);
+                            points.push([d.home.bottomRight.x, d.home.bottomRight.y]);
+                            return d3.geom.polygon(points);
+                        });
+                        quarterA.attr('points', function (d) {
+                            let points = [];
+                            points.push([d.away.bottomLeft.x, d.away.bottomLeft.y]);
+                            points.push([d.away.upLeft.x, d.away.upLeft.y]);
+                            points.push([d.away.upRight.x, d.away.upRight.y]);
+                            points.push([d.away.bottomRight.x, d.away.bottomRight.y]);
+                            return d3.geom.polygon(points);
+                        });
+                        quarterH.attr('fill', $scope.teamColor.home);
+                        quarterA.attr('fill', $scope.teamColor.away);
+
+                        let CompareLineS = s.append('path').attr('class', 'CompareLineS');
+                        CompareLineS.attr('d', function (d) {
+                            let points = [d.compareLine.startLine.start, d.compareLine.startLine.end];
+                            return lineFunction(points);
+                        });
+                        CompareLineS.attr('stroke', function (d) {
+                            return d.compareLine.startLine.color;
+                        });
+                        CompareLineS.attr('stroke-width', function (d) {
+                            return d.compareLine.startLine.width;
+                        });
+                        let CompareLineE = s.append('path').attr('class', 'CompareLineE');
+                        CompareLineE.attr('d', function (d) {
+                            let points = [d.compareLine.endLine.start, d.compareLine.endLine.end];
+                            return lineFunction(points);
+                        });
+                        CompareLineE.attr('stroke', function (d) {
+                            return d.compareLine.endLine.color;
+                        });
+                        CompareLineE.attr('stroke-width', function (d) {
+                            return d.compareLine.endLine.width;
+                        });
+                        s.on('click', function (d) {
+                            if (index !== 1) return;
+                            if (!$rootScope.quarterSelected) {
+                                quarters.selectAll('g.quarter').attr('opacity', 0.1);
+                                $rootScope.quarterSelected = true;
+                            }
+
+                            d3.select(this).attr('opacity', function (d) {
+                                d.home.isSelected = !d.home.isSelected;
+                                d.away.isSelected = !d.away.isSelected;
+                                if ($rootScope.quarterSelected && !d.home.isSelected) {
+                                    return 0.1;
+                                } else {
+                                    return 1.0;
+                                }
+                            });
+                        });
+                    });
+                    let update = quarter.call(function (s) {
+                        s.attr('id', function (d, i) {
+                            return i;
+                        });
+                        let quarterH = s.select('rect.quarterH');
+                        let quarterA = s.select('rect.quarterA');
+                        quarterH.attr('points', function (d) {
+                            let points = [];
+                            points.push([d.home.bottomLeft.x, d.home.bottomLeft.y]);
+                            points.push([d.home.upLeft.x, d.home.upLeft.y]);
+                            points.push([d.home.upRight.x, d.home.upRight.y]);
+                            points.push([d.home.bottomRight.x, d.home.bottomRight.y]);
+                            return d3.geom.polygon(points);
+                        });
+                        quarterA.attr('points', function (d) {
+                            let points = [];
+                            points.push([d.away.bottomLeft.x, d.away.bottomLeft.y]);
+                            points.push([d.away.upLeft.x, d.away.upLeft.y]);
+                            points.push([d.away.upRight.x, d.away.upRight.y]);
+                            points.push([d.away.bottomRight.x, d.away.bottomRight.y]);
+                            return d3.geom.polygon(points);
+                        });
+                        quarterH.attr('fill', $scope.teamColor.home);
+                        quarterA.attr('fill', $scope.teamColor.away);
+
+                        let CompareLineS = s.select('path.CompareLineS');
+                        CompareLineS.attr('d', function (d) {
+                            let points = [d.compareLine.startLine.start, d.compareLine.startLine.end];
+                            return lineFunction(points);
+                        });
+                        CompareLineS.attr('stroke', function (d) {
+                            return d.compareLine.startLine.color;
+                        });
+                        CompareLineS.attr('stroke-width', function (d) {
+                            return d.compareLine.startLine.width;
+                        });
+                        let CompareLineE = s.select('path.CompareLineE');
+                        CompareLineE.attr('d', function (d) {
+                            let points = [d.compareLine.endLine.start, d.compareLine.endLine.end];
+                            return lineFunction(points);
+                        });
+                        CompareLineE.attr('stroke', function (d) {
+                            return d.compareLine.endLine.color;
+                        });
+                        CompareLineE.attr('stroke-width', function (d) {
+                            return d.compareLine.endLine.width;
+                        });
+                    });
+                    let exit = quarter.exit().remove();
+                }
+
+                function updateMinutes(minuteData, index) {
+                    let minute = minutes.selectAll('g.minute').data(minuteData);
+                    let enter = minute.enter().append('g').attr('class', 'minute').call(function (s) {
+                        s.attr('id', function (d, i) {
+                            return i;
+                        });
+                        s.attr('opacity', function (d) {
+                            if ($rootScope.minuteSelected && !d.home.isSelected) {
+                                return 0.1;
+                            } else {
+                                return 1.0;
+                            }
+                        });
+                        let minuteH = s.append('polygon').attr('class', 'minuteH');
+                        let minuteA = s.append('polygon').attr('class', 'minuteA');
+                        minuteH.attr('points', function (d) {
+                            let points = [];
+                            points.push([d.home.bottomLeft.x, d.home.bottomLeft.y]);
+                            points.push([d.home.upLeft.x, d.home.upLeft.y]);
+                            points.push([d.home.upRight.x, d.home.upRight.y]);
+                            points.push([d.home.bottomRight.x, d.home.bottomRight.y]);
+                            return d3.geom.polygon(points);
+                        });
+                        minuteA.attr('points', function (d) {
+                            let points = [];
+                            points.push([d.away.bottomLeft.x, d.away.bottomLeft.y]);
+                            points.push([d.away.upLeft.x, d.away.upLeft.y]);
+                            points.push([d.away.upRight.x, d.away.upRight.y]);
+                            points.push([d.away.bottomRight.x, d.away.bottomRight.y]);
+                            return d3.geom.polygon(points);
+                        });
+                        minuteH.attr('fill', function (d) {
+                            return d.home.background;
+                        });
+                        minuteA.attr('fill', function (d) {
+                            return d.away.background;
+                        });
+                        let CompareLineS = s.append('path').attr('class', 'CompareLineS');
+                        CompareLineS.attr('d', function (d) {
+                            let points = [d.compareLine.startLine.start, d.compareLine.startLine.end];
+                            return lineFunction(points);
+                        });
+                        CompareLineS.attr('stroke', function (d) {
+                            return d.compareLine.startLine.color;
+                        });
+                        CompareLineS.attr('stroke-width', function (d) {
+                            return d.compareLine.startLine.width;
+                        });
+                        let CompareLineE = s.append('path').attr('class', 'CompareLineE');
+                        CompareLineE.attr('d', function (d) {
+                            let points = [d.compareLine.endLine.start, d.compareLine.endLine.end];
+                            return lineFunction(points);
+                        });
+                        CompareLineE.attr('stroke', function (d) {
+                            return d.compareLine.endLine.color;
+                        });
+                        CompareLineE.attr('stroke-width', function (d) {
+                            return d.compareLine.endLine.width;
+                        });
+                        s.on('click', function (d) {
+                            if (index !== 2) return;
+                            if (!$rootScope.minuteSelected) {
+                                quarters.selectAll('g.quarter').attr('opacity', 0.1);
+                                minutes.selectAll('g.minute').attr('opacity', 0.1);
+                                $rootScope.minuteSelected = true;
+                            }
+
+                            d3.select(this).attr('opacity', function (d) {
+                                d.home.isSelected = !d.home.isSelected;
+                                d.away.isSelected = !d.away.isSelected;
+                                if ($rootScope.minuteSelected && !d.home.isSelected) {
+                                    return 0.1;
+                                } else {
+                                    return 1.0;
+                                }
+                            });
+                        });
+                    });
+                    let update = minute.call(function (s) {
+                        s.attr('id', function (d, i) {
+                            return i;
+                        });
+                        let quarterH = s.select('rect.quarterH');
+                        let quarterA = s.select('rect.quarterA');
+                        quarterH.attr('points', function (d) {
+                            let points = [];
+                            points.push([d.home.bottomLeft.x, d.home.bottomLeft.y]);
+                            points.push([d.home.upLeft.x, d.home.upLeft.y]);
+                            points.push([d.home.upRight.x, d.home.upRight.y]);
+                            points.push([d.home.bottomRight.x, d.home.bottomRight.y]);
+                            return d3.geom.polygon(points);
+                        });
+                        quarterA.attr('points', function (d) {
+                            let points = [];
+                            points.push([d.away.bottomLeft.x, d.away.bottomLeft.y]);
+                            points.push([d.away.upLeft.x, d.away.upLeft.y]);
+                            points.push([d.away.upRight.x, d.away.upRight.y]);
+                            points.push([d.away.bottomRight.x, d.away.bottomRight.y]);
+                            return d3.geom.polygon(points);
+                        });
+                        quarterH.attr('fill', $scope.teamColor.home);
+                        quarterA.attr('fill', $scope.teamColor.away);
+                        let CompareLineS = s.select('path.CompareLineS');
+                        CompareLineS.attr('d', function (d) {
+                            let points = [d.compareLine.startLine.start, d.compareLine.startLine.end];
+                            return lineFunction(points);
+                        });
+                        CompareLineS.attr('stroke', function (d) {
+                            return d.compareLine.startLine.color;
+                        });
+                        CompareLineS.attr('stroke-width', function (d) {
+                            return d.compareLine.startLine.width;
+                        });
+                        let CompareLineE = s.select('path.CompareLineE');
+                        CompareLineE.attr('d', function (d) {
+                            let points = [d.compareLine.endLine.start, d.compareLine.endLine.end];
+                            return lineFunction(points);
+                        });
+                        CompareLineE.attr('stroke', function (d) {
+                            return d.compareLine.endLine.color;
+                        });
+                        CompareLineE.attr('stroke-width', function (d) {
+                            return d.compareLine.endLine.width;
+                        });
+                    });
+                    let exit = minute.exit().remove();
+
+                }
+
+                function updatePlays(playData, index) {
+                    let eventsData = [];
+                    playData.forEach(function (d) {
+                        d.home.forEach(function (p) {
+                            eventsData.push(p);
+                        });
+                        d.away.forEach(function (p) {
+                            eventsData.push(p);
+                        })
+                    });
+                    let play = plays.selectAll('.play').data(eventsData);
+                    let enter = play.enter().append('circle').attr('class', 'play')
+                        .attr('id', function (d, i) {
+                            return i;
+                        })
+                        .attr('cx', function (d) {
+                            return d.center.x;
+                        })
+                        .attr('cy', function (d) {
+                            return d.center.y;
+                        })
+                        .attr('r', function (d) {
+                            return d.radius;
+                        })
+                        .attr('fill', function (d) {
+                            return d.background;
+                        })
+                        .on('mouseover', function (d) {
+                            if (index !== 3) return;
+                            let tempEvent = $rootScope.eventData[d.eventId];
+                            let eventPlayerImg = 'https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/' + tempEvent['players'][0].id + '.png';
+                            let eventTime = tempEvent.time;
+                            let eventPlayer = tempEvent['players'][0].name;
+                            let eventType = tempEvent['event_type'];
+                            let eventPoint = tempEvent['home_point'] > tempEvent['away_point'] ? tempEvent['home_point'] : tempEvent['away_point'];
+                            tooltip.html("<table id = 'd3tooltip'>" +
+                                "<tr>" +
+                                "<td width='70%'>" +
+                                "<img id='playerPhoto'  style='background:' + $scope.predictSide(tempEvent['players'][0]['team']).color +'' src=''+ eventPlayerImg + ''  width='130px' ></td>" +
+                                "<td width='30%'>" +
+                                "<table height='100%'>" +
+                                "<tr height = '33%'><td>" + eventTime + "</td></tr>" +
+                                "<tr height = '33%'><td>" + eventPlayer + "</td></tr>" +
+                                "<tr height = '33%'><td>" + eventType + "</td></tr>" +
+                                "</table>" +
+                                "</td></table>");
+                            tooltip.show();
+
+                        })
+                        .on('mouseout', function () {
+                            if (index !== 3) return;
+                            tooltip.hide();
+                        });
+                    let update = play.attr('id', function (d, i) {
+                        return i;
+                    })
+                        .attr('cx', function (d) {
+                            return d.center.x;
+                        })
+                        .attr('cy', function (d) {
+                            return d.center.y;
+                        })
+                        .attr('r', function (d) {
+                            return d.radius;
+                        })
+                        .attr('fill', function (d) {
+                            return d.background;
+                        });
+                    let exit = play.exit().remove();
+
+                }
+            }
+        }
+    }])
+    .directive('myDirective', ['$rootScope', '$document', function ($rootScope) {
+        return {
+            restrict: 'E',  // Element name: <my-directive></my-directive>
             link: function ($scope, $element) {
                 console.log($rootScope.data.selectedIndex);
                 let lineFunction = d3.svg.line()
@@ -1061,13 +1480,13 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         return d;
                     })
                     .append('path')
-                    .attr("d", function (d) {
+                    .attr('d', function (d) {
                         return lineFunction($rootScope.storyLineDrawData[d].points);
                     })
                     .attr('stroke', function (d) {
                         return d3.rgb($rootScope.storyLineDrawData[d].color);
                     })
-                    .attr("stroke-width", function (d) {
+                    .attr('stroke-width', function (d) {
                         return d3.rgb($rootScope.storyLineDrawData[d].width);
                     })
                     .attr('stroke-linecap', 'round')
@@ -1078,14 +1497,14 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let currentX = 0, currentY = 0;
 
 
-                angular.element($element).attr("draggable", "true");
-                $element.bind("dragstart", function (e) {
+                angular.element($element).attr('draggable', 'true');
+                $element.bind('dragstart', function (e) {
                     // if(e.shiftKey){
                     currentX = e.originalEvent.clientX;
                     currentY = e.originalEvent.clientY;
                     // }
                 });
-                $element.bind("dragover", function (e) {
+                $element.bind('dragover', function (e) {
                     // if(e.shiftKey){
                     if (e.preventDefault) {
                         e.preventDefault();
@@ -1094,13 +1513,13 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
                     $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
 
-                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
                     currentX = e.originalEvent.clientX;
                     currentY = e.originalEvent.clientY;
                     return false;
                     // }
                 });
-                $element.bind("drop", function (e) {
+                $element.bind('drop', function (e) {
                     // if(e.shiftKey){
                     if (e.stopPropogation) {
                         e.stopPropogation(); // Necessary. Allows us to drop.
@@ -1142,12 +1561,12 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
                         }
                     }
-                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
                 }
 
                 function svgInitialize() {
                     theSvgElement = $element.find('#gameSVG');
-                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
                 }
 
                 svgInitialize();
@@ -1156,20 +1575,14 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             }
         };
     }])
-    .directive("storyLine", ['$rootScope', '$document', function ($rootScope) {
+    .directive('storyLine', ['$rootScope', '$document', function ($rootScope) {
         return {
-            restrict: "E",  // Element name: <my-directive></my-directive>
+            restrict: 'E',  // Element name: <my-directive></my-directive>
             link: function ($scope, $element) {
+
                 console.log($rootScope.data.selectedIndex);
-                let lineFunction = d3.svg.line()
-                    .interpolate('bundle')
-                    .tension(Math.random())
-                    .x(function (d) {
-                        return d.x;
-                    })
-                    .y(function (d) {
-                        return d.y;
-                    });
+
+
 
 
                 let svg = d3.select('story-line')
@@ -1212,17 +1625,19 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         return d;
                     })
                     .append('path')
-                    .attr("d", function (d) {
-                        return lineFunction($rootScope.storyLine.draw[d]);
+                    .attr('d', function (d) {
+                        return areaFunction($rootScope.storyLine.draw[d]);
                     })
-                    .attr('stroke', function (d) {
+                    // .attr('stroke', function (d) {
+                    //     return d3.rgb($rootScope.storyLine.pre[d].color);
+                    // })
+                    // .attr('stroke-width', function (d) {
+                    //     return 2;
+                    // })
+                    // .attr('stroke-linecap', 'round')
+                    .attr('fill', function (d) {
                         return d3.rgb($rootScope.storyLine.pre[d].color);
-                    })
-                    .attr("stroke-width", function (d) {
-                        return 2;
-                    })
-                    .attr('stroke-linecap', 'round')
-                    .attr('fill', 'none');
+                    });
 
 
                 let zoomRate = 0.1;
@@ -1230,14 +1645,14 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let currentX = 0, currentY = 0;
 
 
-                angular.element($element).attr("draggable", "true");
-                $element.bind("dragstart", function (e) {
+                angular.element($element).attr('draggable', 'true');
+                $element.bind('dragstart', function (e) {
                     // if(e.shiftKey){
                     currentX = e.originalEvent.clientX;
                     currentY = e.originalEvent.clientY;
                     // }
                 });
-                $element.bind("dragover", function (e) {
+                $element.bind('dragover', function (e) {
                     // if(e.shiftKey){
                     if (e.preventDefault) {
                         e.preventDefault();
@@ -1246,13 +1661,13 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
                     $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
 
-                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
                     currentX = e.originalEvent.clientX;
                     currentY = e.originalEvent.clientY;
                     return false;
                     // }
                 });
-                $element.bind("drop", function (e) {
+                $element.bind('drop', function (e) {
                     // if(e.shiftKey){
                     if (e.stopPropogation) {
                         e.stopPropogation(); // Necessary. Allows us to drop.
@@ -1294,12 +1709,12 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
                         }
                     }
-                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
                 }
 
                 function svgInitialize() {
                     theSvgElement = $element.find('#gameSVG');
-                    theSvgElement.children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
                 }
 
                 svgInitialize();
@@ -1307,63 +1722,37 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             }
         };
     }])
-    .directive("storyLine2", ['$rootScope', '$document', function ($rootScope) {
+    .directive('storyLine2', ['$rootScope', '$document', function ($rootScope) {
         return {
-            restrict: "E",  // Element name: <my-directive></my-directive>
-            link: function () {
+            restrict: 'E',  // Element name: <my-directive></my-directive>
+            link: function ($scope) {
 
                 console.log($rootScope.data.selectedIndex);
 
                 let scenes = $rootScope.storyLine2.scenes;
                 let characters = $rootScope.storyLine2.characters;
+
                 let storyLine = d3.select('story-line2');
-                let svg = storyLine.append('svg')
-                    .attr('id', 'narrative-chart')
-                    .attr('transform', function (d) {
-                    let x = 10;
-                    let y = 50;
-                    return 'translate(' + [x, y] + ')';
-                });
-                svg.attr('width', 2000) ;
-                svg.attr('height', 1600);
-                let Links = svg.append('g').attr('class', 'links');
+                let selector = storyLine.append('select');
+                let svg = storyLine.append('svg');
+                let sliderCon = storyLine.append('div');
+
+                let Links  = svg.append('g').attr('class', 'links');
                 let Scenes = svg.append('g').attr('class', 'scenes');
                 let Intros = svg.append('g').attr('class', 'intros');
-                let tooltip = d3.tip()
-                    .attr("class", "d3-tip")
-                    .style('box-sizing', 'content-box');
-                svg.call(tooltip);
+                let SteamT = svg.append('g').attr('class', 'steamT');
+                SteamT.append('path').attr('class','areaH');
+                SteamT.append('path').attr('class','areaA');
+                SteamT.append('path').attr('class','baseL');
 
-                let sliderContent = storyLine.append('div');
-                let thresh = 1;
-                let slider = d3.slider();
-                slider.axis(true);
-                slider.min(0.1);
-                slider.max(100);
-                slider.value(100);
-                slider.on("slide", function(evt, value) {
-                    thresh = value / 100;
-                    console.log("value : " + value);
-                    let dateSet = [];
-                    scenes.forEach(function (scene) {
-                        if(scene.timeOffset < Math.floor(scenes[scenes.length - 1]['timeOffset'] * thresh )){
-                            dateSet.push(scene);
-                        }
-                    });
-                    update(dateSet, characters);
-                });
-                sliderContent.style('width', '1000px');
-                sliderContent.style('margin-left', '150px');
-                sliderContent.style('margin-top', '10px');
-                sliderContent.call(slider);
-
-
+                configSelector(selector);
+                configSliderCon(sliderCon);
 
                 update(scenes, characters);
 
                 function update(scenes, characters) {
                     let Canvas = {};
-                    Canvas.width  = scenes.length * 40;
+                    Canvas.width = scenes.length * 40;
                     Canvas.height = 1600;
 
                     let narrative = d3.layout.narrative();
@@ -1377,13 +1766,18 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     narrative.labelPosition('left');
                     narrative.layout();
 
-                    svg.attr('width', narrative.extent()[0] + 50) ;
-                    svg.attr('height', narrative.extent()[1] + 50);
+                    configSvg(svg, narrative);
+                    configSteamT(SteamT, narrative);
 
                     updateLinks(narrative);
                     updateScenes(narrative);
                     updateNodes(narrative);
+
+
+                    svg.call(tooltip);
+
                 }
+
                 function updateLinks(narrative) {
 
                     let link = Links.selectAll('g')
@@ -1397,12 +1791,12 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         });
 
                     link.attr('id', function (d) {
-                            return d.id;
-                        });
+                        return d.id;
+                    });
 
                     link.exit().remove();
 
-                    let segment= link.selectAll('path')
+                    let segment = link.selectAll('path')
                         .data(function (d) {
                             return d.links;
                         });
@@ -1414,27 +1808,27 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             return d.character.color;
                         })
                         .attr('stroke-dasharray', function (d) {
-                            return d.target.scene.status[d.character.id] ? "" : "1,4";
+                            return d.target.scene.status[d.character.id] ? '' : '1,4';
                         })
                         .attr('stroke-width', 2)
                         .attr('fill', 'none')
-                        .on("mouseover", function (d) {
+                        .on('mouseover', function (d) {
                             svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                            svg.select('g.links').selectAll("[id =\"" + d.character.id + "\"]").attr('opacity', 1.0);
+                            svg.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
 
-                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
-                            svg.select('g.intros').selectAll("[id = \"" + d.character.id + "\"]").attr('opacity', 1.0);
+                            svg.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
+                            svg.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
 
-                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 0.1);
+                            svg.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
                             d.character.appearances.forEach(function (c) {
                                 let id = c.scene.id;
-                                svg.select('g.scenes').selectAll("[id =\"" + id + "\"]").attr('opacity', 1.0);
+                                svg.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
                             });
                         })
-                        .on("mouseout", function () {
+                        .on('mouseout', function () {
                             svg.select('g.links').selectAll('g').attr('opacity', 1.0);
-                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
-                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
+                            svg.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
+                            svg.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
                         });
 
                     segment.attr('d', narrative.link())
@@ -1442,30 +1836,31 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             return d.character.color;
                         })
                         .attr('stroke-dasharray', function (d) {
-                            return d.target.scene.status[d.character.id] ? "" : "1,4";
+                            return d.target.scene.status[d.character.id] ? '' : '1,4';
                         })
-                        .on("mouseover", function (d) {
+                        .on('mouseover', function (d) {
                             svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                            svg.select('g.links').selectAll("[id =\"" + d.character.id + "\"]").attr('opacity', 1.0);
+                            svg.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
 
-                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
-                            svg.select('g.intros').selectAll("[id = \"" + d.character.id + "\"]").attr('opacity', 1.0);
+                            svg.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
+                            svg.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
 
-                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 0.1);
+                            svg.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
                             d.character.appearances.forEach(function (c) {
                                 let id = c.scene.id;
-                                svg.select('g.scenes').selectAll("[id =\"" + id + "\"]").attr('opacity', 1.0);
+                                svg.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
                             });
                         })
-                        .on("mouseout", function () {
+                        .on('mouseout', function () {
                             svg.select('g.links').selectAll('g').attr('opacity', 1.0);
-                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
-                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
+                            svg.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
+                            svg.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
                         });
 
                     segment.exit().remove();
                 }
-                function updateScenes(narrative){
+
+                function updateScenes(narrative) {
                     let scene = Scenes.selectAll('.scene')
                         .data(narrative.scenes());
 
@@ -1482,14 +1877,15 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             return 'translate(' + [x, y] + ')';
                         })
                         .append('rect')
+                        .attr('opacity',0)
                         .attr('width', function (d) {
                             return d.width;
                         })
                         .attr('height', function (d) {
                             return d.height;
                         })
-                        .attr('rx', 3)
-                        .attr('ry', 3)
+                        .attr('rx', 5)
+                        .attr('ry', 5)
                         .attr('stroke', '#000')
                         .attr('opacity', function (d) {
                             if (d.appearances.length === 1)
@@ -1498,16 +1894,16 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 return 1;
                         })
                         .attr('fill', '#ffffff')
-                        .on("mouseover", function (d) {
-                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
+                        .on('mouseover', function (d) {
+                            svg.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
                             svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 0.1);
+                            svg.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
                             d.characters.forEach(function (c) {
-                                svg.select('g.links').selectAll("[id = \"" + c.id + "\"]").attr('opacity', 1.0);
-                                svg.select('g.intros').selectAll("[id = \"" + c.id + "\"]").attr('opacity', 1.0);
+                                svg.select('g.links').selectAll('[id = \'' + c.id + '\']').attr('opacity', 1.0);
+                                svg.select('g.intros').selectAll('[id = \'' + c.id + '\']').attr('opacity', 1.0);
                                 c.appearances.forEach(function (e) {
                                     let id = e.scene.id;
-                                    svg.select('g.scenes').selectAll("[id =\"" + id + "\"]").attr('opacity', 1.0);
+                                    svg.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
                                 });
                             });
                             tooltip.offset([-10, 0]);
@@ -1517,16 +1913,16 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 "</table></div>");
                             tooltip.show();
                         })
-                        .on("mouseout", function () {
-                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
+                        .on('mouseout', function () {
+                            svg.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
                             svg.select('g.links').selectAll('g.character').attr('opacity', 1.0);
-                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
+                            svg.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
                             tooltip.hide();
                         });
 
                     scene.attr('id', function (d) {
-                            return d.id;
-                        })
+                        return d.id;
+                    })
                         .attr('transform', function (d) {
                             let x, y;
                             x = Math.round(d.x) + 0.5;
@@ -1540,36 +1936,12 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         .attr('height', function (d) {
                             return d.height;
                         })
+                        // .attr('opacity',0)
                         .attr('opacity', function (d) {
                             if (d.appearances.length === 1)
                                 return 0;
                             else
                                 return 1;
-                        })
-                        .on("mouseover", function (d) {
-                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
-                            svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 0.1);
-                            d.characters.forEach(function (c) {
-                                svg.select('g.links').selectAll("[id = \"" + c.id + "\"]").attr('opacity', 1.0);
-                                svg.select('g.intros').selectAll("[id = \"" + c.id + "\"]").attr('opacity', 1.0);
-                                c.appearances.forEach(function (e) {
-                                    let id = e.scene.id;
-                                    svg.select('g.scenes').selectAll("[id =\"" + id + "\"]").attr('opacity', 1.0);
-                                });
-                            });
-                            tooltip.offset([-10, 0]);
-                            tooltip.html("<div ><table>" +
-                                "<tr><td width='50px' align ='left'>id:" + d.id + "</td></tr>" +
-                                "<tr><td align ='left'>type:" + d.type + "</td></tr>" +
-                                "</table></div>");
-                            tooltip.show();
-                        })
-                        .on("mouseout", function () {
-                            svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
-                            svg.select('g.links').selectAll('g.character').attr('opacity', 1.0);
-                            svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
-                            tooltip.hide();
                         });
 
                     scene.exit().remove();
@@ -1630,81 +2002,82 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
 
                 }
-                function updateNodes(narrative){
+
+                function updateNodes(narrative) {
                     let intro = Intros.selectAll('.intro')
                         .data(narrative.introductions());
                     intro.enter()
                         .call(function (s) {
-                        let g = s.append('g')
-                            .attr('class', 'intro')
-                            .attr('id', function (d) {
-                                return d.character.id;
-                            });
-
-                        g.append('rect')
-                            .attr('x', -4)
-                            .attr('y', -4.5)
-                            .attr('width', 4)
-                            .attr('height', 8)
-                            .attr('fill', function (d) {
-                                return d.character.color;
-                            });
-
-                        let text = g.append('g').attr('class', 'text');
-
-                        // Apppend two actual 'text' nodes to fake an 'outside' outline.
-                        text.append('text');
-                        text.append('text').attr('class', 'color');
-
-                        g.attr('transform', function (d) {
-                            let x, y;
-                            x = Math.round(d.x);
-                            y = Math.round(d.y);
-                            return 'translate(' + [x, y] + ')';
-                        });
-
-                        g.selectAll('text')
-                            .attr('text-anchor', 'end')
-                            .attr('y', '4px')
-                            .attr('x', '-8px')
-                            .text(function (d) {
-                                return d.character.name;
-                            })
-                            .attr('font-family', 'Arial')
-                            .attr('fill', function (d) {
-                                return d.character.color;
-                            })
-                            .on("mouseover", function (d) {
-                                svg.select('g.scenes').selectAll("g.scene").attr('opacity', 0.1);
-                                d.character.appearances.forEach(function (c) {
-                                    let id = c.scene.id;
-                                    svg.select('g.scenes').selectAll("[id =\"" + id + "\"]").attr('opacity', 1.0);
+                            let g = s.append('g')
+                                .attr('class', 'intro')
+                                .attr('id', function (d) {
+                                    return d.character.id;
                                 });
 
-                                svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                                svg.select('g.links').selectAll("[id =\"" + d.character.id + "\"]").attr('opacity', 1.0);
-                                svg.select('g.intros').selectAll("g.intro").attr('opacity', 0.1);
-                                svg.select('g.intros').selectAll("[id = \"" + d.character.id + "\"]").attr('opacity', 1.0);
-                                let preUrl = "https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/";
-                                tooltip.offset([-10, 0]);
-                                tooltip.html("<div  class = 'row' style='background: #dddddd'>" +
-                                    "<table>" +
-                                    "<tr><td align ='center'><img style='background: " + d.character.color + "' width='130px' src='" + preUrl + d.character.id + ".png" + "'></td></tr>" +
-                                    "<tr><td align ='center'>" + d.character.group.id + "</td></tr>" +
-                                    "</table></div>").show();
-                            })
-                            .on("mouseout", function () {
-                                svg.select('g.scenes').selectAll("g.scene").attr('opacity', 1.0);
-                                svg.select('g.links').selectAll('g').attr('opacity', 1.0);
-                                svg.select('g.intros').selectAll("g.intro").attr('opacity', 1.0);
-                                tooltip.hide();
+                            g.append('rect')
+                                .attr('x', -4)
+                                .attr('y', -4.5)
+                                .attr('width', 4)
+                                .attr('height', 8)
+                                .attr('fill', function (d) {
+                                    return d.character.color;
+                                });
+
+                            let text = g.append('g').attr('class', 'text');
+
+                            // Apppend two actual 'text' nodes to fake an 'outside' outline.
+                            text.append('text');
+                            text.append('text').attr('class', 'color');
+
+                            g.attr('transform', function (d) {
+                                let x, y;
+                                x = Math.round(d.x);
+                                y = Math.round(d.y);
+                                return 'translate(' + [x, y] + ')';
                             });
 
-                    });
-                   intro.call(function (s) {
+                            g.selectAll('text')
+                                .attr('text-anchor', 'end')
+                                .attr('y', '4px')
+                                .attr('x', '-8px')
+                                .text(function (d) {
+                                    return d.character.name;
+                                })
+                                .attr('font-family', 'Arial')
+                                .attr('fill', function (d) {
+                                    return d.character.color;
+                                })
+                                .on('mouseover', function (d) {
+                                    svg.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
+                                    d.character.appearances.forEach(function (c) {
+                                        let id = c.scene.id;
+                                        svg.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
+                                    });
+
+                                    svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                                    svg.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
+                                    svg.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
+                                    svg.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
+                                    let preUrl = 'https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/';
+                                    tooltip.offset([-10, 0]);
+                                    tooltip.html("<div  class = 'row' style='background: #dddddd'>" +
+                                        "<table><tr><td align ='center'>" +
+                                        "<img  class = 'playerImg' style='background: " + d.character.color + "' src='" + preUrl + d.character.id + ".png" + "'>" +
+                                        "</td></tr>" +
+                                        "<tr><td align ='center'>" + d.character.group.id + "</td></tr>" + "</table></div>").show();
+                                })
+                                .on('mouseout', function () {
+                                    svg.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
+                                    svg.select('g.links').selectAll('g').attr('opacity', 1.0);
+                                    svg.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
+                                    tooltip.hide();
+                                });
+
+                        });
+                    intro.call(function (s) {
                         let g = s.attr('id', function (d) {
-                                return d.character.id;
-                            });
+                            return d.character.id;
+                        });
 
                         g.attr('x', -4)
                             .attr('y', -4.5)
@@ -1713,7 +2086,6 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             .attr('fill', function (d) {
                                 return d.character.color;
                             });
-
 
 
                         g.attr('transform', function (d) {
@@ -1740,10 +2112,103 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
                 }
 
+                function configSelector(object) {
+                    object.append('option').html('ALL');
+                    object.append('option').html('1');
+                    object.append('option').html('1');
+                    object.append('option').html('1');
+                    object.style('margin-left', '10px');
+                    object.style('margin-right', '10px');
+                    object.style('margin-top', '10px');
+                    object.style('margin-bottom', '10px');
+                    return object;
+                }
 
+                function configSvg(object, narrative) {
+                    object.attr('id', 'narrative-chart');
+                    object.attr('transform', function (d) {
+                        let x = 10;
+                        let y = 50;
+                        return 'translate(' + [x, y] + ')';
+                    });
+                    object.style('margin-left', '10px');
+                    object.style('margin-right', '10px');
+                    object.style('margin-top', '10px');
+                    object.style('margin-bottom', '10px');
+                    object.attr('width', narrative.extent()[0] + 50);
+                    object.attr('height', narrative.extent()[1] + 1000);
+                }
+
+                function configSliderCon(object) {
+                    object.style('width', '1000px');
+                    object.style('margin-left', '150px');
+                    object.style('margin-top', '10px');
+                    let slider = d3.slider();
+                    configSlider(slider);
+                    object.call(slider);
+                }
+
+                function configSlider(object) {
+                    object.axis(true);
+                    object.min(0.1);
+                    object.max(100);
+                    object.value(100);
+                    object.on('slide', function (evt, value) {
+                        let thresh = value / 100;
+                        console.log('value : ' + value);
+                        let dateSet = [];
+                        scenes.forEach(function (scene) {
+                            if (scene.timeOffset < Math.floor(scenes[scenes.length - 1]['timeOffset'] * thresh)) {
+                                dateSet.push(scene);
+                            }
+                        });
+                        update(dateSet, characters);
+                    });
+                }
+
+                function configSteamT(object, narrative) {
+                    object.attr('transform', function (d) {
+                        let x = 10 + 150;
+                        let y = narrative.extent()[1] + 200;
+                        return 'translate(' + [x, y] + ')';
+                    });
+                    let area = d3.svg.area()
+                        .x(function (d) {
+                            return d.x * narrative.scale();
+                        })
+                        .y0(function (d) {
+                            return d.y0;
+                        })
+                        .y1(function (d) {
+                            return d.y1;
+                        })
+                        .interpolate("bundle")
+                        ;
+                        // .interpolate("basis");
+
+                    let home = object.select('path.areaH')
+                        .attr('d', function () {
+                            return area($rootScope.eventEffect.home);
+                        })
+                        .attr('fill', $scope.teamColor.home);
+
+                    let away = object.select('path.areaA')
+                        .attr('d', function (d) {
+                            return area($rootScope.eventEffect.away);
+                        })
+                        .attr('fill',  $scope.teamColor.away);
+                    let base = object.select('path.baseL')
+                        .attr('d', function (d) {
+                            return 'M0,98L' + narrative.extent()[0] +',98';
+                        })
+                        .attr('stroke-width', 2)
+                        .attr('stroke',  '#a5a5a5')
+                        .attr('stroke-dasharray', '1,4');
+
+                }
 
             }
-        };
+        }
     }]);
 
 function eventWeight(actType, position) {
@@ -1779,6 +2244,51 @@ function eventWeight(actType, position) {
     return result;
 }
 
+function eventEffect(actType, timeDuring, sceneTeam) {
+    let result;
+    let zone = 24;
+    if (sceneTeam === 'home') {
+        switch (actType) {
+            case  1:
+                result = {home: 2 * zone - timeDuring, away: timeDuring};
+                break;
+            case  2:
+            case  5:
+            case  6:
+            case  7:
+                result = {home: timeDuring, away: 2 * zone - timeDuring};
+                break;
+            case  3:
+                result = {home: 2 * zone - 12, away: 12};
+                break;
+            default:
+                result = {home: zone, away: zone};
+                break;
+        }
+    } else if (sceneTeam === 'away') {
+        switch (actType) {
+            case  1:
+                result = {home: timeDuring, away: 2 * zone - timeDuring};
+                break;
+            case  2:
+            case  5:
+            case  6:
+            case  7:
+                result = {home: 2 * zone - timeDuring, away: timeDuring};
+                break;
+            case  3:
+                result = {home: 12, away: 2 * zone - 12};
+                break;
+            default:
+                result = {home: zone, away: zone};
+                break;
+        }
+    } else {
+        result = {home: zone, away: zone};
+    }
+    return result;
+}
+
 function deepCopy(obj) {
     let result = Array.isArray(obj) ? [] : {};
     if (obj && typeof obj === 'object') {
@@ -1794,3 +2304,22 @@ function deepCopy(obj) {
     }
     return result;
 }
+
+let lineFunction = d3.svg.line().x(function (d) {
+    return d.x;
+}).y(function (d) {
+    return d.y;
+}).interpolate('linear');
+let tooltip = d3.tip().attr('class', 'd3-tip').style('box-sizing', 'content-box');
+let areaFunction = d3.svg.area()
+    .x(function (d) {
+        return d.x;
+    })
+    .y0(function (d) {
+        return d.y0;
+    })
+    .y1(function (d) {
+        return d.y1;
+    })
+    .interpolate("monotone");
+
