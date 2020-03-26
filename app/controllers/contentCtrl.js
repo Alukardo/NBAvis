@@ -2209,6 +2209,24 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
             }
         }
+    }])
+    .directive('forceDirect', ['$rootScope', '$document', function ($rootScope) {
+        return {
+            restrict: 'E',  // Element name: <my-directive></my-directive>
+            link: function ($scope, $element) {
+                console.log($rootScope.data.selectedIndex);
+
+                let svg = d3.select('story-line')
+                    .append('svg')
+                    .attr('id', 'gameSVG')
+                    .attr('width', '100%')
+                    .attr('height', $scope.windowHeight)
+                    .style('margin-left', '1%');
+
+
+
+            }
+        };
     }]);
 
 function eventWeight(actType, position) {
@@ -2311,15 +2329,11 @@ let lineFunction = d3.svg.line().x(function (d) {
     return d.y;
 }).interpolate('linear');
 let tooltip = d3.tip().attr('class', 'd3-tip').style('box-sizing', 'content-box');
-let areaFunction = d3.svg.area()
-    .x(function (d) {
+let areaFunction = d3.svg.area().x(function (d) {
         return d.x;
-    })
-    .y0(function (d) {
+    }).y0(function (d) {
         return d.y0;
-    })
-    .y1(function (d) {
+    }).y1(function (d) {
         return d.y1;
-    })
-    .interpolate("monotone");
+    }).interpolate("monotone");
 

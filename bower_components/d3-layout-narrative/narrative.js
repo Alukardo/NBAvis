@@ -1012,16 +1012,16 @@ d3.layout.narrative = function () {
                 }
             }
             edges.forEach(function (d) {
-                sceneMatrix[d.source][d.target] = d.weight.toFixed(1) / edgeAMax.weight;
-                sceneMatrix[d.target][d.source] = d.weight.toFixed(1) / edgeAMax.weight;
+                sceneMatrix[d.source][d.target] = d.weight.toFixed(1) / edgeAMax.weight * 10;
+                sceneMatrix[d.target][d.source] = d.weight.toFixed(1) / edgeAMax.weight * 10;
             });
-            // for (let i = 0; i < nodes.length; i++) {
-            //     for (let j = 0; j < nodes.length; j++) {
-            //         if(characters[i].group.id === characters[j].group.id){
-            //             sceneMatrix[i][j] = sceneMatrix[i][j] + 0.5;
-            //         }
-            //     }
-            // }
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = 0; j < nodes.length; j++) {
+                    if(characters[i].group.id === characters[j].group.id){
+                        sceneMatrix[i][j] = sceneMatrix[i][j] + 0.9;
+                    }
+                }
+            }
 
             return r2e(sceneMatrix, nodes.length);
         }
