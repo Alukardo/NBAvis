@@ -1053,9 +1053,10 @@ d3.layout.narrative = function () {
             duration += scene.duration;
         });
 
-        scale = ((orientation === 'vertical') ? size[1] - labelSize[1] : size[0] - labelSize[0]) / duration;
+        //scale = ((orientation === 'vertical') ? size[1] - labelSize[1] : size[0] - labelSize[0]) / duration;
+
+        scale = 1;
         console.log('scale:'+ scale);
-        //scale = 2;
     }
 
 // Position scenes

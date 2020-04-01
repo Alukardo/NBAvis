@@ -51,7 +51,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             $rootScope.quarterDrawData = [];
 
             $rootScope.quarterEmpty = [];
-            $rootScope.quarterGap = 20;
+            $rootScope.quarterGap = 100;
 
             $rootScope.minuteScore = [];
             $rootScope.minuteOriginDrawData = [];
@@ -1025,42 +1025,42 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     return false;
                     // }
                 });
-                $element.bind('mousewheel', function (mouseWheelEvent) {
-                    let zoomCenter = {
-                        'x': mouseWheelEvent.originalEvent.clientX,
-                        'y': mouseWheelEvent.originalEvent.clientY
-                    };
-                    if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
-                        zoom('zoomIn', zoomCenter);
-                    } else {
-                        zoom('zoomOut', zoomCenter);
-                    }
-
-                    mouseWheelEvent.cancelBubble = true;
-                    return false;
-                });
-
-                function zoom(zoomType, zoomCenter) {
-                    $rootScope.matrix[0] = parseFloat($rootScope.matrix[0]);	//scale-x
-                    $rootScope.matrix[3] = parseFloat($rootScope.matrix[3]);	//scale-y
-
-                    if (zoomType === 'zoomIn') {
-                        if ($rootScope.matrix[0] + zoomRate > 0.1 && $rootScope.matrix[3] + zoomRate > 0.1) {
-                            $rootScope.matrix[0] += zoomRate;
-                            $rootScope.matrix[3] += zoomRate;
-                            $rootScope.matrix[4] -= (zoomCenter.x * zoomRate);
-                            $rootScope.matrix[5] -= (zoomCenter.y * zoomRate);
-                        }
-                    } else if (zoomType === 'zoomOut') {
-                        if ($rootScope.matrix[0] - zoomRate > 0.1 && $rootScope.matrix[3] - zoomRate > 0.1) {
-                            $rootScope.matrix[0] -= zoomRate;
-                            $rootScope.matrix[3] -= zoomRate;
-                            $rootScope.matrix[4] += (zoomCenter.x * zoomRate);
-                            $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
-                        }
-                    }
-                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
-                }
+                // $element.bind('mousewheel', function (mouseWheelEvent) {
+                //     let zoomCenter = {
+                //         'x': mouseWheelEvent.originalEvent.clientX,
+                //         'y': mouseWheelEvent.originalEvent.clientY
+                //     };
+                //     if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
+                //         zoom('zoomIn', zoomCenter);
+                //     } else {
+                //         zoom('zoomOut', zoomCenter);
+                //     }
+                //
+                //     mouseWheelEvent.cancelBubble = true;
+                //     return false;
+                // });
+                //
+                // function zoom(zoomType, zoomCenter) {
+                //     $rootScope.matrix[0] = parseFloat($rootScope.matrix[0]);	//scale-x
+                //     $rootScope.matrix[3] = parseFloat($rootScope.matrix[3]);	//scale-y
+                //
+                //     if (zoomType === 'zoomIn') {
+                //         if ($rootScope.matrix[0] + zoomRate > 0.1 && $rootScope.matrix[3] + zoomRate > 0.1) {
+                //             $rootScope.matrix[0] += zoomRate;
+                //             $rootScope.matrix[3] += zoomRate;
+                //             $rootScope.matrix[4] -= (zoomCenter.x * zoomRate);
+                //             $rootScope.matrix[5] -= (zoomCenter.y * zoomRate);
+                //         }
+                //     } else if (zoomType === 'zoomOut') {
+                //         if ($rootScope.matrix[0] - zoomRate > 0.1 && $rootScope.matrix[3] - zoomRate > 0.1) {
+                //             $rootScope.matrix[0] -= zoomRate;
+                //             $rootScope.matrix[3] -= zoomRate;
+                //             $rootScope.matrix[4] += (zoomCenter.x * zoomRate);
+                //             $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
+                //         }
+                //     }
+                //     theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
+                // }
 
                 theSvgElement = $element.find('#gameSVG');
                 theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
@@ -1598,6 +1598,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let characters = $rootScope.storyLine2.characters;
 
                 let storyLine = d3.select('story-line2').attr('id','gameSVG');
+
+
                 //let video = storyLine.append('p').append('div').append('video');
 
                 let selectCon = storyLine.append('p').append('div');
@@ -1620,6 +1622,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 configSliderCon(sliderCon);
 
                 update(scenes, characters);
+
+
 
                 function update(scenes, characters) {
                     let Canvas = {};
@@ -1992,8 +1996,10 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 }
 
                 function configSelectCon(object) {
+                    let selectTx = object.append('label');
+                    selectTx.text('Event Type : ');
                     let selector = object.append('select');
-                    let optionsDate = ['All','Shoot Made','Shoot Miss','Free Throw','Rebound','Turn Over','Foul','Violation','Sub','Regular','Jump Ball','Unknown'];
+                    let optionsDate = [' All ',' Shoot Made ',' Shoot Miss ',' Free Throw ',' Rebound ',' Turn Over ',' Foul ',' Violation ',' Sub ',' Regular ',' Jump Ball ',' Unknown '];
                     let options = selector.selectAll('option').data(optionsDate);
                     options.enter().append('option').text(function (d) {
                         return d;
@@ -2012,28 +2018,6 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     return object;
                 }
 
-                function configSvg(object, narrative, width, height) {
-                    object.attr('id', 'narrative-chart');
-                    object.attr('transform', function (d) {
-                        let x = 10;
-                        let y = 0;
-                        return 'translate(' + [x, y] + ')';
-                    });
-                    object.style('margin-left', '5px');
-                    object.style('margin-right', '5px');
-                    object.style('margin-top', '10px');
-                    object.style('margin-bottom', '10px');
-                    object.attr('width',  width  === 0 ? narrative.extent()[0] + 30 : width);
-                    object.attr('height', height === 0 ? narrative.extent()[1] + 5 : height);
-                }
-
-                function configVideo(object){
-                    object.attr('src','http://smb.cdnak.neulion.com/nlds_vod/nba/vod/2016/11/14/21600145/2_21600145_orl_ind_2016_b_discrete_ind19_1_1600.mp4');
-                    object.attr('autoplay', 'autoplay');
-                    object.attr('controls', 'controls');
-                    object.style('padding-left','120px');
-                }
-
                 function configSliderCon(object) {
                     object.style('width', '1000px');
                     object.style('margin-left', '120px');
@@ -2042,19 +2026,36 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     let slider = d3.slider();
                     configSlider(slider);
                     object.call(slider);
+
+                    function configSlider(object) {
+                        object.axis(true);
+                        object.min(0.1);
+                        object.max(100);
+                        object.value(100);
+                        object.on('slide', function (evt, value) {
+                            let thresh = value / 100;
+                            console.log('value : ' + value);
+                            let dateSet = sceneQuery(scenes, 0, thresh);
+                            update(dateSet, characters);
+                        });
+                    }
+
                 }
 
-                function configSlider(object) {
-                    object.axis(true);
-                    object.min(0.1);
-                    object.max(100);
-                    object.value(100);
-                    object.on('slide', function (evt, value) {
-                        let thresh = value / 100;
-                        console.log('value : ' + value);
-                        let dateSet = sceneQuery(scenes, 0, thresh);
-                        update(dateSet, characters);
+                function configSvg(object, narrative, width, height) {
+                    object.attr('id', 'narrative-chart');
+                    object.attr('transform', function (d) {
+                        let x = 10;
+                        let y = 0;
+                        return 'translate(' + [x, y] + ')';
                     });
+
+                    object.style('margin-left', '5px');
+                    object.style('margin-right', '5px');
+                    object.style('margin-top', '10px');
+                    object.style('margin-bottom', '10px');
+                    object.attr('width',  width  === 0 ? narrative.extent()[0] + 30 : width);
+                    object.attr('height', height === 0 ? narrative.extent()[1] + 5 : height);
                 }
 
                 function configSteam(object, narrative, data, info) {
@@ -2145,6 +2146,13 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         }
                     });
                     return dateSet;
+                }
+
+                function configVideo(object){
+                    object.attr('src','http://smb.cdnak.neulion.com/nlds_vod/nba/vod/2016/11/14/21600145/2_21600145_orl_ind_2016_b_discrete_ind19_1_1600.mp4');
+                    object.attr('autoplay', 'autoplay');
+                    object.attr('controls', 'controls');
+                    object.style('padding-left','120px');
                 }
 
                 $('story-line2').scroll(function () {
