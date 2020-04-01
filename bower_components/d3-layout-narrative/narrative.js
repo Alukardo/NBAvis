@@ -944,7 +944,7 @@ d3.layout.narrative = function () {
 //
 // Compute the actual min and max y-positions of each group.
     function computeGroupPositions() {
-        let max = 100;
+        let max = 0;
         groups.forEach(function (group) {
             group.min = max;
             max = characterGroupHeight(group.characters.length) + group.min;
@@ -1053,8 +1053,9 @@ d3.layout.narrative = function () {
             duration += scene.duration;
         });
 
-        //scale = ((orientation === 'vertical') ? size[1] - labelSize[1] : size[0] - labelSize[0]) / duration;
-        scale = 2;
+        scale = ((orientation === 'vertical') ? size[1] - labelSize[1] : size[0] - labelSize[0]) / duration;
+        console.log('scale:'+ scale);
+        //scale = 2;
     }
 
 // Position scenes
@@ -1086,20 +1087,23 @@ d3.layout.narrative = function () {
                     appearance.x = 0.6 * characterPosition(i) + scenePadding[3];
                     prePositions[appearance.character.id] = avg + appearance.x;
                 } else {
-                    appearance.y = rate * characterPosition(i) + scenePadding[0];
-                    appearance.x = scenePadding[3];
+                    if (scene.appearances.length > 1) {
+                      appearance.y = rate * characterPosition(i) + scenePadding[0];
+                      appearance.x = scenePadding[3];
+                    }else{
+                        appearance.x = 0;
+                        appearance.y = 0;
+                    }
 
                 }
             });
-            if (scene.appearances.length > 0) {
+            if (scene.appearances.length > 1) {
                 scene.width = scenePadding[1] + scenePadding[3];
                 scene.height = rate * characterGroupHeight(scene.appearances.length) + scenePadding[0] + scenePadding[2];
             } else {
-                scene.width = 3;
-                scene.height = 3;
+                scene.width = 2;
+                scene.height = 2;
             }
-
-
             if (scene.appearances.length > 1) {
                 avg = characterPosition(tempAppearance.character.cOrder) + tempAppearance.character.group.min;
             } else if (scene.appearances.length == 1) {
@@ -1107,11 +1111,11 @@ d3.layout.narrative = function () {
             }
 
             if (orientation === 'vertical') {
-                scene.x = Math.max(0, Math.min(size[0], avg - tempAppearance.x));
-                scene.y = Math.max(labelSize[0], Math.min(size[1], scale * scene.start + labelSize[1]));
+                scene.x = Math.max(0, avg - tempAppearance.x);
+                scene.y = Math.max(labelSize[0], scale * scene.start + labelSize[1]);
             } else {
-                scene.x = Math.max(labelSize[0], Math.min(size[0], scale * scene.start + labelSize[0]));
-                scene.y = Math.max(0, Math.min(size[1], avg - tempAppearance.y));
+                scene.x = Math.max(labelSize[0], scale * scene.start + labelSize[0]);
+                scene.y = Math.max(    0, avg - tempAppearance.y);
             }
             scene.appearances.forEach(function (appearance) {
                 if (orientation === 'vertical') {
@@ -1163,8 +1167,9 @@ d3.layout.narrative = function () {
                 }
             } else {
 
-                x = appearanceMin.scene.x - 0.5 * scale;
+                x = 0 - 0.5 * scale;
                 y = characterPosition(appearance.character.cOrder) + appearance.character.group.min;
+                //x = appearanceMin.scene.x - 0.5 * scale;
                 //y = appearance.scene.y + appearance.y;
 
                 // Move x-axis position to the dedicated label space if it makes sense.
@@ -1174,11 +1179,11 @@ d3.layout.narrative = function () {
             }
 
             if (orientation === 'vertical') {
-                introduction.x = appearance.character._x || Math.max(0 + labelSize[0] / 2, Math.min(size[0] - labelSize[0] / 2, x));
-                introduction.y = appearance.character._y || Math.max(labelSize[0], Math.min(size[1] - labelSize[1], y));
+                introduction.x = appearance.character._x || Math.max(0 + labelSize[0] / 2,  x);
+                introduction.y = appearance.character._y || Math.max(labelSize[0], y);
             } else {
-                introduction.x = appearance.character._x || Math.max(labelSize[0], Math.min(size[0] - labelSize[0], x));
-                introduction.y = appearance.character._y || Math.max(0 + labelSize[1] / 2, Math.min(size[1] - labelSize[1] / 2, y));
+                introduction.x = appearance.character._x || Math.max(labelSize[0], x);
+                introduction.y = appearance.character._y || Math.max(0 + labelSize[1] / 2,y);
             }
 
             introduction.width = appearance.character._width || labelSize[0];
@@ -1200,8 +1205,14 @@ d3.layout.narrative = function () {
         let collidables, intros;
 
         // Get a list of things introductions can collide with.
-        collidables = introductions.concat(scenes);
-
+        //collidables = introductions.concat(scenes);
+        let tempScenes  = [];
+        scenes.forEach(function (d) {
+            if(d.characters.length > 1){
+                tempScenes.push(d);
+            }
+        });
+        collidables = introductions.concat(tempScenes);
         // Use a copy of the introductions array so we can sort it without changing
         // the main array's order.
         intros = introductions.slice();

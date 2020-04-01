@@ -61,18 +61,18 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             $rootScope.playOriginDrawData = [];
             $rootScope.playDrawData = [];
 
-            $rootScope.eventData = [];
-            $rootScope.playerInfo = [];
-            $rootScope.storyLine = {pre: {}, data: [], ps: [], draw: {}};
-            $rootScope.storyLine2 = {'characters': [], 'scenes': [], 'charactersMap': {}};
-            $rootScope.eventEffect = {home:[{'x': 0, 'y0': 98, 'y1':122}], away:[{'x': 0, 'y0': 74, 'y1':98}]};
-            $rootScope.storyLineInteractionCount = [];
-            $rootScope.sortedY = [];
-            $rootScope.sortedList = [];
-
             $rootScope.storyLineData = [];
             $rootScope.storyLineDrawData = [];
             $rootScope.storyLineOriginDrawData = [];
+
+            $rootScope.eventData = [];
+            $rootScope.playerInfo = [];
+
+            $rootScope.storyLine2 = {'characters': [], 'scenes': [], 'charactersMap': {}};
+
+            $rootScope.storyLineInteractionCount = [];
+            $rootScope.sortedY = [];
+            $rootScope.sortedList = [];
 
             $scope.rawData = undefined;
             $scope.loadFlag = false;
@@ -133,7 +133,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     $rootScope.playerInfo[playerName] = player;
                 });
                 ngProgress.complete();
-                $scope.loadFlag = 1;
+                $scope.loadFlag = true;
                 return $scope.generateData();
             }
         };
@@ -199,10 +199,12 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 });
             });
 
+            // Story Lines
             let preOffsetX = -1;
-            let pIndex = {home: 0, away: 0};
-            let Index = {home: 0, away: 0};
+            let pIndex = {'home': 0, 'away': 0};
+            let Index  = {'home': 0, 'away': 0};
 
+            $rootScope.storyLine = {'pre': {}, 'data': [], 'ps': [], 'draw': {}};
             angular.forEach($sessionStorage.playerData, function (player) {
                 let playerName = player['firstName'] + ' ' + player['lastName'];
                 let playerId = player['id'];
@@ -274,7 +276,6 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     });
                 });
             });
-
             angular.forEach($rootScope.storyLine.data, function (record) {
                 angular.forEach(record, function (p) {
                     let x = $rootScope.storyLine.pre[p.id].startX + p.offsetX;
@@ -288,6 +289,10 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             // Story Lines 2
             let preEvent = null;
             let playerStatus = {};
+            let tempScoreSum = {'home' : 0, 'away' : 0};
+            $rootScope.eventGapsce = {'home':[ { 'x': 0, 'y0' :  0, 'y1':  0 } ], 'away':[ { 'x': 0, 'y0':    0, 'y1': 0 } ]};
+            $rootScope.eventEffect = {'home':[ { 'x': 0, 'y0' :  0, 'y1': 48 } ], 'away':[ { 'x': 0, 'y0':  -48, 'y1': 0 } ]};
+            $rootScope.eventTurnin = {'home':[ { 'x': 0, 'y0' :  0, 'y1':  0 } ], 'away':[ { 'x': 0, 'y0':    0, 'y1': 0 } ]};
             angular.forEach($sessionStorage.playerData, function (player) {
                 let temp = {id: '', name: '', width: 0, affiliation: '', color: '', initialGroup: undefined};
                 temp.id = player['id'];
@@ -296,7 +301,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 temp.affiliation = $scope.predictSide(player['team']).teamM;
                 temp.color = $scope.predictSide(player['team']).color;
                 temp.initialGroup = $scope.predictSide(player['team']).group;
-
+                //temp.initialGroup = 0;
                 playerStatus[temp.id] = player['starter'];
                 $rootScope.storyLine2.charactersMap[temp.id] = temp;
                 $rootScope.storyLine2.characters.push($rootScope.storyLine2.charactersMap[temp.id]);
@@ -367,23 +372,43 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap : $rootScope.quarterGap;
                             scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
                             $rootScope.storyLine2.scenes.push(scene);
+                            preEvent = event;
 
                             let sceneTeam = $scope.predictSide(players[0].team);
-                            let score_gap = 5 * (event['home_score'] - event['away_score']);
-                            let number_T = 50;
+                            let score_gap = 2 * (event['home_score'] - event['away_score']);
+                            let score_gap_h = score_gap > 0 ? score_gap : 0;
+                            let score_gap_a = score_gap < 0 ? -score_gap : 0;
+
                             if (event['event_type'] !== 12 && event['event_type'] !== 13){
+
                                 let  effect = eventEffect(event['event_type'], event['timeDuring'], sceneTeam.teamM);
                                 let  x =  scene.start + scene.duration;
-                                $rootScope.eventEffect.away.push({'x': x, 'y0': number_T + 24 - score_gap, 'y1':number_T +24 + effect.away - score_gap});
-                                $rootScope.eventEffect.home.push({'x': x, 'y0': number_T + 48 + 24 - score_gap - effect.home, 'y1' :number_T + 48 + 24 - score_gap});
+                                let factor = 2.0;
+                                $rootScope.eventEffect.away.push({'x': x, 'y0': -24 * factor, 'y1' : (-24 + effect.away) * factor});
+                                $rootScope.eventEffect.home.push({'x': x, 'y0': (24 - effect.home) * factor, 'y1' : 24 * factor});
 
+                                $rootScope.eventGapsce.away.push({'x': x, 'y0':  - score_gap_a , 'y1': 0 });
+                                $rootScope.eventGapsce.home.push({'x': x, 'y0': 0, 'y1' : score_gap_h});
+
+                                //Turning Point
+                                if(event['home_point'] !== event['away_point']){
+                                    if( event['home_point'] !== 0 ){
+                                        tempScoreSum.home += event['home_point'];
+                                        tempScoreSum.away = 0;
+                                    }
+                                    if( event['away_point'] !== 0 ){
+                                        tempScoreSum.away += event['away_point'];
+                                        tempScoreSum.home = 0;
+                                    }
+                                }
+                                $rootScope.eventTurnin.away.push({'x': x, 'y0': -3 * tempScoreSum.away, 'y1': 0});
+                                $rootScope.eventTurnin.home.push({'x': x, 'y0': 0, 'y1' : 3 * tempScoreSum.home});
                             }
-                            preEvent = event;
+
                         }
                     });
                 });
             });
-
             return $scope.generateDrawData();
         };
         $scope.generateDrawData = function () {
@@ -398,12 +423,12 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             let QuarterGap = $rootScope.factor.x;
             let mOffset = 5.0;
 
-            let homeOrgX = 80, homeOrgY = $scope.halfHeightY + $rootScope.factor.y * 2;
-            let awayOrgX = 80, awayOrgY = $scope.halfHeightY - $rootScope.factor.y * 2;
+            let homeOrg = {'x' : 80, 'y' : $scope.halfHeightY + $rootScope.factor.y * 2};
+            let awayOrg = {'x' : 80, 'y' : $scope.halfHeightY - $rootScope.factor.y * 2};
 
-            $scope.Icon = {home: null, away: null};
-            $scope.Icon.home = {x: 0, y: $scope.halfHeightY - 37.5 + $rootScope.factor.y * 11};
-            $scope.Icon.away = {x: 0, y: $scope.halfHeightY - 37.5 - $rootScope.factor.y * 11};
+            $scope.Icon = {'home': null, 'away': null};
+            $scope.Icon.home = {'x': 0, 'y': homeOrg.y };
+            $scope.Icon.away = {'x': 0, 'y': awayOrg.y - $rootScope.factor.y * 10};
 
             if ($scope.loadFlag === false) return;
             console.log('# Generate Draw Data');
@@ -419,26 +444,26 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     away: (quarterScore.away + minuteCount) * $rootScope.factor.x + MinuteGap * (minuteCount + 1)
                 };
                 let QuarterOffset_Y = {
-                    home: $rootScope.factor.y * 20,
-                    away: 0 - $rootScope.factor.y * 20
+                    home: $rootScope.factor.y * 10,
+                    away: 0 - $rootScope.factor.y * 10
                 };
                 QuarterObj.home = new Quad(
-                    new Point(homeOrgX, homeOrgY),
-                    new Point(homeOrgX, homeOrgY + QuarterOffset_Y.home),
-                    new Point(homeOrgX + QuarterOffset_X.home, homeOrgY + QuarterOffset_Y.home),
-                    new Point(homeOrgX + QuarterOffset_X.home, homeOrgY)
+                    new Point(homeOrg.x, homeOrg.y),
+                    new Point(homeOrg.x, homeOrg.y + QuarterOffset_Y.home),
+                    new Point(homeOrg.x + QuarterOffset_X.home, homeOrg.y + QuarterOffset_Y.home),
+                    new Point(homeOrg.x + QuarterOffset_X.home, homeOrg.y)
                 );
                 QuarterObj.away = new Quad(
-                    new Point(awayOrgX, awayOrgY),
-                    new Point(awayOrgX, awayOrgY + QuarterOffset_Y.away),
-                    new Point(awayOrgX + QuarterOffset_X.away, awayOrgY + QuarterOffset_Y.away),
-                    new Point(awayOrgX + QuarterOffset_X.away, awayOrgY),
+                    new Point(awayOrg.x, awayOrg.y),
+                    new Point(awayOrg.x, awayOrg.y + QuarterOffset_Y.away),
+                    new Point(awayOrg.x + QuarterOffset_X.away, awayOrg.y + QuarterOffset_Y.away),
+                    new Point(awayOrg.x + QuarterOffset_X.away, awayOrg.y),
                 );
-                QuarterObj.compareLine.startLine = new Line(new Point(homeOrgX, homeOrgY), new Point(awayOrgX, awayOrgY), lineWidth, $scope.compareColor(homeOrgX, awayOrgX));
-                QuarterObj.compareLine.endLine = new Line(new Point(homeOrgX + QuarterOffset_X.home, homeOrgY), new Point(awayOrgX + QuarterOffset_X.away, awayOrgY), lineWidth, $scope.compareColor(homeOrgX + QuarterOffset_X.home, awayOrgX + QuarterOffset_X.away));
+                QuarterObj.compareLine.startLine = new Line(new Point(homeOrg.x, homeOrg.y), new Point(awayOrg.x, awayOrg.y), lineWidth, $scope.compareColor(homeOrg.x, awayOrg.x));
+                QuarterObj.compareLine.endLine = new Line(new Point(homeOrg.x + QuarterOffset_X.home, homeOrg.y), new Point(awayOrg.x + QuarterOffset_X.away, awayOrg.y), lineWidth, $scope.compareColor(homeOrg.x + QuarterOffset_X.home, awayOrg.x + QuarterOffset_X.away));
 
-                homeOrgX += QuarterOffset_X.home + QuarterGap;
-                awayOrgX += QuarterOffset_X.away + QuarterGap;
+                homeOrg.x += QuarterOffset_X.home + QuarterGap;
+                awayOrg.x += QuarterOffset_X.away + QuarterGap;
 
 
                 QuarterObj.home.isSelected = false;
@@ -447,10 +472,10 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 $rootScope.quarterDrawData.push(QuarterObj);
             });
 
-            homeOrgX = 80 + MinuteGap;
-            homeOrgY = $scope.halfHeightY + $rootScope.factor.y * 2;
-            awayOrgX = 80 + MinuteGap;
-            awayOrgY = $scope.halfHeightY - $rootScope.factor.y * 2;
+            homeOrg.x = 80 + MinuteGap;
+            homeOrg.y = $scope.halfHeightY + $rootScope.factor.y * 2;
+            awayOrg.x = 80 + MinuteGap;
+            awayOrg.y = $scope.halfHeightY - $rootScope.factor.y * 2;
 
             let tempQuarter = 1;
             angular.forEach($rootScope.minuteScore, function (minuteInfo) {
@@ -465,33 +490,33 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     away: (minuteInfo.away + 1.0) * $rootScope.factor.x
                 };
                 let MinuteOffset_Y = {
-                    home: $rootScope.factor.y * 20,
-                    away: 0 - $rootScope.factor.y * 20
+                    home: $rootScope.factor.y * 10,
+                    away: 0 - $rootScope.factor.y * 10
                 };
                 if (tempQuarter !== minuteInfo.quarter) {
-                    homeOrgX += QuarterGap + MinuteGap;
-                    awayOrgX += QuarterGap + MinuteGap;
+                    homeOrg.x += QuarterGap + MinuteGap;
+                    awayOrg.x += QuarterGap + MinuteGap;
                     tempQuarter = minuteInfo.quarter;
                 }
                 MinuteObj.home = new Quad(
-                    new Point(homeOrgX, homeOrgY + MinuteOffset_Y.home - mOffset),
-                    new Point(homeOrgX + MinuteOffset_X.home, homeOrgY + MinuteOffset_Y.home - mOffset),
-                    new Point(homeOrgX + MinuteOffset_X.home, homeOrgY + mOffset),
-                    new Point(homeOrgX, homeOrgY + mOffset),
+                    new Point(homeOrg.x, homeOrg.y + MinuteOffset_Y.home - mOffset),
+                    new Point(homeOrg.x + MinuteOffset_X.home, homeOrg.y + MinuteOffset_Y.home - mOffset),
+                    new Point(homeOrg.x + MinuteOffset_X.home, homeOrg.y + mOffset),
+                    new Point(homeOrg.x, homeOrg.y + mOffset),
                     Background.home);
 
                 MinuteObj.away = new Quad(
-                    new Point(awayOrgX, awayOrgY + MinuteOffset_Y.away + mOffset),
-                    new Point(awayOrgX + MinuteOffset_X.away, awayOrgY + MinuteOffset_Y.away + mOffset),
-                    new Point(awayOrgX + MinuteOffset_X.away, awayOrgY - mOffset),
-                    new Point(awayOrgX, awayOrgY - mOffset),
+                    new Point(awayOrg.x, awayOrg.y + MinuteOffset_Y.away + mOffset),
+                    new Point(awayOrg.x + MinuteOffset_X.away, awayOrg.y + MinuteOffset_Y.away + mOffset),
+                    new Point(awayOrg.x + MinuteOffset_X.away, awayOrg.y - mOffset),
+                    new Point(awayOrg.x, awayOrg.y - mOffset),
                     Background.away);
 
-                MinuteObj.compareLine.startLine = new Line(new Point(awayOrgX, awayOrgY), new Point(homeOrgX, homeOrgY), lineWidth, $scope.compareColor(homeOrgX, awayOrgX));
-                MinuteObj.compareLine.endLine = new Line(new Point(awayOrgX + MinuteOffset_X.away, awayOrgY), new Point(homeOrgX + MinuteOffset_X.home, homeOrgY), lineWidth, $scope.compareColor(homeOrgX + MinuteOffset_X.home, awayOrgX + MinuteOffset_X.away));
+                MinuteObj.compareLine.startLine = new Line(new Point(awayOrg.x, awayOrg.y), new Point(homeOrg.x, homeOrg.y), lineWidth, $scope.compareColor(homeOrg.x, awayOrg.x));
+                MinuteObj.compareLine.endLine = new Line(new Point(awayOrg.x + MinuteOffset_X.away, awayOrg.y), new Point(homeOrg.x + MinuteOffset_X.home, homeOrg.y), lineWidth, $scope.compareColor(homeOrg.x + MinuteOffset_X.home, awayOrg.x + MinuteOffset_X.away));
 
-                homeOrgX += MinuteOffset_X.home + MinuteGap;
-                awayOrgX += MinuteOffset_X.away + MinuteGap;
+                homeOrg.x += MinuteOffset_X.home + MinuteGap;
+                awayOrg.x += MinuteOffset_X.away + MinuteGap;
 
                 MinuteObj.home.isSelected = false;
                 MinuteObj.away.isSelected = false;
@@ -504,25 +529,22 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             let tempPlayHomeDrawInfo = {}, tempPlayAwayDrawInfo = {};
             let background = '', radius = 1, lastRadius = 1;
 
-            let homePlayX = 0, homePlayY = 0, lastHomeScorePlayRadius = 0;
-            let awayPlayX = 0, awayPlayY = 0, lastAwayScorePlayRadius = 0;
+            let homePlay = { 'x' : 80, 'y' : $scope.halfHeightY + $rootScope.factor.y * 2};
+            let awayPlay = { 'x' : 80, 'y' : $scope.halfHeightY - $rootScope.factor.y * 2};
+            let lastHomeScorePlayRadius = 0;
+            let lastAwayScorePlayRadius = 0;
             let tempPlayHomeIndex = 0, tempPlayAwayIndex = 0;
-
-            homeOrgX = 80;
-            homeOrgY = $scope.halfHeightY + $rootScope.factor.y * 2;
-            awayOrgX = 80;
-            awayOrgY = $scope.halfHeightY - $rootScope.factor.y * 2;
 
             angular.forEach($rootScope.playData, function (minuteInfo, minuteIndex) {
                 tempPlayDrawData = [];
                 tempMinutePlayAwayDrawArray = [];
                 tempMinutePlayHomeDrawArray = [];
 
-                awayPlayX = $scope.minuteDrawData[minuteIndex].away.bottomLeft.x;
-                awayPlayY = awayOrgY - mOffset;
+                awayPlay.x = $scope.minuteDrawData[minuteIndex].away.bottomLeft.x;
+                awayPlay.y = awayOrg.y - mOffset;
 
-                homePlayX = $scope.minuteDrawData[minuteIndex].home.bottomLeft.x;
-                homePlayY = homeOrgY + mOffset;
+                homePlay.x = $scope.minuteDrawData[minuteIndex].home.bottomLeft.x;
+                homePlay.y = homeOrg.y + mOffset;
 
                 lastHomeScorePlayRadius = 0;
                 lastAwayScorePlayRadius = 0;
@@ -542,31 +564,31 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     }
                     if (playIndex === 0) {
                         if ($rootScope.minuteScore[minuteIndex].away > 0 && tempPlayAwayIndex > 1) {
-                            awayPlayX += (0.25 * $rootScope.factor.x);
+                            awayPlay.x += (0.25 * $rootScope.factor.x);
                         }
-                        awayPlayX += radius;
-                        awayPlayY -= radius;
+                        awayPlay.x += radius;
+                        awayPlay.y -= radius;
                     } else {
                         if (playInfo.point > 0) {
                             if (lastRadius === (((1 / 2) * $rootScope.factor.x) - MinuteGap)) {
                                 if (lastAwayScorePlayRadius === 0) {
-                                    awayPlayX = awayPlayX + radius;
+                                    awayPlay.x = awayPlay.x + radius;
                                 } else {
-                                    awayPlayX = lastAwayScorePlayRadius + radius;
+                                    awayPlay.x = lastAwayScorePlayRadius + radius;
                                 }
                             } else {
-                                awayPlayX += lastRadius + radius;
+                                awayPlay.x += lastRadius + radius;
                             }
                         }
-                        awayPlayY -= radius + lastRadius;
+                        awayPlay.y -= radius + lastRadius;
                     }
-                    tempPlayAwayDrawInfo = new Circle(new Point(awayPlayX, awayPlayY), radius, background);
+                    tempPlayAwayDrawInfo = new Circle(new Point(awayPlay.x, awayPlay.y), radius, background);
                     tempPlayAwayDrawInfo.eventId = playInfo.eventId;
                     tempMinutePlayAwayDrawArray.isSelected = false;
                     tempMinutePlayAwayDrawArray.push(tempPlayAwayDrawInfo);
                     lastRadius = radius;
                     if (playInfo.point > 0) {
-                        lastAwayScorePlayRadius = awayPlayX + radius;
+                        lastAwayScorePlayRadius = awayPlay.x + radius;
                     }
                 });
                 angular.forEach(minuteInfo.home, function (playInfo, playIndex) {
@@ -582,31 +604,31 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     }
                     if (playIndex === 0) {
                         if ($rootScope.minuteScore[minuteIndex].home > 0 && tempPlayHomeIndex > 1) {
-                            homePlayX += (0.25 * $rootScope.factor.x);
+                            homePlay.x += (0.25 * $rootScope.factor.x);
                         }
-                        homePlayX += radius;
-                        homePlayY += radius;
+                        homePlay.x += radius;
+                        homePlay.y += radius;
                     } else {
                         if (playInfo.point > 0) {
                             if (lastRadius === (((1 / 2) * $rootScope.factor.x) - MinuteGap)) {
                                 if (lastHomeScorePlayRadius === 0) {
-                                    homePlayX = homePlayX + radius;
+                                    homePlay.x = homePlay.x + radius;
                                 } else {
-                                    homePlayX = lastHomeScorePlayRadius + radius;
+                                    homePlay.x = lastHomeScorePlayRadius + radius;
                                 }
                             } else {
-                                homePlayX += lastRadius + radius;
+                                homePlay.x += lastRadius + radius;
                             }
                         }
-                        homePlayY += radius + lastRadius;
+                        homePlay.y += radius + lastRadius;
                     }
-                    tempPlayHomeDrawInfo = new Circle(new Point(homePlayX, homePlayY), radius, background);
+                    tempPlayHomeDrawInfo = new Circle(new Point(homePlay.x, homePlay.y), radius, background);
                     tempPlayHomeDrawInfo.eventId = playInfo.eventId;
                     tempMinutePlayHomeDrawArray.isSelected = false;
                     tempMinutePlayHomeDrawArray.push(tempPlayHomeDrawInfo);
                     lastRadius = radius;
                     if (playInfo.point > 0) {
-                        lastHomeScorePlayRadius = homePlayX + radius;
+                        lastHomeScorePlayRadius = homePlay.x + radius;
                     }
                 });
 
@@ -619,10 +641,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
             $scope.interactionCountCalculation();
 
-            let tempOrgX = 150;
-            let tempOrgY = 0;
-            let tempEndX = 0;
-            let tempEndY = 0;
+            let tempOrg = {'x' : 150, 'y' : 0};
+            let tempEnd = {'x' : 0,   'y' : 0};
 
             let interactionFactor = 1;
             let tempPathObj = {};
@@ -630,24 +650,24 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
             for (let playerName in $rootScope.storyLineData) {
                 if ($rootScope.playerInfo[playerName] === undefined) continue;
-                tempOrgX = 150;
-                tempOrgY = Math.floor($rootScope.sortedY[playerName]) - 5;
-                let tempOrg = 'M' + tempOrgX + ' ' + tempOrgY;
+                tempOrg.x = 150;
+                tempOrg.y = Math.floor($rootScope.sortedY[playerName]) - 5;
+                let tempOrgP = 'M' + tempOrg.x + ' ' + tempOrg.y;
                 tempColor = $rootScope.playerInfo[playerName]['team'] === $scope.game['homeId'] ? $scope.teamColor.home : $scope.teamColor.away;
                 tempPathObj = $rootScope.storyLineDrawData[playerName] === undefined ?
                     {
-                        path: tempOrg,
-                        points: [{x: tempOrgX, y: tempOrgY}],
+                        path: tempOrgP,
+                        points: [{x: tempOrg.x, y: tempOrg.y}],
                         color: tempColor,
                         width: 1
                     } : $rootScope.storyLineDrawData[playerName];
                 angular.forEach($rootScope.storyLineData[playerName], function (eventId) {
-                    tempEndX = $rootScope.eventData[eventId]['timeOffset'] * interactionFactor + 150;
-                    tempEndY = tempOrgY;
-                    if (tempEndX > tempOrgX) {
-                        tempPathObj.path = tempPathObj.path + ' L' + tempEndX + ' ' + tempOrgY;
-                        tempPathObj.points.push({x: tempEndX, y: tempOrgY});
-                        tempOrgX = tempEndX;
+                    tempEnd.x = $rootScope.eventData[eventId]['timeOffset'] * interactionFactor + 150;
+                    tempEnd.y = tempOrg.y;
+                    if (tempEnd.x > tempOrg.x) {
+                        tempPathObj.path = tempPathObj.path + ' L' + tempEnd.x + ' ' + tempOrg.y;
+                        tempPathObj.points.push({x: tempEnd.x, y: tempOrg.y});
+                        tempOrg.x = tempEnd.x;
                     }
                     switch ($rootScope.eventData[eventId]['event_type']) {
                         case 1:
@@ -657,48 +677,45 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 if ($rootScope.eventData[eventId]['players'][1]['id'] != null) {
                                     let playerName1 = $rootScope.eventData[eventId]['players'][1]['name'];
                                     if ($rootScope.sortedY[playerName] < $rootScope.sortedY[playerName1]) {
-                                        tempEndY = Math.floor(0.5 * ($rootScope.sortedY[playerName] + $rootScope.sortedY[playerName1]) - 5) - 2;
+                                        tempEnd.y = Math.floor(0.5 * ($rootScope.sortedY[playerName] + $rootScope.sortedY[playerName1]) - 5) - 2;
                                     } else {
-                                        tempEndY = Math.floor(0.5 * ($rootScope.sortedY[playerName] + $rootScope.sortedY[playerName1]) - 5) + 2;
+                                        tempEnd.y = Math.floor(0.5 * ($rootScope.sortedY[playerName] + $rootScope.sortedY[playerName1]) - 5) + 2;
                                     }
 
-                                    tempPathObj.path += ' L' + Math.floor(tempOrgX + 1) + ' ' + tempEndY + ' L' + Math.floor(tempOrgX + 2) + ' ' + tempOrgY;
-                                    tempPathObj.points.push({x: Math.floor(tempOrgX + 1), y: tempEndY});
-                                    tempPathObj.points.push({x: Math.floor(tempOrgX + 2), y: tempOrgY});
-                                    tempOrgX = Math.floor(tempEndX + 2);
+                                    tempPathObj.path += ' L' + Math.floor(tempOrg.x + 1) + ' ' + tempEnd.y + ' L' + Math.floor(tempOrg.x + 2) + ' ' + tempOrg.y;
+                                    tempPathObj.points.push({x: Math.floor(tempOrg.x + 1), y: tempEnd.y});
+                                    tempPathObj.points.push({x: Math.floor(tempOrg.x + 2), y: tempOrg.y});
+                                    tempOrg.x = Math.floor(tempEnd.x + 2);
                                 }
                             }
                             if ($rootScope.eventData[eventId]['players'][1]['name'] === playerName) {
                                 let playerName1 = $rootScope.eventData[eventId]['players'][0]['name'];
                                 if ($rootScope.sortedY[playerName] < $rootScope.sortedY[playerName1]) {
-                                    tempEndY = Math.floor(0.5 * ($rootScope.sortedY[playerName] + $rootScope.sortedY[playerName1]) - 5) - 2;
+                                    tempEnd.y = Math.floor(0.5 * ($rootScope.sortedY[playerName] + $rootScope.sortedY[playerName1]) - 5) - 2;
                                 } else {
-                                    tempEndY = Math.floor(0.5 * ($rootScope.sortedY[playerName] + $rootScope.sortedY[playerName1]) - 5) + 2;
+                                    tempEnd.y = Math.floor(0.5 * ($rootScope.sortedY[playerName] + $rootScope.sortedY[playerName1]) - 5) + 2;
                                 }
-                                tempPathObj.path += ' L' + Math.floor(tempOrgX + 1) + ' ' + tempEndY + ' L' + Math.floor(tempOrgX + 2) + ' ' + tempOrgY;
-                                tempPathObj.points.push({x: Math.floor(tempOrgX + 1), y: tempEndY});
-                                tempPathObj.points.push({x: Math.floor(tempOrgX + 2), y: tempOrgY});
-                                tempOrgX = Math.floor(tempEndX + 2);
+                                tempPathObj.path += ' L' + Math.floor(tempOrg.x + 1) + ' ' + tempEnd.y + ' L' + Math.floor(tempOrg.x + 2) + ' ' + tempOrg.y;
+                                tempPathObj.points.push({x: Math.floor(tempOrg.x + 1), y: tempEnd.y});
+                                tempPathObj.points.push({x: Math.floor(tempOrg.x + 2), y: tempOrg.y});
+                                tempOrg.x = Math.floor(tempEnd.x + 2);
                             }
                             break;
                         default:
                             break;
                     }
                 });
-                tempEndX = 150 + (720 * 4 + 5 * 60) * interactionFactor;
-                tempPathObj.path = tempPathObj.path + ' L' + tempEndX + ' ' + tempOrgY;
-                tempPathObj.points.push({x: tempEndX, y: tempOrgY});
+                tempEnd.x = 150 + (720 * 4 + 5 * 60) * interactionFactor;
+                tempPathObj.path = tempPathObj.path + ' L' + tempEnd.x + ' ' + tempOrg.y;
+                tempPathObj.points.push({x: tempEnd.x, y: tempOrg.y});
                 $rootScope.storyLineDrawData[playerName] = tempPathObj;
             }
-
-
 
             $rootScope.quarterOriginDrawData = $rootScope.quarterDrawData;
             $rootScope.minuteOriginDrawData = $rootScope.minuteDrawData;
             $rootScope.playOriginDrawData = $rootScope.playDrawData;
             $rootScope.storyLineOriginDrawData = $rootScope.storyLineDrawData;
 
-            $rootScope.dataGeneration = true;
             $rootScope.data.selectedIndex = 0;
 
 
@@ -963,7 +980,6 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
         };
         $scope.playMouseSelect = function (index) {
         };
-
         return $scope.init();
     }])
     .directive('gameGraph', ['$rootScope', '$document', function ($rootScope) {
@@ -974,7 +990,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
                 console.log($rootScope.data.selectedIndex);
 
-                let zoomRate = 0.1;
+                let zoomRate = 0.08;
                 let theSvgElement;
                 let currentX = 0, currentY = 0;
 
@@ -1427,163 +1443,12 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             }
         }
     }])
-    .directive('myDirective', ['$rootScope', '$document', function ($rootScope) {
-        return {
-            restrict: 'E',  // Element name: <my-directive></my-directive>
-            link: function ($scope, $element) {
-                console.log($rootScope.data.selectedIndex);
-                let lineFunction = d3.svg.line()
-                    .interpolate('linear')
-                    .tension(Math.random())
-                    .x(function (d) {
-                        return d.x;
-                    })
-                    .y(function (d) {
-                        return d.y;
-                    });
-
-
-                let svg = d3.select('my-directive')
-                    .append('svg')
-                    .attr('id', 'gameSVG')
-                    .attr('width', '100%')
-                    .attr('height', $scope.windowHeight)
-                    .style('margin-left', '1%');
-
-                let storyLEntity = svg.append('g')
-                    .attr('id', 'storyLEntity')
-                    .attr('ng-if', 'data.selectedIndex === 4');
-
-                let playerNames = storyLEntity.append('g')
-                    .attr('id', 'playerName')
-                    .selectAll('text')
-                    .data($rootScope.sortedList)
-                    .enter()
-                    .append('text')
-                    .attr('x', '0')
-                    .attr('y', function (d) {
-                        return $rootScope.sortedY[d];
-                    })
-                    .text(function (d) {
-                        return d;
-                    })
-                    .style('font-family', 'Arial');
-
-
-                let paths = svg.append('g')
-                    .attr('id', 'storyLine')
-                    .selectAll('g')
-                    .data($rootScope.sortedList)
-                    .enter()
-                    .append('g')
-                    .attr('id', function (d) {
-                        return d;
-                    })
-                    .append('path')
-                    .attr('d', function (d) {
-                        return lineFunction($rootScope.storyLineDrawData[d].points);
-                    })
-                    .attr('stroke', function (d) {
-                        return d3.rgb($rootScope.storyLineDrawData[d].color);
-                    })
-                    .attr('stroke-width', function (d) {
-                        return d3.rgb($rootScope.storyLineDrawData[d].width);
-                    })
-                    .attr('stroke-linecap', 'round')
-                    .attr('fill', 'none');
-
-                let zoomRate = 0.1;
-                let theSvgElement;
-                let currentX = 0, currentY = 0;
-
-
-                angular.element($element).attr('draggable', 'true');
-                $element.bind('dragstart', function (e) {
-                    // if(e.shiftKey){
-                    currentX = e.originalEvent.clientX;
-                    currentY = e.originalEvent.clientY;
-                    // }
-                });
-                $element.bind('dragover', function (e) {
-                    // if(e.shiftKey){
-                    if (e.preventDefault) {
-                        e.preventDefault();
-                    }
-
-                    $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
-                    $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
-
-                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
-                    currentX = e.originalEvent.clientX;
-                    currentY = e.originalEvent.clientY;
-                    return false;
-                    // }
-                });
-                $element.bind('drop', function (e) {
-                    // if(e.shiftKey){
-                    if (e.stopPropogation) {
-                        e.stopPropogation(); // Necessary. Allows us to drop.
-                    }
-                    return false;
-                    // }
-                });
-                $element.bind('mousewheel', function (mouseWheelEvent) {
-                    let zoomCenter = {
-                        'x': mouseWheelEvent.originalEvent.clientX,
-                        'y': mouseWheelEvent.originalEvent.clientY
-                    };
-                    if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
-                        zoom('zoomIn', zoomCenter);
-                    } else {
-                        zoom('zoomOut', zoomCenter);
-                    }
-
-                    mouseWheelEvent.cancelBubble = true;
-                    return false;
-                });
-
-                function zoom(zoomType, zoomCenter) {
-                    $rootScope.matrix[0] = parseFloat($rootScope.matrix[0]);	//scale-x
-                    $rootScope.matrix[3] = parseFloat($rootScope.matrix[3]);	//scale-y
-
-                    if (zoomType === 'zoomIn') {
-                        if ($rootScope.matrix[0] + zoomRate > 0.1 && $rootScope.matrix[3] + zoomRate > 0.1) {
-                            $rootScope.matrix[0] += zoomRate;
-                            $rootScope.matrix[3] += zoomRate;
-                            $rootScope.matrix[4] -= (zoomCenter.x * zoomRate);
-                            $rootScope.matrix[5] -= (zoomCenter.y * zoomRate);
-                        }
-                    } else if (zoomType === 'zoomOut') {
-                        if ($rootScope.matrix[0] - zoomRate > 0.1 && $rootScope.matrix[3] - zoomRate > 0.1) {
-                            $rootScope.matrix[0] -= zoomRate;
-                            $rootScope.matrix[3] -= zoomRate;
-                            $rootScope.matrix[4] += (zoomCenter.x * zoomRate);
-                            $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
-                        }
-                    }
-                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
-                }
-
-                function svgInitialize() {
-                    theSvgElement = $element.find('#gameSVG');
-                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
-                }
-
-                svgInitialize();
-
-
-            }
-        };
-    }])
     .directive('storyLine', ['$rootScope', '$document', function ($rootScope) {
         return {
             restrict: 'E',  // Element name: <my-directive></my-directive>
             link: function ($scope, $element) {
 
                 console.log($rootScope.data.selectedIndex);
-
-
-
 
                 let svg = d3.select('story-line')
                     .append('svg')
@@ -1722,30 +1587,36 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             }
         };
     }])
-    .directive('storyLine2', ['$rootScope', '$document', function ($rootScope) {
+    .directive('storyLine2', ['$rootScope', '$document', function ($rootScope, $document) {
         return {
             restrict: 'E',  // Element name: <my-directive></my-directive>
-            link: function ($scope) {
+            link: function ($scope, $element, $document) {
 
                 console.log($rootScope.data.selectedIndex);
 
                 let scenes = $rootScope.storyLine2.scenes;
                 let characters = $rootScope.storyLine2.characters;
 
-                let storyLine = d3.select('story-line2');
-                let selector = storyLine.append('select');
-                let svg = storyLine.append('svg');
-                let sliderCon = storyLine.append('div');
+                let storyLine = d3.select('story-line2').attr('id','gameSVG');
+                //let video = storyLine.append('p').append('div').append('video');
 
-                let Links  = svg.append('g').attr('class', 'links');
-                let Scenes = svg.append('g').attr('class', 'scenes');
-                let Intros = svg.append('g').attr('class', 'intros');
-                let SteamT = svg.append('g').attr('class', 'steamT');
-                SteamT.append('path').attr('class','areaH');
-                SteamT.append('path').attr('class','areaA');
-                SteamT.append('path').attr('class','baseL');
+                let selectCon = storyLine.append('p').append('div');
+                let sliderCon = storyLine.append('p').append('div');
 
-                configSelector(selector);
+                let svg0 = storyLine.append('p').append('div').append('svg');
+                let svg1 = storyLine.append('p').append('div').append('svg');
+                let svg2 = storyLine.append('p').append('div').append('svg');
+                let svg3 = storyLine.append('p').append('div').append('svg');
+
+                let Links  = svg0.append('g').attr('class', 'links');
+                let Scenes = svg0.append('g').attr('class', 'scenes');
+                let Intros = svg0.append('g').attr('class', 'intros');
+
+                let SteamS = svg1.append('g').attr('class', 'steamS');
+                let SteamP = svg2.append('g').attr('class', 'steamP');
+                let SteamT = svg3.append('g').attr('class', 'steamT');
+
+                configSelectCon(selectCon);
                 configSliderCon(sliderCon);
 
                 update(scenes, characters);
@@ -1766,15 +1637,23 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     narrative.labelPosition('left');
                     narrative.layout();
 
-                    configSvg(svg, narrative);
-                    configSteamT(SteamT, narrative);
+                    //configVideo(video);
+
+                    configSvg(svg0, narrative, 0, 0);
+                    configSvg(svg1, narrative, 0, 120);
+                    configSvg(svg2, narrative, 0, 120);
+                    configSvg(svg3, narrative, 0, 120);
+
+                    configSteam(SteamS, narrative, $rootScope.eventGapsce, 'Score Gap');
+                    configSteam(SteamP, narrative, $rootScope.eventTurnin, 'Turning Points');
+                    configSteam(SteamT, narrative, $rootScope.eventEffect, 'Real-time Efficiency');
 
                     updateLinks(narrative);
                     updateScenes(narrative);
                     updateNodes(narrative);
 
 
-                    svg.call(tooltip);
+                    svg0.call(tooltip);
 
                 }
 
@@ -1813,22 +1692,22 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         .attr('stroke-width', 2)
                         .attr('fill', 'none')
                         .on('mouseover', function (d) {
-                            svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                            svg.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
+                            svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                            svg0.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
 
-                            svg.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
-                            svg.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
+                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
+                            svg0.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
 
-                            svg.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
+                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
                             d.character.appearances.forEach(function (c) {
                                 let id = c.scene.id;
                                 svg.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
                             });
                         })
                         .on('mouseout', function () {
-                            svg.select('g.links').selectAll('g').attr('opacity', 1.0);
-                            svg.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
-                            svg.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
+                            svg0.select('g.links').selectAll('g').attr('opacity', 1.0);
+                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
+                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
                         });
 
                     segment.attr('d', narrative.link())
@@ -1839,22 +1718,22 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             return d.target.scene.status[d.character.id] ? '' : '1,4';
                         })
                         .on('mouseover', function (d) {
-                            svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                            svg.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
+                            svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                            svg0.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
 
-                            svg.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
-                            svg.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
+                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
+                            svg0.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
 
-                            svg.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
+                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
                             d.character.appearances.forEach(function (c) {
                                 let id = c.scene.id;
-                                svg.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
+                                svg0.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
                             });
                         })
                         .on('mouseout', function () {
-                            svg.select('g.links').selectAll('g').attr('opacity', 1.0);
-                            svg.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
-                            svg.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
+                            svg0.select('g.links').selectAll('g').attr('opacity', 1.0);
+                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
+                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
                         });
 
                     segment.exit().remove();
@@ -1895,15 +1774,15 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         })
                         .attr('fill', '#ffffff')
                         .on('mouseover', function (d) {
-                            svg.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
-                            svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                            svg.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
+                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
+                            svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
                             d.characters.forEach(function (c) {
-                                svg.select('g.links').selectAll('[id = \'' + c.id + '\']').attr('opacity', 1.0);
-                                svg.select('g.intros').selectAll('[id = \'' + c.id + '\']').attr('opacity', 1.0);
+                                svg0.select('g.links').selectAll('[id = \'' + c.id + '\']').attr('opacity', 1.0);
+                                svg0.select('g.intros').selectAll('[id = \'' + c.id + '\']').attr('opacity', 1.0);
                                 c.appearances.forEach(function (e) {
                                     let id = e.scene.id;
-                                    svg.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
+                                    svg0.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
                                 });
                             });
                             tooltip.offset([-10, 0]);
@@ -1914,9 +1793,9 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             tooltip.show();
                         })
                         .on('mouseout', function () {
-                            svg.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
-                            svg.select('g.links').selectAll('g.character').attr('opacity', 1.0);
-                            svg.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
+                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
+                            svg0.select('g.links').selectAll('g.character').attr('opacity', 1.0);
+                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
                             tooltip.hide();
                         });
 
@@ -2048,16 +1927,16 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                     return d.character.color;
                                 })
                                 .on('mouseover', function (d) {
-                                    svg.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
+                                    svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
                                     d.character.appearances.forEach(function (c) {
                                         let id = c.scene.id;
-                                        svg.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
+                                        svg0.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
                                     });
 
-                                    svg.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                                    svg.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
-                                    svg.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
-                                    svg.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
+                                    svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                                    svg0.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
+                                    svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
+                                    svg0.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
                                     let preUrl = 'https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/';
                                     tooltip.offset([-10, 0]);
                                     tooltip.html("<div  class = 'row' style='background: #dddddd'>" +
@@ -2067,9 +1946,9 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                         "<tr><td align ='center'>" + d.character.r2eIndex + "</td></tr>" + "</table></div>").show();
                                 })
                                 .on('mouseout', function () {
-                                    svg.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
-                                    svg.select('g.links').selectAll('g').attr('opacity', 1.0);
-                                    svg.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
+                                    svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
+                                    svg0.select('g.links').selectAll('g').attr('opacity', 1.0);
+                                    svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
                                     tooltip.hide();
                                 });
 
@@ -2112,37 +1991,54 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
                 }
 
-                function configSelector(object) {
-                    object.append('option').html('ALL');
-                    object.append('option').html('1');
-                    object.append('option').html('1');
-                    object.append('option').html('1');
-                    object.style('margin-left', '10px');
+                function configSelectCon(object) {
+                    let selector = object.append('select');
+                    let optionsDate = ['All','Shoot Made','Shoot Miss','Free Throw','Rebound','Turn Over','Foul','Violation','Sub','Regular','Jump Ball','Unknown'];
+                    let options = selector.selectAll('option').data(optionsDate);
+                    options.enter().append('option').text(function (d) {
+                        return d;
+                    });
+                    selector.on("change", function () {
+                        let selectedIndex = selector.property('selectedIndex');
+                        data = options[0][selectedIndex].__data__;
+                        let dateSet = sceneQuery(scenes, selectedIndex, 1.0);
+                        update(dateSet, characters);
+                        sliderCon.select('.d3-slider-handle').style('left','100%');
+                    });
+                    object.style('margin-left', '120px');
                     object.style('margin-right', '10px');
-                    object.style('margin-top', '10px');
-                    object.style('margin-bottom', '10px');
+                    object.style('margin-top', '5px');
+                    object.style('margin-bottom', '5px');
                     return object;
                 }
 
-                function configSvg(object, narrative) {
+                function configSvg(object, narrative, width, height) {
                     object.attr('id', 'narrative-chart');
                     object.attr('transform', function (d) {
                         let x = 10;
-                        let y = 50;
+                        let y = 0;
                         return 'translate(' + [x, y] + ')';
                     });
-                    object.style('margin-left', '10px');
-                    object.style('margin-right', '10px');
+                    object.style('margin-left', '5px');
+                    object.style('margin-right', '5px');
                     object.style('margin-top', '10px');
                     object.style('margin-bottom', '10px');
-                    object.attr('width', narrative.extent()[0] + 50);
-                    object.attr('height', narrative.extent()[1] + 1000);
+                    object.attr('width',  width  === 0 ? narrative.extent()[0] + 30 : width);
+                    object.attr('height', height === 0 ? narrative.extent()[1] + 5 : height);
+                }
+
+                function configVideo(object){
+                    object.attr('src','http://smb.cdnak.neulion.com/nlds_vod/nba/vod/2016/11/14/21600145/2_21600145_orl_ind_2016_b_discrete_ind19_1_1600.mp4');
+                    object.attr('autoplay', 'autoplay');
+                    object.attr('controls', 'controls');
+                    object.style('padding-left','120px');
                 }
 
                 function configSliderCon(object) {
                     object.style('width', '1000px');
-                    object.style('margin-left', '150px');
+                    object.style('margin-left', '120px');
                     object.style('margin-top', '10px');
+                    object.style('margin-bottom', '10px');
                     let slider = d3.slider();
                     configSlider(slider);
                     object.call(slider);
@@ -2156,50 +2052,75 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     object.on('slide', function (evt, value) {
                         let thresh = value / 100;
                         console.log('value : ' + value);
-                        let dateSet = [];
-                        scenes.forEach(function (scene) {
-                            if (scene.timeOffset < Math.floor(scenes[scenes.length - 1]['timeOffset'] * thresh)) {
-                                dateSet.push(scene);
-                            }
-                        });
+                        let dateSet = sceneQuery(scenes, 0, thresh);
                         update(dateSet, characters);
                     });
                 }
 
-                function configSteamT(object, narrative) {
+                function configSteam(object, narrative, data, info) {
                     object.attr('transform', function (d) {
                         let x = 10 + 150;
-                        let y = narrative.extent()[1] + 200;
+                        let y = 60  ;
                         return 'translate(' + [x, y] + ')';
                     });
+                    object.append('path').attr('class','areaH');
+                    object.append('path').attr('class','areaA');
+                    object.append('path').attr('class','baseL');
+
+                    let gameLogo = object.append('g').attr('class', 'gameLogo');
+                    let homeIcon = gameLogo.append('image').attr('class', 'homeIcon');
+                    let awayIcon = gameLogo.append('image').attr('class', 'awayIcon');
+                    let TextInfo = gameLogo.append('text').attr('class', 'TextInfo');
+                    homeIcon.attr('href', 'assets/images/teamLogo/' + $scope.game['homeName'] + '.svg');
+                    homeIcon.attr('width', '30').attr('x', 0).attr('y', 24 );
+                    awayIcon.attr('href', 'assets/images/teamLogo/' + $scope.game['awayName'] + '.svg');
+                    awayIcon.attr('width', '30').attr('x', 0).attr('y', -24 );
+                    homeIcon.attr('transform', function (d) {
+                        let x = -30 - homeIcon[0][0].getBBox().width;
+                        let y = - 0.5 * homeIcon[0][0].getBBox().height;
+                        return 'translate(' + [x, y] + ')';
+                    });
+                    awayIcon.attr('transform', function (d) {
+                        let x = -30 - awayIcon[0][0].getBBox().width;
+                        let y = - 0.5 * awayIcon[0][0].getBBox().height;
+                        return 'translate(' + [x, y] + ')';
+                    });
+                    TextInfo.text(info);
+                    TextInfo.attr('text-anchor', 'head');
+                    TextInfo.attr('font-family', 'Arial');
+                    TextInfo.attr('transform', function (d) {
+                        let x = -150;
+                        let y = -45;
+                        return 'translate(' + [x, y] + ')';
+                    });
+
                     let area = d3.svg.area()
                         .x(function (d) {
                             return d.x * narrative.scale();
                         })
                         .y0(function (d) {
-                            return d.y0;
+                            return d.y0 ;
                         })
                         .y1(function (d) {
-                            return d.y1;
+                            return d.y1 ;
                         })
-                        .interpolate("bundle")
-                        ;
-                        // .interpolate("basis");
+                        .interpolate("step"); // [ "linear","bundle", "basis", "step", "cardinal"]
+
 
                     let home = object.select('path.areaH')
                         .attr('d', function () {
-                            return area($rootScope.eventEffect.home);
+                            return area(data.home);
                         })
                         .attr('fill', $scope.teamColor.home);
 
                     let away = object.select('path.areaA')
                         .attr('d', function (d) {
-                            return area($rootScope.eventEffect.away);
+                            return area(data.away);
                         })
                         .attr('fill',  $scope.teamColor.away);
                     let base = object.select('path.baseL')
                         .attr('d', function (d) {
-                            return 'M0,98L' + narrative.extent()[0] +',98';
+                            return 'M0,' + 0 + 'L' + (narrative.extent()[0] - 170) +',' + 0;
                         })
                         .attr('stroke-width', 2)
                         .attr('stroke',  '#a5a5a5')
@@ -2207,6 +2128,39 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
                 }
 
+                function sceneQuery(scenes, query, thresh) {
+                    let dateSet = [];
+                    scenes.forEach(function (scene) {
+                        if (scene.timeOffset <= Math.floor(scenes[scenes.length - 1]['timeOffset'] * thresh)) {
+                            if(query == 0){
+                                dateSet.push(scene);
+                            }
+                            else if(scene.type == query){
+                                dateSet.push(scene);
+                            }
+                            else if(scene.type == 13){
+                                dateSet.push(scene);
+                            }
+
+                        }
+                    });
+                    return dateSet;
+                }
+
+                $('story-line2').scroll(function () {
+                   // video.style('margin-left', function (d) {
+                   //     let offset = $('story-line2').scrollLeft();
+                   //     return offset + "px";
+                   //  });
+                   sliderCon.style('margin-left', function (d) {
+                        let offset = $('story-line2').scrollLeft() + 120;
+                        return offset + "px";
+                    });
+                   selectCon.style('margin-left', function (d) {
+                        let offset = $('story-line2').scrollLeft() + 120;
+                        return offset + "px";
+                    });
+                });
             }
         }
     }])
@@ -2330,10 +2284,10 @@ let lineFunction = d3.svg.line().x(function (d) {
 }).interpolate('linear');
 let tooltip = d3.tip().attr('class', 'd3-tip').style('box-sizing', 'content-box');
 let areaFunction = d3.svg.area().x(function (d) {
-        return d.x;
-    }).y0(function (d) {
-        return d.y0;
-    }).y1(function (d) {
-        return d.y1;
-    }).interpolate("monotone");
+    return d.x;
+}).y0(function (d) {
+    return d.y0;
+}).y1(function (d) {
+    return d.y1;
+}).interpolate("monotone");
 
