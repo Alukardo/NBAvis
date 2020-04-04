@@ -413,7 +413,7 @@ d3.layout.narrative = function () {
         scenes, characters, introductions, links,
         size, orientation, pathSpace, scale,
         labelSize, labelPosition, groupMargin, scenePadding,
-        groups, totalCharacters;
+        groups, totalCharacters, r2eSort;
 
 // Set some defaults.
     size = [1, 1];
@@ -424,6 +424,7 @@ d3.layout.narrative = function () {
     scenePadding = [0, 0, 0, 0];
     groupMargin = 0;
     orientation = 'horizontal';
+    r2eSort = true;
 
 // Public functions (the API)
 // ==========================
@@ -606,6 +607,15 @@ d3.layout.narrative = function () {
             return labelPosition;
         }
         labelPosition = _;
+        return narrative;
+    };
+
+// r2eSort enable/disable
+    narrative.r2eSort = function (_) {
+        if (!arguments.length) {
+            return r2eSort;
+        }
+        r2eSort = _;
         return narrative;
     };
 
@@ -1029,9 +1039,12 @@ d3.layout.narrative = function () {
             d.r2eIndex = charactersOrder[i];
         });
         groups.forEach(function (group) {
-            group.characters.sort(function (a, b) {
-                return  a.r2eIndex - b.r2eIndex;
-            });
+            if(r2eSort){
+                group.characters.sort(function (a, b) {
+                    return  a.r2eIndex - b.r2eIndex;
+                });
+            }
+
             group.characters.forEach(function (character, i) {
                 character.cOrder = i;
             });
@@ -1067,7 +1080,7 @@ d3.layout.narrative = function () {
 
         let prePositions = {};
 
-        let rate = 0.6;
+        let rate = 0.5;
 
         totalCharacters.forEach(function (d) {
             prePositions[d.id] = characterPosition(d.cOrder) + d.group.min
@@ -1085,7 +1098,7 @@ d3.layout.narrative = function () {
             scene.appearances.forEach(function (appearance, i) {
                 if (orientation === 'vertical') {
                     appearance.y = scenePadding[0];
-                    appearance.x = 0.6 * characterPosition(i) + scenePadding[3];
+                    appearance.x = rate * characterPosition(i) + scenePadding[3];
                     prePositions[appearance.character.id] = avg + appearance.x;
                 } else {
                     if (scene.appearances.length > 1) {
@@ -1107,6 +1120,7 @@ d3.layout.narrative = function () {
             }
             if (scene.appearances.length > 1) {
                 avg = characterPosition(tempAppearance.character.cOrder) + tempAppearance.character.group.min;
+                //avg = prePositions[tempAppearance.character.id]
             } else if (scene.appearances.length == 1) {
                 avg = prePositions[tempAppearance.character.id];
             }

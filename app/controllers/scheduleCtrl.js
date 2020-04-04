@@ -6,7 +6,7 @@ app.controller('scheduleCtrl', ['$rootScope', '$scope', '$filter', '$location', 
             globalService.clear();
             $rootScope.menuIcon = 'menu';
             let date = new Date();
-            date.setDate(date.getDate() - 1);
+            date.setDate(date.getDate() - 360);
             if ($stateParams.date !== undefined) {
                 $scope.paramDate = $stateParams.date;
             } else {

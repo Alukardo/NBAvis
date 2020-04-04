@@ -291,7 +291,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             let playerStatus = {};
             let tempScoreSum = {'home' : 0, 'away' : 0};
             $rootScope.eventGapsce = {'home':[ { 'x': 0, 'y0' :  0, 'y1':  0 } ], 'away':[ { 'x': 0, 'y0':    0, 'y1': 0 } ]};
-            $rootScope.eventEffect = {'home':[ { 'x': 0, 'y0' :  0, 'y1': 48 } ], 'away':[ { 'x': 0, 'y0':  -48, 'y1': 0 } ]};
+            $rootScope.eventEffect = {'home':[ { 'x': 0, 'y0' :  0, 'y1':  0 } ], 'away':[ { 'x': 0, 'y0':    0, 'y1': 0 } ]};
             $rootScope.eventTurnin = {'home':[ { 'x': 0, 'y0' :  0, 'y1':  0 } ], 'away':[ { 'x': 0, 'y0':    0, 'y1': 0 } ]};
             angular.forEach($sessionStorage.playerData, function (player) {
                 let temp = {id: '', name: '', width: 0, affiliation: '', color: '', initialGroup: undefined};
@@ -301,7 +301,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 temp.affiliation = $scope.predictSide(player['team']).teamM;
                 temp.color = $scope.predictSide(player['team']).color;
                 temp.initialGroup = $scope.predictSide(player['team']).group;
-                //temp.initialGroup = 0;
+                temp.initialGroup = 0;
                 playerStatus[temp.id] = player['starter'];
                 $rootScope.storyLine2.charactersMap[temp.id] = temp;
                 $rootScope.storyLine2.characters.push($rootScope.storyLine2.charactersMap[temp.id]);
@@ -320,7 +320,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             duration: 0,
                             type: 0,
                             status: {},
-                            weight: 0
+                            weight: 0,
+                            description:[]
                         };
                         let players = event['players'].filter(function (player) {
                             return player.id !== null && player.name !== null && player.team !== null;
@@ -341,7 +342,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                     duration: 0,
                                     type: 0,
                                     status: {},
-                                    weight: 0
+                                    weight: 0,
+                                    description:[]
                                 };
                                 scene.id = event.eventId + '-' + (i++).toString();
                                 scene.type = event['event_type'];
@@ -371,6 +373,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             }
                             scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap : $rootScope.quarterGap;
                             scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
+                            scene.description.push(event['home_description']);
+                            scene.description.push(event['away_description']);
                             $rootScope.storyLine2.scenes.push(scene);
                             preEvent = event;
 
@@ -382,10 +386,11 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             if (event['event_type'] !== 12 && event['event_type'] !== 13){
 
                                 let  effect = eventEffect(event['event_type'], event['timeDuring'], sceneTeam.teamM);
+                                let  minEffect = Math.min(effect.away, effect.home);
                                 let  x =  scene.start + scene.duration;
                                 let factor = 2.0;
-                                $rootScope.eventEffect.away.push({'x': x, 'y0': -24 * factor, 'y1' : (-24 + effect.away) * factor});
-                                $rootScope.eventEffect.home.push({'x': x, 'y0': (24 - effect.home) * factor, 'y1' : 24 * factor});
+                                $rootScope.eventEffect.away.push({'x': x, 'y0': (-effect.away + minEffect) * factor, 'y1' : 0 });
+                                $rootScope.eventEffect.home.push({'x': x, 'y0': 0, 'y1' : (effect.home - minEffect) * factor });
 
                                 $rootScope.eventGapsce.away.push({'x': x, 'y0':  - score_gap_a , 'y1': 0 });
                                 $rootScope.eventGapsce.home.push({'x': x, 'y0': 0, 'y1' : score_gap_h});
@@ -1450,6 +1455,18 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
                 console.log($rootScope.data.selectedIndex);
 
+                let areaFunction = d3.svg.area()
+                    .x(function (d) {
+                    return d.x;
+                })
+                    .y0(function (d) {
+                    return d.y0;
+                })
+                    .y1(function (d) {
+                    return d.y1;
+                })
+                    .interpolate("monotone");
+
                 let svg = d3.select('story-line')
                     .append('svg')
                     .attr('id', 'gameSVG')
@@ -1595,7 +1612,12 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 console.log($rootScope.data.selectedIndex);
 
                 let scenes = $rootScope.storyLine2.scenes;
+                let scenesDate = scenes;
                 let characters = $rootScope.storyLine2.characters;
+
+                let query  = 0;
+                let sort   = true;
+                let thresh =  1.0;
 
                 let storyLine = d3.select('story-line2').attr('id','gameSVG');
 
@@ -1618,14 +1640,18 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let SteamP = svg2.append('g').attr('class', 'steamP');
                 let SteamT = svg3.append('g').attr('class', 'steamT');
 
+
                 configSelectCon(selectCon);
                 configSliderCon(sliderCon);
+                update(scenes, characters, true);
 
-                update(scenes, characters);
+                let tooltip = d3.tip()
+                    .attr('class', 'd3-tip')
+                    .style('box-sizing', 'content-box');
+                svg0.call(tooltip);
 
 
-
-                function update(scenes, characters) {
+                function update(scenes, characters, sort) {
                     let Canvas = {};
                     Canvas.width = scenes.length * 40;
                     Canvas.height = 1600;
@@ -1639,6 +1665,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     narrative.labelSize([160, 15]);
                     narrative.scenePadding([0, 5, 0, 5]);
                     narrative.labelPosition('left');
+                    narrative.r2eSort(sort);
                     narrative.layout();
 
                     //configVideo(video);
@@ -1657,7 +1684,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     updateNodes(narrative);
 
 
-                    svg0.call(tooltip);
+
 
                 }
 
@@ -1788,12 +1815,22 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                     let id = e.scene.id;
                                     svg0.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
                                 });
+
                             });
                             tooltip.offset([-10, 0]);
-                            tooltip.html("<div ><table>" +
-                                "<tr><td width='50px' align ='left'>id:" + d.id + "</td></tr>" +
-                                "<tr><td align ='left'>type:" + d.type + "</td></tr>" +
-                                "</table></div>");
+                            let toolTipContent = "<table width='300px'>" + "<tr>" +
+                                "<td>" + playerImg(d.characters[0]) + "</td>";
+                            if(d.characters.length > 1){
+                                toolTipContent +=  "<td>" + playerImg(d.characters[1]) + "</td>";
+                            }
+                            toolTipContent += "</tr></table>";
+                            d.description.forEach(function (c) {
+                                if(c!== ""){
+                                    toolTipContent += "<p style='font-family:Arial'>*"+ c + "</p>";
+                                }
+                            });
+
+                            tooltip.html("<div style='background: #dddddd' >" + toolTipContent + "</div>");
                             tooltip.show();
                         })
                         .on('mouseout', function () {
@@ -1819,7 +1856,6 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         .attr('height', function (d) {
                             return d.height;
                         })
-                        // .attr('opacity',0)
                         .attr('opacity', function (d) {
                             if (d.appearances.length === 1)
                                 return 0;
@@ -1889,8 +1925,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 function updateNodes(narrative) {
                     let intro = Intros.selectAll('.intro')
                         .data(narrative.introductions());
-                    intro.enter()
-                        .call(function (s) {
+                    intro.enter().call(function (s) {
                             let g = s.append('g')
                                 .attr('class', 'intro')
                                 .attr('id', function (d) {
@@ -1941,13 +1976,9 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                     svg0.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
                                     svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
                                     svg0.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
-                                    let preUrl = 'https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/';
+
                                     tooltip.offset([-10, 0]);
-                                    tooltip.html("<div  class = 'row' style='background: #dddddd'>" +
-                                        "<table><tr><td align ='center'>" +
-                                        "<img  class = 'playerImg' style='background: " + d.character.color + "' src='" + preUrl + d.character.id + ".png" + "'>" +
-                                        "</td></tr>" +
-                                        "<tr><td align ='center'>" + d.character.r2eIndex + "</td></tr>" + "</table></div>").show();
+                                    tooltip.html("<div  style='background: #dddddd'>" + playerImg(d.character) + "</div>").show();
                                 })
                                 .on('mouseout', function () {
                                     svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
@@ -1996,25 +2027,40 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 }
 
                 function configSelectCon(object) {
-                    let selectTx = object.append('label');
-                    selectTx.text('Event Type : ');
-                    let selector = object.append('select');
-                    let optionsDate = [' All ',' Shoot Made ',' Shoot Miss ',' Free Throw ',' Rebound ',' Turn Over ',' Foul ',' Violation ',' Sub ',' Regular ',' Jump Ball ',' Unknown '];
-                    let options = selector.selectAll('option').data(optionsDate);
-                    options.enter().append('option').text(function (d) {
+                    let selectTypeTx = object.append('label').attr('class', 'selectLabel');
+                    selectTypeTx.text('Event Type : ');
+                    let selectorType = object.append('select').attr('class','selectorType');
+                    let optionsData = [' All ',' Shoot Made ',' Shoot Miss ',' Free Throw ',' Rebound ',' Turn Over ',' Foul ',' Violation ',' Sub ',' Regular ',' Jump Ball ',' Ejection '];
+                    let optionsType = selectorType.selectAll('option').data(optionsData);
+                    optionsType.enter().append('option').text(function (d) {
                         return d;
                     });
-                    selector.on("change", function () {
-                        let selectedIndex = selector.property('selectedIndex');
-                        data = options[0][selectedIndex].__data__;
-                        let dateSet = sceneQuery(scenes, selectedIndex, 1.0);
-                        update(dateSet, characters);
-                        sliderCon.select('.d3-slider-handle').style('left','100%');
+                    selectorType.on("change", function () {
+                        let selectedIndex = selectorType.property('selectedIndex');
+                        scenesDate = sceneQuery(scenes, selectedIndex, thresh);
+                        update(scenesDate, characters, sort);
                     });
+
+                    let selectSortTx = object.append('label').attr('class', 'selectLabel');
+                    selectSortTx.text('Sort Type : ');
+                    let selectorSort = object.append('select').attr('class','selectorSort');
+                    let SortData = [' R2eSort ', ' None ' ];
+                    let optionsSort = selectorSort.selectAll('option').data(SortData);
+                    optionsSort.enter().append('option').text(function (d) {
+                        return d;
+                    });
+                    selectorSort.on("change", function () {
+                        let selectedIndex = selectorSort.property('selectedIndex');
+                        if(selectedIndex === 0 ) sort = true;
+                        if(selectedIndex === 1 ) sort = false;
+                        update(scenesDate, characters, sort);
+                    });
+
+
                     object.style('margin-left', '120px');
                     object.style('margin-right', '10px');
-                    object.style('margin-top', '5px');
-                    object.style('margin-bottom', '5px');
+                    object.style('margin-top', '10px');
+                    object.style('margin-bottom', '10px');
                     return object;
                 }
 
@@ -2033,10 +2079,10 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         object.max(100);
                         object.value(100);
                         object.on('slide', function (evt, value) {
-                            let thresh = value / 100;
+                            thresh = value / 100;
                             console.log('value : ' + value);
-                            let dateSet = sceneQuery(scenes, 0, thresh);
-                            update(dateSet, characters);
+                            let dateSet = sceneQuery(scenesDate, query, thresh);
+                            update(dateSet, characters,true);
                         });
                     }
 
@@ -2160,15 +2206,27 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                    //     let offset = $('story-line2').scrollLeft();
                    //     return offset + "px";
                    //  });
-                   sliderCon.style('margin-left', function (d) {
-                        let offset = $('story-line2').scrollLeft() + 120;
+                   sliderCon.style('padding-left', function (d) {
+                        let offset = $('story-line2').scrollLeft();
                         return offset + "px";
                     });
-                   selectCon.style('margin-left', function (d) {
-                        let offset = $('story-line2').scrollLeft() + 120;
+                   selectCon.style('padding-left', function (d) {
+                        let offset = $('story-line2').scrollLeft();
                         return offset + "px";
                     });
                 });
+
+                function playerImg(character){
+                    let preUrl = 'https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/';
+                    return "<table width='148'>" +
+                        "<tr><td align ='center'>" +
+                        "<img class = 'playerImg' " +
+                        "style = 'background: " + character.color + "' " +
+                        "src = '" + preUrl + character.id + ".png" + "'>" +
+                        "</td></tr>" +
+                        "<tr><td align ='center'>" +
+                        "<label class ='playerName' >" + character.name + "</label>" + "</td></tr>" + "</table>";
+                }
             }
         }
     }])
@@ -2285,17 +2343,50 @@ function deepCopy(obj) {
     return result;
 }
 
+function eventType(id){
+    switch (id) {
+        case  1 : return 'Made'; break;
+        case  2 : return 'Miss'; break;
+        case  3 : return 'Free Throw'; break;
+        case  4 : return 'Rebound'; break;
+        case  5 : return 'Turn Over'; break;
+        case  6 : return 'Foul'; break;
+        case  7 : return 'Violation'; break;
+        case  8 : return 'Sub'; break;
+        case  9 : return 'Regular'; break;
+        case 10 : return 'Jump Ball'; break;
+        case 11 : return 'Ejection'; break;
+        case 12 : return 'Start'; break;
+        case 13 : return 'End'; break;
+    }
+
+}
+
+function description(des, type){
+    switch (type) {
+        case  1 : return 'Made'; break;
+        case  2 : return 'Miss'; break;
+        case  3 : return 'Free Throw'; break;
+        case  4 : return 'Rebound'; break;
+        case  5 : return 'Turn Over'; break;
+        case  6 : return 'Foul'; break;
+        case  7 : return 'Violation'; break;
+        case  8 : return 'Sub'; break;
+        case  9 : return 'Regular'; break;
+        case 10 : return 'Jump Ball'; break;
+        case 11 : return 'Ejection'; break;
+        case 12 : return 'Start'; break;
+        case 13 : return 'End'; break;
+    }
+}
+
+
+
 let lineFunction = d3.svg.line().x(function (d) {
     return d.x;
 }).y(function (d) {
     return d.y;
 }).interpolate('linear');
-let tooltip = d3.tip().attr('class', 'd3-tip').style('box-sizing', 'content-box');
-let areaFunction = d3.svg.area().x(function (d) {
-    return d.x;
-}).y0(function (d) {
-    return d.y0;
-}).y1(function (d) {
-    return d.y1;
-}).interpolate("monotone");
+
+
 

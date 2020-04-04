@@ -41,7 +41,6 @@ md-tabs .md-paginator {
 	border-radius: 6px;
 }
 #d3tooltip {
-
 	color: #FFFFFF;
 	background: #a5a5a5;
 	height: 150px;
@@ -60,5 +59,19 @@ story-line2{
 
 }
 .playerImg{
-	width:130px;
+	width :130px;
+	margin: 5px;
+}
+.playerName{
+	margin: 5px;
+	font-size:6px;
+	text-align:center;
+}
+.eventDescription{
+	font-size:3px;
+	text-align:center;
+}
+.selectLabel{
+	margin-left: 10px;
+	margin-right: 10px;
 }
