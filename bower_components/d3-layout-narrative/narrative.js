@@ -651,7 +651,7 @@ d3.layout.narrative = function () {
         // displaying the narrative chart. It accepts an object and returns a path
         // string linking the two.
         function link(d) {
-            let x0, x1, y0, y1, cx0, cy0, cx1, cy1, ci;
+            let x0, y0, x1, y1, cx0, cy0, cx1, cy1, ci;
 
             // Set path end positions.
             x0 = (d.source.scene) ? d.source.scene.x + d.source.x : d.source.x;
@@ -695,7 +695,8 @@ d3.layout.narrative = function () {
                     cy1 = y1;
                 }
 
-                return "M" + x0 + "," + y0 + "L" + (x1 - padding) + "," + y0 +
+                return "M" + x0 + "," + y0 +
+                    "L" + (x1 - padding) + "," + y0 +
                     "C" + cx0 + "," + cy0 +
                     " " + cx1 + "," + cy1 +
                     " " + x1 + "," + y1;
@@ -784,9 +785,15 @@ d3.layout.narrative = function () {
                 character._y = character.y || false;
                 character._width = character.width || false;
                 character._height = character.height || false;
-
+                let des = "";
+                for(let i =0; i < scene.description.length; i++ ){
+                    if(scene.description[i].id == character.id){
+                        des = scene.description[i].action;
+                        break;
+                    }
+                }
                 // Add this appearance to the map.
-                appearances.push({id: character.id + "-" + scene.id, character: character, scene: scene});
+                appearances.push({id: character.id + "-" + scene.id, character: character, scene: scene, des: des});
 
                 // Setup some properties on the character and scene that we'll need later.
                 scene.appearances = [];
@@ -969,7 +976,11 @@ d3.layout.narrative = function () {
 // Group appearances (`group.appearances`) is an array
 // of all characters which appear in scenes assigned to this group.
     function sortGroupAppearances() {
-
+        // let nodes  = characters.map(function (d, i) {
+        //     return i;
+        // });
+        // let edges  = getEdges(characters, scenes);
+        // let matrix = getMatrix(nodes, edges);
     }
 
 // Character group positions
@@ -983,34 +994,7 @@ d3.layout.narrative = function () {
             let nodes  = characters.map(function (d, i) {
                 return i;
             });
-            let edges = [];
-            scenes.forEach(function (scene) {
-                edges = edges.concat(sceneEdges(scene.appearances, characters));
-            });
-            function sceneEdges(appearances, characters) {
-                let i, j, matrix;
-                matrix = [];
-                if(appearances.length < 2) return matrix;
-                for (i = appearances.length; i--;) {
-                    for (j = i; j--;) {
-                        let a = characters.indexOf(appearances[i].character);
-                        let b = characters.indexOf(appearances[j].character);
-                        if (a !== -1 && b !== -1 && a !== b) matrix.push([a, b]);
-                    }
-                }
-                return matrix;
-            }
-            edges = edges.reduce(function (result, edge) {
-                let resultEdge;
-                resultEdge = result.filter(function (resultEdge) {
-                    return (resultEdge.source === edge[1] && resultEdge.target === edge[0]) || (resultEdge.source === edge[0] && resultEdge.target === edge[1]);
-                })[0] || {source: edge[0], target: edge[1], weight: 0};
-                resultEdge.weight++;
-                if (resultEdge.weight === 1) {
-                    result.push(resultEdge);
-                }
-                return result;
-            }, []);
+            let edges = getEdges(characters, scenes);
             let edgeAMax = edges.reduce((edge1, edge2) => {
                 return edge1.weight > edge2.weight ? edge1 : edge2
             }, []);
@@ -1032,7 +1016,6 @@ d3.layout.narrative = function () {
                     }
                 }
             }
-
             return r2e(sceneMatrix, nodes.length);
         }
         totalCharacters.forEach(function (d, i) {
@@ -1049,7 +1032,6 @@ d3.layout.narrative = function () {
                 character.cOrder = i;
             });
         });
-
     }
 
 // Scene timing
@@ -1101,28 +1083,23 @@ d3.layout.narrative = function () {
                     appearance.x = rate * characterPosition(i) + scenePadding[3];
                     prePositions[appearance.character.id] = avg + appearance.x;
                 } else {
-                    if (scene.appearances.length > 1) {
                       appearance.y = rate * characterPosition(i) + scenePadding[0];
                       appearance.x = scenePadding[3];
-                    }else{
-                        appearance.x = 0;
-                        appearance.y = 0;
-                    }
-
                 }
             });
             if (scene.appearances.length > 1) {
                 scene.width = scenePadding[1] + scenePadding[3];
                 scene.height = rate * characterGroupHeight(scene.appearances.length) + scenePadding[0] + scenePadding[2];
             } else {
-                scene.width = 2;
-                scene.height = 2;
+                scene.width = 4;
+                scene.height = 4;
             }
             if (scene.appearances.length > 1) {
                 avg = characterPosition(tempAppearance.character.cOrder) + tempAppearance.character.group.min;
                 //avg = prePositions[tempAppearance.character.id]
             } else if (scene.appearances.length == 1) {
-                avg = prePositions[tempAppearance.character.id];
+                avg = characterPosition(tempAppearance.character.cOrder) + tempAppearance.character.group.min;
+               // avg = prePositions[tempAppearance.character.id] ;
             }
 
             if (orientation === 'vertical') {
@@ -1132,6 +1109,7 @@ d3.layout.narrative = function () {
                 scene.x = Math.max(labelSize[0], scale * scene.start + labelSize[0]);
                 scene.y = Math.max(    0, avg - tempAppearance.y);
             }
+
             scene.appearances.forEach(function (appearance) {
                 if (orientation === 'vertical') {
                     prePositions[appearance.character.id] = scene.x + appearance.x;
@@ -1538,6 +1516,73 @@ d3.layout.narrative = function () {
         Module._free(input_ptr.byteOffset);
         Module._free(output_ptr.byteOffset);
         return result;
+    }
+//获取edge
+    function getEdges(characters, scenes) {
+        let edges = [];
+        scenes.forEach(function (scene) {
+            edges = edges.concat(sceneEdges(scene.appearances, characters));
+        });
+        function sceneEdges(appearances, characters) {
+            let i, j, matrix;
+            matrix = [];
+            if(appearances.length < 2) return matrix;
+            for (i = appearances.length; i--;) {
+                for (j = i; j--;) {
+                    let a = characters.indexOf(appearances[i].character);
+                    let b = characters.indexOf(appearances[j].character);
+                    if (a !== -1 && b !== -1 && a !== b) matrix.push([a, b]);
+                }
+            }
+            return matrix;
+        }
+        edges = edges.reduce(function (result, edge) {
+            let resultEdge;
+            resultEdge = result.filter(function (resultEdge) {
+                edge.sort(function(a,b){
+                    return a - b;
+                });
+                return resultEdge.source === edge[0] && resultEdge.target === edge[1];
+            })[0] || {source: edge[0], target: edge[1], weight: 0};
+            resultEdge.weight++;
+            if (resultEdge.weight === 1) {
+                result.push(resultEdge);
+            }
+            return result;
+        }, []);
+        return edges;
+    }
+
+    function getMatrix(nodes, edges) {
+        let sceneMatrix = [];
+        for (let i = 0; i < nodes.length; i++) {
+            sceneMatrix[i] = [];
+            for (let j = 0; j < nodes.length; j++) {
+                sceneMatrix[i][j] = 0.0;
+            }
+        }
+        edges.forEach(function (d) {
+            sceneMatrix[d.source][d.target] = d.weight;
+            sceneMatrix[d.target][d.source] = d.weight;
+        });
+        return  sceneMatrix
+    }
+
+    function findMax(matrix) {
+        let id = 0;
+        let value = 0;
+        for(let i = 0; i < matrix.length; i++){
+            let tempValue = 0;
+            for(let j = 0; j < matrix[i].length; j++){
+                tempValue += matrix[i][j];
+            }
+            if(tempValue > value){
+                id = i;
+                value = tempValue;
+            }
+        }
+
+
     }
 
 };

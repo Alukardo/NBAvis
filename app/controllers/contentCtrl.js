@@ -67,7 +67,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
             $rootScope.eventData = [];
             $rootScope.playerInfo = [];
-
+            $rootScope.playerInfoL = [];
             $rootScope.storyLine2 = {'characters': [], 'scenes': [], 'charactersMap': {}};
 
             $rootScope.storyLineInteractionCount = [];
@@ -202,7 +202,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             // Story Lines
             let preOffsetX = -1;
             let pIndex = {'home': 0, 'away': 0};
-            let Index  = {'home': 0, 'away': 0};
+            let Index = {'home': 0, 'away': 0};
 
             $rootScope.storyLine = {'pre': {}, 'data': [], 'ps': [], 'draw': {}};
             angular.forEach($sessionStorage.playerData, function (player) {
@@ -289,10 +289,10 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             // Story Lines 2
             let preEvent = null;
             let playerStatus = {};
-            let tempScoreSum = {'home' : 0, 'away' : 0};
-            $rootScope.eventGapsce = {'home':[ { 'x': 0, 'y0' :  0, 'y1':  0 } ], 'away':[ { 'x': 0, 'y0':    0, 'y1': 0 } ]};
-            $rootScope.eventEffect = {'home':[ { 'x': 0, 'y0' :  0, 'y1':  0 } ], 'away':[ { 'x': 0, 'y0':    0, 'y1': 0 } ]};
-            $rootScope.eventTurnin = {'home':[ { 'x': 0, 'y0' :  0, 'y1':  0 } ], 'away':[ { 'x': 0, 'y0':    0, 'y1': 0 } ]};
+            let tempScoreSum = {'home': 0, 'away': 0};
+            $rootScope.eventGapsce = {'home': [{'x': 0, 'y0': 0, 'y1': 0}], 'away': [{'x': 0, 'y0': 0, 'y1': 0}]};
+            $rootScope.eventEffect = {'home': [{'x': 0, 'y0': 0, 'y1': 0}], 'away': [{'x': 0, 'y0': 0, 'y1': 0}]};
+            $rootScope.eventTurnin = {'home': [{'x': 0, 'y0': 0, 'y1': 0}], 'away': [{'x': 0, 'y0': 0, 'y1': 0}]};
             angular.forEach($sessionStorage.playerData, function (player) {
                 let temp = {id: '', name: '', width: 0, affiliation: '', color: '', initialGroup: undefined};
                 temp.id = player['id'];
@@ -301,11 +301,34 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 temp.affiliation = $scope.predictSide(player['team']).teamM;
                 temp.color = $scope.predictSide(player['team']).color;
                 temp.initialGroup = $scope.predictSide(player['team']).group;
-                temp.initialGroup = 0;
+                //temp.initialGroup = 0;
                 playerStatus[temp.id] = player['starter'];
                 $rootScope.storyLine2.charactersMap[temp.id] = temp;
                 $rootScope.storyLine2.characters.push($rootScope.storyLine2.charactersMap[temp.id]);
 
+            });
+            let playerStat = {}
+            angular.forEach($sessionStorage.playerData, function (player) {
+                playerStat[player.id] = player['starter'];
+            });
+            angular.forEach($scope.rawData, function (quarter) {
+                angular.forEach(quarter, function (minute) {
+                    angular.forEach(minute, function (event) {
+                        event.description = [];
+                        if (event['home_description'] !== "") {
+                            let temp = description(event['home_description'], event['event_type'], $rootScope.playerInfo, $sessionStorage.playerData);
+                            temp.forEach(function (item) {
+                                event.description.push(item);
+                            });
+                        }
+                        if (event['away_description'] !== "") {
+                            let temp = description(event['away_description'], event['event_type'], $rootScope.playerInfo, $sessionStorage.playerData);
+                            temp.forEach(function (item) {
+                                event.description.push(item);
+                            });
+                        }
+                    });
+                })
             });
             angular.forEach($scope.rawData, function (quarter) {
                 angular.forEach(quarter, function (minute) {
@@ -321,7 +344,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             type: 0,
                             status: {},
                             weight: 0,
-                            description:[]
+                            description: []
                         };
                         let players = event['players'].filter(function (player) {
                             return player.id !== null && player.name !== null && player.team !== null;
@@ -343,7 +366,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                     type: 0,
                                     status: {},
                                     weight: 0,
-                                    description:[]
+                                    description: []
                                 };
                                 scene.id = event.eventId + '-' + (i++).toString();
                                 scene.type = event['event_type'];
@@ -356,6 +379,18 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 $rootScope.storyLine2.scenes.push(scene);
                             });
                             preEvent = event;
+                            scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap : $rootScope.quarterGap;
+                            scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
+                            let x = scene.start + scene.duration;
+                            $rootScope.eventEffect.away.push({'x': x, 'y0': 0, 'y1': 0});
+                            $rootScope.eventEffect.home.push({'x': x, 'y0': 0, 'y1': 0});
+                        }
+                        if (event['event_type'] === 12) {
+                            scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap : $rootScope.quarterGap;
+                            scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
+                            let x = scene.start + scene.duration;
+                            $rootScope.eventEffect.away.push({'x': x, 'y0': 0, 'y1': 0});
+                            $rootScope.eventEffect.home.push({'x': x, 'y0': 0, 'y1': 0});
                         }
                         if (players.length > 0) {
                             scene.id = event.eventId;
@@ -373,8 +408,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             }
                             scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap : $rootScope.quarterGap;
                             scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
-                            scene.description.push(event['home_description']);
-                            scene.description.push(event['away_description']);
+                            scene.description = event.description;
                             $rootScope.storyLine2.scenes.push(scene);
                             preEvent = event;
 
@@ -383,33 +417,38 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             let score_gap_h = score_gap > 0 ? score_gap : 0;
                             let score_gap_a = score_gap < 0 ? -score_gap : 0;
 
-                            if (event['event_type'] !== 12 && event['event_type'] !== 13){
 
-                                let  effect = eventEffect(event['event_type'], event['timeDuring'], sceneTeam.teamM);
-                                let  minEffect = Math.min(effect.away, effect.home);
-                                let  x =  scene.start + scene.duration;
-                                let factor = 2.0;
-                                $rootScope.eventEffect.away.push({'x': x, 'y0': (-effect.away + minEffect) * factor, 'y1' : 0 });
-                                $rootScope.eventEffect.home.push({'x': x, 'y0': 0, 'y1' : (effect.home - minEffect) * factor });
+                            let effect = eventEffect(event['event_type'], event['timeDuring'], sceneTeam.teamM);
+                            let minEffect = Math.min(effect.away, effect.home);
+                            let x = scene.start + scene.duration;
+                            let factor = 2.0;
+                            $rootScope.eventEffect.away.push({
+                                'x': x,
+                                'y0': (-effect.away + minEffect) * factor,
+                                'y1': 0
+                            });
+                            $rootScope.eventEffect.home.push({
+                                'x': x,
+                                'y0': 0,
+                                'y1': (effect.home - minEffect) * factor
+                            });
 
-                                $rootScope.eventGapsce.away.push({'x': x, 'y0':  - score_gap_a , 'y1': 0 });
-                                $rootScope.eventGapsce.home.push({'x': x, 'y0': 0, 'y1' : score_gap_h});
+                            $rootScope.eventGapsce.away.push({'x': x, 'y0': -score_gap_a, 'y1': 0});
+                            $rootScope.eventGapsce.home.push({'x': x, 'y0': 0, 'y1': score_gap_h});
 
-                                //Turning Point
-                                if(event['home_point'] !== event['away_point']){
-                                    if( event['home_point'] !== 0 ){
-                                        tempScoreSum.home += event['home_point'];
-                                        tempScoreSum.away = 0;
-                                    }
-                                    if( event['away_point'] !== 0 ){
-                                        tempScoreSum.away += event['away_point'];
-                                        tempScoreSum.home = 0;
-                                    }
+                            //Turning Point
+                            if (event['home_point'] !== event['away_point']) {
+                                if (event['home_point'] !== 0) {
+                                    tempScoreSum.home += event['home_point'];
+                                    tempScoreSum.away = 0;
                                 }
-                                $rootScope.eventTurnin.away.push({'x': x, 'y0': -3 * tempScoreSum.away, 'y1': 0});
-                                $rootScope.eventTurnin.home.push({'x': x, 'y0': 0, 'y1' : 3 * tempScoreSum.home});
+                                if (event['away_point'] !== 0) {
+                                    tempScoreSum.away += event['away_point'];
+                                    tempScoreSum.home = 0;
+                                }
                             }
-
+                            $rootScope.eventTurnin.away.push({'x': x, 'y0': -3 * tempScoreSum.away, 'y1': 0});
+                            $rootScope.eventTurnin.home.push({'x': x, 'y0': 0, 'y1': 3 * tempScoreSum.home});
                         }
                     });
                 });
@@ -428,11 +467,11 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             let QuarterGap = $rootScope.factor.x;
             let mOffset = 5.0;
 
-            let homeOrg = {'x' : 80, 'y' : $scope.halfHeightY + $rootScope.factor.y * 2};
-            let awayOrg = {'x' : 80, 'y' : $scope.halfHeightY - $rootScope.factor.y * 2};
+            let homeOrg = {'x': 80, 'y': $scope.halfHeightY + $rootScope.factor.y * 2};
+            let awayOrg = {'x': 80, 'y': $scope.halfHeightY - $rootScope.factor.y * 2};
 
             $scope.Icon = {'home': null, 'away': null};
-            $scope.Icon.home = {'x': 0, 'y': homeOrg.y };
+            $scope.Icon.home = {'x': 0, 'y': homeOrg.y};
             $scope.Icon.away = {'x': 0, 'y': awayOrg.y - $rootScope.factor.y * 10};
 
             if ($scope.loadFlag === false) return;
@@ -534,8 +573,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             let tempPlayHomeDrawInfo = {}, tempPlayAwayDrawInfo = {};
             let background = '', radius = 1, lastRadius = 1;
 
-            let homePlay = { 'x' : 80, 'y' : $scope.halfHeightY + $rootScope.factor.y * 2};
-            let awayPlay = { 'x' : 80, 'y' : $scope.halfHeightY - $rootScope.factor.y * 2};
+            let homePlay = {'x': 80, 'y': $scope.halfHeightY + $rootScope.factor.y * 2};
+            let awayPlay = {'x': 80, 'y': $scope.halfHeightY - $rootScope.factor.y * 2};
             let lastHomeScorePlayRadius = 0;
             let lastAwayScorePlayRadius = 0;
             let tempPlayHomeIndex = 0, tempPlayAwayIndex = 0;
@@ -646,8 +685,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
             $scope.interactionCountCalculation();
 
-            let tempOrg = {'x' : 150, 'y' : 0};
-            let tempEnd = {'x' : 0,   'y' : 0};
+            let tempOrg = {'x': 150, 'y': 0};
+            let tempEnd = {'x': 0, 'y': 0};
 
             let interactionFactor = 1;
             let tempPathObj = {};
@@ -1457,14 +1496,14 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
                 let areaFunction = d3.svg.area()
                     .x(function (d) {
-                    return d.x;
-                })
+                        return d.x;
+                    })
                     .y0(function (d) {
-                    return d.y0;
-                })
+                        return d.y0;
+                    })
                     .y1(function (d) {
-                    return d.y1;
-                })
+                        return d.y1;
+                    })
                     .interpolate("monotone");
 
                 let svg = d3.select('story-line')
@@ -1615,14 +1654,11 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let scenesDate = scenes;
                 let characters = $rootScope.storyLine2.characters;
 
-                let query  = 0;
-                let sort   = true;
-                let thresh =  1.0;
+                let query = 0;
+                let sort = true;
+                let thresh = 1.0;
 
-                let storyLine = d3.select('story-line2').attr('id','gameSVG');
-
-
-                //let video = storyLine.append('p').append('div').append('video');
+                let storyLine = d3.select('story-line2').attr('id', 'gameSVG');
 
                 let selectCon = storyLine.append('p').append('div');
                 let sliderCon = storyLine.append('p').append('div');
@@ -1632,7 +1668,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let svg2 = storyLine.append('p').append('div').append('svg');
                 let svg3 = storyLine.append('p').append('div').append('svg');
 
-                let Links  = svg0.append('g').attr('class', 'links');
+                let Links = svg0.append('g').attr('class', 'links');
                 let Scenes = svg0.append('g').attr('class', 'scenes');
                 let Intros = svg0.append('g').attr('class', 'intros');
 
@@ -1682,9 +1718,6 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     updateLinks(narrative);
                     updateScenes(narrative);
                     updateNodes(narrative);
-
-
-
 
                 }
 
@@ -1786,8 +1819,42 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             y = Math.round(d.y) + 0.5;
                             return 'translate(' + [x, y] + ')';
                         })
+                        .on('mouseover', function (d) {
+                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
+                            svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
+                            d.characters.forEach(function (c) {
+                                svg0.select('g.links').selectAll('[id = \'' + c.id + '\']').attr('opacity', 1.0);
+                                svg0.select('g.intros').selectAll('[id = \'' + c.id + '\']').attr('opacity', 1.0);
+                                c.appearances.forEach(function (e) {
+                                    let id = e.scene.id;
+                                    svg0.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
+                                });
+
+                            });
+                            tooltip.offset([-10, 0]);
+                            let toolTipContent = "<table width='300px'>";
+                            for(let i= 0; i<d.characters.length;i++){
+                                toolTipContent +=
+                                    "<tr>" +
+                                    "<td style='zoom: 75%'>" + playerImg(d.characters[i]) + "</td>" +
+                                    "<td style='alignment: left'>" +
+                                    "<label class ='playerName' >" + d.appearances[i].des + "</label>" +
+                                    "</td>" +
+                                    "</tr>";
+                            }
+                            toolTipContent += "</table>";
+                            tooltip.html("<div style='background: #dddddd' >" + toolTipContent + "</div>");
+                            tooltip.show();
+                        })
+                        .on('mouseout', function () {
+                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
+                            svg0.select('g.links').selectAll('g.character').attr('opacity', 1.0);
+                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
+                            tooltip.hide();
+                        })
                         .append('rect')
-                        .attr('opacity',0)
+                        .attr('opacity', 0)
                         .attr('width', function (d) {
                             return d.width;
                         })
@@ -1803,42 +1870,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             else
                                 return 1;
                         })
-                        .attr('fill', '#ffffff')
-                        .on('mouseover', function (d) {
-                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
-                            svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
-                            d.characters.forEach(function (c) {
-                                svg0.select('g.links').selectAll('[id = \'' + c.id + '\']').attr('opacity', 1.0);
-                                svg0.select('g.intros').selectAll('[id = \'' + c.id + '\']').attr('opacity', 1.0);
-                                c.appearances.forEach(function (e) {
-                                    let id = e.scene.id;
-                                    svg0.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
-                                });
+                        .attr('fill', '#ffffff');
 
-                            });
-                            tooltip.offset([-10, 0]);
-                            let toolTipContent = "<table width='300px'>" + "<tr>" +
-                                "<td>" + playerImg(d.characters[0]) + "</td>";
-                            if(d.characters.length > 1){
-                                toolTipContent +=  "<td>" + playerImg(d.characters[1]) + "</td>";
-                            }
-                            toolTipContent += "</tr></table>";
-                            d.description.forEach(function (c) {
-                                if(c!== ""){
-                                    toolTipContent += "<p style='font-family:Arial'>*"+ c + "</p>";
-                                }
-                            });
-
-                            tooltip.html("<div style='background: #dddddd' >" + toolTipContent + "</div>");
-                            tooltip.show();
-                        })
-                        .on('mouseout', function () {
-                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
-                            svg0.select('g.links').selectAll('g.character').attr('opacity', 1.0);
-                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
-                            tooltip.hide();
-                        });
 
                     scene.attr('id', function (d) {
                         return d.id;
@@ -1926,68 +1959,68 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     let intro = Intros.selectAll('.intro')
                         .data(narrative.introductions());
                     intro.enter().call(function (s) {
-                            let g = s.append('g')
-                                .attr('class', 'intro')
-                                .attr('id', function (d) {
-                                    return d.character.id;
-                                });
-
-                            g.append('rect')
-                                .attr('x', -4)
-                                .attr('y', -4.5)
-                                .attr('width', 4)
-                                .attr('height', 8)
-                                .attr('fill', function (d) {
-                                    return d.character.color;
-                                });
-
-                            let text = g.append('g').attr('class', 'text');
-
-                            // Apppend two actual 'text' nodes to fake an 'outside' outline.
-                            text.append('text');
-                            text.append('text').attr('class', 'color');
-
-                            g.attr('transform', function (d) {
-                                let x, y;
-                                x = Math.round(d.x);
-                                y = Math.round(d.y);
-                                return 'translate(' + [x, y] + ')';
+                        let g = s.append('g')
+                            .attr('class', 'intro')
+                            .attr('id', function (d) {
+                                return d.character.id;
                             });
 
-                            g.selectAll('text')
-                                .attr('text-anchor', 'end')
-                                .attr('y', '4px')
-                                .attr('x', '-8px')
-                                .text(function (d) {
-                                    return d.character.name;
-                                })
-                                .attr('font-family', 'Arial')
-                                .attr('fill', function (d) {
-                                    return d.character.color;
-                                })
-                                .on('mouseover', function (d) {
-                                    svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
-                                    d.character.appearances.forEach(function (c) {
-                                        let id = c.scene.id;
-                                        svg0.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
-                                    });
+                        g.append('rect')
+                            .attr('x', -4)
+                            .attr('y', -4.5)
+                            .attr('width', 4)
+                            .attr('height', 8)
+                            .attr('fill', function (d) {
+                                return d.character.color;
+                            });
 
-                                    svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                                    svg0.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
-                                    svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
-                                    svg0.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
+                        let text = g.append('g').attr('class', 'text');
 
-                                    tooltip.offset([-10, 0]);
-                                    tooltip.html("<div  style='background: #dddddd'>" + playerImg(d.character) + "</div>").show();
-                                })
-                                .on('mouseout', function () {
-                                    svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
-                                    svg0.select('g.links').selectAll('g').attr('opacity', 1.0);
-                                    svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
-                                    tooltip.hide();
+                        // Apppend two actual 'text' nodes to fake an 'outside' outline.
+                        text.append('text');
+                        text.append('text').attr('class', 'color');
+
+                        g.attr('transform', function (d) {
+                            let x, y;
+                            x = Math.round(d.x);
+                            y = Math.round(d.y);
+                            return 'translate(' + [x, y] + ')';
+                        });
+
+                        g.selectAll('text')
+                            .attr('text-anchor', 'end')
+                            .attr('y', '4px')
+                            .attr('x', '-8px')
+                            .text(function (d) {
+                                return d.character.name;
+                            })
+                            .attr('font-family', 'Arial')
+                            .attr('fill', function (d) {
+                                return d.character.color;
+                            })
+                            .on('mouseover', function (d) {
+                                svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
+                                d.character.appearances.forEach(function (c) {
+                                    let id = c.scene.id;
+                                    svg0.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
                                 });
 
-                        });
+                                svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                                svg0.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
+                                svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
+                                svg0.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
+
+                                tooltip.offset([-10, 0]);
+                                tooltip.html("<div  style='background: #dddddd'>" + playerImg(d.character) + "</div>").show();
+                            })
+                            .on('mouseout', function () {
+                                svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
+                                svg0.select('g.links').selectAll('g').attr('opacity', 1.0);
+                                svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
+                                tooltip.hide();
+                            });
+
+                    });
                     intro.call(function (s) {
                         let g = s.attr('id', function (d) {
                             return d.character.id;
@@ -2029,8 +2062,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 function configSelectCon(object) {
                     let selectTypeTx = object.append('label').attr('class', 'selectLabel');
                     selectTypeTx.text('Event Type : ');
-                    let selectorType = object.append('select').attr('class','selectorType');
-                    let optionsData = [' All ',' Shoot Made ',' Shoot Miss ',' Free Throw ',' Rebound ',' Turn Over ',' Foul ',' Violation ',' Sub ',' Regular ',' Jump Ball ',' Ejection '];
+                    let selectorType = object.append('select').attr('class', 'selectorType');
+                    let optionsData = [' All ', ' Shoot Made ', ' Shoot Miss ', ' Free Throw ', ' Rebound ', ' Turn Over ', ' Foul ', ' Violation ', ' Sub ', ' Regular ', ' Jump Ball ', ' Ejection '];
                     let optionsType = selectorType.selectAll('option').data(optionsData);
                     optionsType.enter().append('option').text(function (d) {
                         return d;
@@ -2043,16 +2076,16 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
                     let selectSortTx = object.append('label').attr('class', 'selectLabel');
                     selectSortTx.text('Sort Type : ');
-                    let selectorSort = object.append('select').attr('class','selectorSort');
-                    let SortData = [' R2eSort ', ' None ' ];
+                    let selectorSort = object.append('select').attr('class', 'selectorSort');
+                    let SortData = [' R2eSort ', ' None '];
                     let optionsSort = selectorSort.selectAll('option').data(SortData);
                     optionsSort.enter().append('option').text(function (d) {
                         return d;
                     });
                     selectorSort.on("change", function () {
                         let selectedIndex = selectorSort.property('selectedIndex');
-                        if(selectedIndex === 0 ) sort = true;
-                        if(selectedIndex === 1 ) sort = false;
+                        if (selectedIndex === 0) sort = true;
+                        if (selectedIndex === 1) sort = false;
                         update(scenesDate, characters, sort);
                     });
 
@@ -2082,13 +2115,13 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             thresh = value / 100;
                             console.log('value : ' + value);
                             let dateSet = sceneQuery(scenesDate, query, thresh);
-                            update(dateSet, characters,true);
+                            update(dateSet, characters, true);
                         });
                     }
 
                 }
 
-                function configSvg(object, narrative, width, height) {
+                function configSvg(object, narrative = d3.layout.narrative(), width, height) {
                     object.attr('id', 'narrative-chart');
                     object.attr('transform', function (d) {
                         let x = 10;
@@ -2100,36 +2133,40 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     object.style('margin-right', '5px');
                     object.style('margin-top', '10px');
                     object.style('margin-bottom', '10px');
-                    object.attr('width',  width  === 0 ? narrative.extent()[0] + 30 : width);
+                    object.attr('width', width === 0 ? narrative.extent()[0] + 30 : width);
                     object.attr('height', height === 0 ? narrative.extent()[1] + 5 : height);
                 }
 
-                function configSteam(object, narrative, data, info) {
+                function configSteam(object, narrative = d3.layout.narrative(), data, info) {
                     object.attr('transform', function (d) {
                         let x = 10 + 150;
-                        let y = 60  ;
+                        let y = 60;
                         return 'translate(' + [x, y] + ')';
                     });
-                    object.append('path').attr('class','areaH');
-                    object.append('path').attr('class','areaA');
-                    object.append('path').attr('class','baseL');
+                    object.append('path').attr('class', 'areaH');
+                    object.append('path').attr('class', 'areaA');
+                    object.append('path').attr('class', 'baseL');
 
                     let gameLogo = object.append('g').attr('class', 'gameLogo');
                     let homeIcon = gameLogo.append('image').attr('class', 'homeIcon');
                     let awayIcon = gameLogo.append('image').attr('class', 'awayIcon');
                     let TextInfo = gameLogo.append('text').attr('class', 'TextInfo');
                     homeIcon.attr('href', 'assets/images/teamLogo/' + $scope.game['homeName'] + '.svg');
-                    homeIcon.attr('width', '30').attr('x', 0).attr('y', 24 );
+                    homeIcon.attr('width', '30').attr('x', 0).attr('y', 24);
                     awayIcon.attr('href', 'assets/images/teamLogo/' + $scope.game['awayName'] + '.svg');
-                    awayIcon.attr('width', '30').attr('x', 0).attr('y', -24 );
+                    awayIcon.attr('width', '30').attr('x', 0).attr('y', -24);
                     homeIcon.attr('transform', function (d) {
-                        let x = -30 - homeIcon[0][0].getBBox().width;
-                        let y = - 0.5 * homeIcon[0][0].getBBox().height;
+                        let width = parseFloat(homeIcon.style('width'));
+                        let height = parseFloat(homeIcon.style('height'));
+                        let x = -30 - width;
+                        let y = -0.5 * height;
                         return 'translate(' + [x, y] + ')';
                     });
                     awayIcon.attr('transform', function (d) {
-                        let x = -30 - awayIcon[0][0].getBBox().width;
-                        let y = - 0.5 * awayIcon[0][0].getBBox().height;
+                        let width = parseFloat(awayIcon.style('width'));
+                        let height = parseFloat(awayIcon.style('height'));
+                        let x = -30 - width;
+                        let y = -0.5 * height;
                         return 'translate(' + [x, y] + ')';
                     });
                     TextInfo.text(info);
@@ -2146,10 +2183,10 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                             return d.x * narrative.scale();
                         })
                         .y0(function (d) {
-                            return d.y0 ;
+                            return d.y0;
                         })
                         .y1(function (d) {
-                            return d.y1 ;
+                            return d.y1;
                         })
                         .interpolate("step"); // [ "linear","bundle", "basis", "step", "cardinal"]
 
@@ -2164,13 +2201,13 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         .attr('d', function (d) {
                             return area(data.away);
                         })
-                        .attr('fill',  $scope.teamColor.away);
+                        .attr('fill', $scope.teamColor.away);
                     let base = object.select('path.baseL')
                         .attr('d', function (d) {
-                            return 'M0,' + 0 + 'L' + (narrative.extent()[0] - 170) +',' + 0;
+                            return 'M0,' + 0 + 'L' + (narrative.extent()[0] - 170) + ',' + 0;
                         })
                         .attr('stroke-width', 2)
-                        .attr('stroke',  '#a5a5a5')
+                        .attr('stroke', '#a5a5a5')
                         .attr('stroke-dasharray', '1,4');
 
                 }
@@ -2179,13 +2216,11 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     let dateSet = [];
                     scenes.forEach(function (scene) {
                         if (scene.timeOffset <= Math.floor(scenes[scenes.length - 1]['timeOffset'] * thresh)) {
-                            if(query == 0){
+                            if (query == 0) {
                                 dateSet.push(scene);
-                            }
-                            else if(scene.type == query){
+                            } else if (scene.type == query) {
                                 dateSet.push(scene);
-                            }
-                            else if(scene.type == 13){
+                            } else if (scene.type == 13) {
                                 dateSet.push(scene);
                             }
 
@@ -2194,29 +2229,29 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     return dateSet;
                 }
 
-                function configVideo(object){
-                    object.attr('src','http://smb.cdnak.neulion.com/nlds_vod/nba/vod/2016/11/14/21600145/2_21600145_orl_ind_2016_b_discrete_ind19_1_1600.mp4');
+                function configVideo(object) {
+                    object.attr('src', 'http://smb.cdnak.neulion.com/nlds_vod/nba/vod/2016/11/14/21600145/2_21600145_orl_ind_2016_b_discrete_ind19_1_1600.mp4');
                     object.attr('autoplay', 'autoplay');
                     object.attr('controls', 'controls');
-                    object.style('padding-left','120px');
+                    object.style('padding-left', '120px');
                 }
 
                 $('story-line2').scroll(function () {
-                   // video.style('margin-left', function (d) {
-                   //     let offset = $('story-line2').scrollLeft();
-                   //     return offset + "px";
-                   //  });
-                   sliderCon.style('padding-left', function (d) {
+                    // video.style('margin-left', function (d) {
+                    //     let offset = $('story-line2').scrollLeft();
+                    //     return offset + "px";
+                    //  });
+                    sliderCon.style('padding-left', function (d) {
                         let offset = $('story-line2').scrollLeft();
                         return offset + "px";
                     });
-                   selectCon.style('padding-left', function (d) {
+                    selectCon.style('padding-left', function (d) {
                         let offset = $('story-line2').scrollLeft();
                         return offset + "px";
                     });
                 });
 
-                function playerImg(character){
+                function playerImg(character) {
                     let preUrl = 'https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/';
                     return "<table width='148'>" +
                         "<tr><td align ='center'>" +
@@ -2224,7 +2259,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         "style = 'background: " + character.color + "' " +
                         "src = '" + preUrl + character.id + ".png" + "'>" +
                         "</td></tr>" +
-                        "<tr><td align ='center'>" +
+                        "<tr><td align='center'>" +
                         "<label class ='playerName' >" + character.name + "</label>" + "</td></tr>" + "</table>";
                 }
             }
@@ -2236,13 +2271,106 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             link: function ($scope, $element) {
                 console.log($rootScope.data.selectedIndex);
 
-                let svg = d3.select('story-line')
+                let scenes = $rootScope.storyLine2.scenes;
+                let characters = $rootScope.storyLine2.characters;
+
+                let nodes  = characters.map(function (d, i) {
+                    return i;
+                });
+                let edges  = getEdges(characters, scenes);
+                let matrix = getMatrix(nodes, edges);
+
+                let svg = d3.select('force-direct')
                     .append('svg')
                     .attr('id', 'gameSVG')
                     .attr('width', '100%')
                     .attr('height', $scope.windowHeight)
                     .style('margin-left', '1%');
 
+                function  myColor() {
+                    return  d3.scaleOrdinal().domain([0, 10]).range(d3.schemeCategory10);
+                }
+                const colorPick = myColor();
+
+                let link = svg.append('g').attr('stroke', '#888').attr('stroke-opacity', 0.6).selectAll('line').data(data.links)
+                    .join('line').attr('stroke-width', function (d) {
+                        return Math.sqrt(d.value);
+                    })
+                let node = svg.append('g').attr('stroke', '#fff').selectAll('circle').data(data.nodes)
+                    .join('circle').attr('stroke-width',1.5)
+                    .attr('r',function (d) {
+                        return d.group;
+                    }).attr('fill', function (d) {
+                        return colorPick(d.group);
+                    });
+                // let simulation = d3.forceSimulation()
+                //     .nodes(data.nodes)
+                //     .velocityDecay(0.2)
+                //     .force("x", d3.forceX(0).strength(0.2))
+                //     .force("y", d3.forceY(-3).strength(0.2))
+                //     .force("collide",d3.forceCollide().radius(function (d) {
+                //         return d.group + 0.5;
+                //     }).iterations(2))
+                //     //.force('link', d3.forceLink(data.links).id(d => d.id).strength(0))
+                //     // .force('charge', d3.forceManyBody())
+                //     .force('center', d3.forceCenter(width * 0.5, height * 0.5))
+                //     .on('tick', function () {
+                //         node.attr('cx', d => d.x);
+                //         node.attr('cy', d => d.y);
+                //         link.attr('x1', d => d.source.x);
+                //         link.attr('y1', d => d.source.y);
+                //         link.attr('x2', d => d.target.x);
+                //         link.attr('y2', d => d.target.y);
+                //     });
+
+                function getEdges(characters, scenes) {
+                    let edges = [];
+                    scenes.forEach(function (scene) {
+                        edges = edges.concat(sceneEdges(scene.characters, characters));
+                    });
+                    function sceneEdges(sceneCharacters, totalCharacters) {
+                        let i, j, matrix;
+                        matrix = [];
+                        if(sceneCharacters.length < 2) return matrix;
+                        for (i = sceneCharacters.length; i--;) {
+                            for (j = i; j--;) {
+                                let a = totalCharacters.indexOf(sceneCharacters[i]);
+                                let b = totalCharacters.indexOf(sceneCharacters[j]);
+                                if (a !== -1 && b !== -1 && a !== b) matrix.push([a, b]);
+                            }
+                        }
+                        return matrix;
+                    }
+                    edges = edges.reduce(function (result, edge) {
+                        let resultEdge;
+                        resultEdge = result.filter(function (resultEdge) {
+                            edge.sort(function(a,b){
+                                return a - b;
+                            });
+                            return resultEdge.source === edge[0] && resultEdge.target === edge[1];
+                        })[0] || {source: edge[0], target: edge[1], weight: 0};
+                        resultEdge.weight++;
+                        if (resultEdge.weight === 1) {
+                            result.push(resultEdge);
+                        }
+                        return result;
+                    }, []);
+                    return edges;
+                }
+                function getMatrix(nodes, edges) {
+                    let sceneMatrix = [];
+                    for (let i = 0; i < nodes.length; i++) {
+                        sceneMatrix[i] = [];
+                        for (let j = 0; j < nodes.length; j++) {
+                            sceneMatrix[i][j] = 0.0;
+                        }
+                    }
+                    edges.forEach(function (d) {
+                        sceneMatrix[d.source][d.target] = d.weight;
+                        sceneMatrix[d.target][d.source] = d.weight;
+                    });
+                    return  sceneMatrix
+                }
 
 
             }
@@ -2343,43 +2471,210 @@ function deepCopy(obj) {
     return result;
 }
 
-function eventType(id){
+function eventType(id) {
     switch (id) {
-        case  1 : return 'Made'; break;
-        case  2 : return 'Miss'; break;
-        case  3 : return 'Free Throw'; break;
-        case  4 : return 'Rebound'; break;
-        case  5 : return 'Turn Over'; break;
-        case  6 : return 'Foul'; break;
-        case  7 : return 'Violation'; break;
-        case  8 : return 'Sub'; break;
-        case  9 : return 'Regular'; break;
-        case 10 : return 'Jump Ball'; break;
-        case 11 : return 'Ejection'; break;
-        case 12 : return 'Start'; break;
-        case 13 : return 'End'; break;
+        case  1 :
+            return 'Made';
+            break;
+        case  2 :
+            return 'Miss';
+            break;
+        case  3 :
+            return 'Free Throw';
+            break;
+        case  4 :
+            return 'Rebound';
+            break;
+        case  5 :
+            return 'Turn Over';
+            break;
+        case  6 :
+            return 'Foul';
+            break;
+        case  7 :
+            return 'Violation';
+            break;
+        case  8 :
+            return 'Sub';
+            break;
+        case  9 :
+            return 'Regular';
+            break;
+        case 10 :
+            return 'Jump Ball';
+            break;
+        case 11 :
+            return 'Ejection';
+            break;
+        case 12 :
+            return 'Start';
+            break;
+        case 13 :
+            return 'End';
+            break;
     }
 
 }
 
-function description(des, type){
+function description(des, type, playerInfo, playerData) {
+    let res = [];
     switch (type) {
-        case  1 : return 'Made'; break;
-        case  2 : return 'Miss'; break;
-        case  3 : return 'Free Throw'; break;
-        case  4 : return 'Rebound'; break;
-        case  5 : return 'Turn Over'; break;
-        case  6 : return 'Foul'; break;
-        case  7 : return 'Violation'; break;
-        case  8 : return 'Sub'; break;
-        case  9 : return 'Regular'; break;
-        case 10 : return 'Jump Ball'; break;
-        case 11 : return 'Ejection'; break;
-        case 12 : return 'Start'; break;
-        case 13 : return 'End'; break;
+        case  1 : {
+            let reg = /([\w|\'|\s|\-]+\s?J?r?\.?)\s\d*\'?\s([\w|\s]+)\(\d+\sPTS\)\s?\(?([\w|\-|\.]*\s?J?r?\.?)\s?\d*\s?A?S?T?\)?/i;
+
+            if (reg.exec(des) !== null) {
+                res.push({'id': queryPlayerInfo(playerData, reg.exec(des)[1])['id'], 'action': reg.exec(des)[2]});
+                if (reg.exec(des)[3] !== "") {
+                    if (queryPlayerInfo(playerData, reg.exec(des)[3]) === null) {
+                        console.log(reg.exec(des)[3]);
+                    } else {
+                        res.push({'id': queryPlayerInfo(playerData, reg.exec(des)[3])['id'], 'action': 'AST'});
+                    }
+                }
+            }
+        }
+            break;
+        case  2 : {
+            let reg1 = /MISS\s([\w|\'|\s|\-]+\s?J?r?\.?)\s\d*\'?\s([\w|\s]+)/i;
+            let reg2 = /([\w|\'|\s|\-]+\s?J?r?\.?)\sBLOCK/i;
+
+            if (reg1.exec(des) !== null) {
+                if (queryPlayerInfo(playerData, reg1.exec(des)[1]) === null) {
+                    console.log(reg1.exec(des)[1]);
+                    queryPlayerInfo(playerData, reg1.exec(des)[1])
+                } else {
+                    res.push({
+                        'id': queryPlayerInfo(playerData, reg1.exec(des)[1])['id'],
+                        'action': 'MISS: ' + reg1.exec(des)[2]
+                    });
+                }
+
+            }
+            if (reg2.exec(des) !== null) {
+                res.push({'id': queryPlayerInfo(playerData, reg2.exec(des)[1])['id'], 'action': 'BLOCK'});
+            }
+        }
+            break;
+        case  3 : {
+            let reg = /(MISS)?\s?([\w|\'|\s|\-]+\s?J?r?\.?)\sFree\sThrow/i;
+
+            if (reg.exec(des) !== null) {
+                let action = reg.exec(des)[1] === undefined ? "Free Throw Made" : "Free Throw Miss";
+                res.push({'id': queryPlayerInfo(playerData, reg.exec(des)[2])['id'], 'action': action});
+            }
+        }
+            break;
+        case  4 : {
+            let reg = /([\w|\'|\s|\-]+\s?J?r?\.?)\sREBOUND\s?(\(Off\:\d+\sDef\:\d+\))?/i;
+
+            if (reg.exec(des) !== null) {
+                if (reg.exec(des)[2] !== undefined) {
+                    res.push({'id': queryPlayerInfo(playerData, reg.exec(des)[1])['id'], 'action': "REBOUND"});
+                } else {
+                    res.push({'id': reg.exec(des)[1], 'action': "REBOUND"});
+                }
+            }
+        }
+            break;
+        case  5 : {
+            let reg1 = /([\w|\'|\-]+\s?J?r?\.?)\s([\w|\'|\s|\-]+)\sTurnover/i;
+            let reg2 = /([\w|\'|\-]+\s?J?r?\.?)\s STEAL/i;
+
+            if (reg1.exec(des) !== null) {
+                res.push({
+                    'id': queryPlayerInfo(playerData, reg1.exec(des)[1])['id'],
+                    'action': "Turnover: " + reg1.exec(des)[2]
+                });
+            }
+            if (reg2.exec(des) !== null) {
+                res.push({'id': queryPlayerInfo(playerData, reg2.exec(des)[1])['id'], 'action': "Turnover: STEAL"});
+            }
+        }
+            break;
+        case  6 : {
+            let reg = /([\w|\'|\s|\-]+\s?J?r?\.?)\s(([\w|\'|\s|\-]+\.)+FOUL)/i;
+
+            if (reg.exec(des) !== null) {
+                let action = reg.exec(des)[2];
+                if (queryPlayerInfo(playerData, reg.exec(des)[1]) !== null) {
+                    res.push({'id': queryPlayerInfo(playerData, reg.exec(des)[1])['id'], 'action': action});
+                } else {
+                    res.push({'id': reg.exec(des)[1], 'action': action});
+                }
+
+            }
+        }
+            break;
+        case  7 : {
+            let reg = /([\w|\'|\s|\-]+\s?J?r?\.?)\s(Violation:[\w|\'|\s|\-]+)\s\(/i;
+
+            if (reg.exec(des) !== null) {
+                let action = reg.exec(des)[2];
+                res.push({'id': queryPlayerInfo(playerData, reg.exec(des)[1])['id'], 'action': action});
+            }
+        }
+            break;
+        case  8 : {
+            let reg = /SUB\:\s([\w|\'|\s|\-]+\s?J?r?\.?)\sFOR\s([\w|\'|\s|\-]+\s?J?r?\.?)/i;
+
+            if (reg.exec(des) !== null) {
+                res.push({'id': queryPlayerInfo(playerData, reg.exec(des)[1])['id'], 'action': "UP"});
+                res.push({'id': queryPlayerInfo(playerData, reg.exec(des)[2])['id'], 'action': "DOWN"});
+            }
+        }
+            break;
+        case  9 : {
+            let reg = /([\w|\'|\s|\-]+)\s([\w|\'|\s|\-]+\:\sRegular)/i;
+
+            if (reg.exec(des) !== null) {
+                let action = reg.exec(des)[2];
+                res.push({'id': reg.exec(des)[1], 'action': action});
+            }
+        }
+            break;
+        case 10 : {
+            let reg = /Jump\sBall\s([\w|\'|\s|\-]+)\svs\.\s([\w|\'|\s|\-]+)\:\sTip\sto\s([\w|\'|\s|\-]+)/i;
+
+            if (reg.exec(des) !== null) {
+                if (queryPlayerInfo(playerData, reg.exec(des)[3]) === null) {
+                    console.log("");
+                } else {
+                    res.push({'id': queryPlayerInfo(playerData, reg.exec(des)[1])['id'], 'action': "Jump Ball"});
+                    res.push({'id': queryPlayerInfo(playerData, reg.exec(des)[2])['id'], 'action': "Jump Ball"});
+                    res.push({'id': queryPlayerInfo(playerData, reg.exec(des)[3])['id'], 'action': "Tip"});
+                }
+            }
+        }
+            break;
+        case 11 : {
+
+            res.push({'id': "0", 'action': "Ejection"});
+        }
+            break;
+        case 12 : {
+
+            res.push({'id': "0", 'action': "Start"});
+        }
+            break;
+        case 13 : {
+            res.push({'id': "0", 'action': "End"});
+        }
+            break;
     }
+    return deepCopy(res);
 }
 
+function queryPlayerInfo(playerData, lastName) {
+    let result = null;
+    for (let i = 0; i < playerData.length; i++) {
+        let reg = /\b([\w|\-]+)\b/i;
+        if (reg.exec(playerData[i]['lastName'])[0] === reg.exec(lastName)[0]) {
+            result = playerData[i];
+            break;
+        }
+    }
+    return result;
+}
 
 
 let lineFunction = d3.svg.line().x(function (d) {
