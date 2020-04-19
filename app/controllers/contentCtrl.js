@@ -2271,7 +2271,9 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             link: function ($scope, $element) {
                 console.log($rootScope.data.selectedIndex);
 
-                let scenes = $rootScope.storyLine2.scenes;
+                let scenes = $rootScope.storyLine2.scenes.filter(function (d) {
+                    return d.characters.length > 1
+                });
                 let characters = $rootScope.storyLine2.characters;
 
                 let nodes  = characters.map(function (d, i) {
@@ -2287,22 +2289,24 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     .attr('height', $scope.windowHeight)
                     .style('margin-left', '1%');
 
-                function  myColor() {
-                    return  d3.scaleOrdinal().domain([0, 10]).range(d3.schemeCategory10);
-                }
-                const colorPick = myColor();
-
-                let link = svg.append('g').attr('stroke', '#888').attr('stroke-opacity', 0.6).selectAll('line').data(data.links)
-                    .join('line').attr('stroke-width', function (d) {
-                        return Math.sqrt(d.value);
+                let link = svg.append('g').attr('stroke', '#888').attr('stroke-opacity', 0.6).selectAll('line').data(edges)
+                link.enter().append('line').attr('stroke-width', function (d) {
+                        return 1;
                     })
-                let node = svg.append('g').attr('stroke', '#fff').selectAll('circle').data(data.nodes)
-                    .join('circle').attr('stroke-width',1.5)
+                let node = svg.append('g').attr('stroke', '#fff').selectAll('circle').data(nodes).enter().append('circle').attr('stroke-width',1.5)
                     .attr('r',function (d) {
-                        return d.group;
-                    }).attr('fill', function (d) {
-                        return colorPick(d.group);
+                        return 5;
+                    }).attr('fill', function (d, i) {
+                        let scale = d3.scale.ordinal().domain([0, 20]).range(d3.scale.category20());
+                        return scale(i % 20);
                     });
+                let force = d3.layout.force();
+                force.charge(-150).linkDistance(100)
+                    .size([500, 500]);
+                force.nodes(nodes)
+                    .links(edges)
+                    .start();
+
                 // let simulation = d3.forceSimulation()
                 //     .nodes(data.nodes)
                 //     .velocityDecay(0.2)
@@ -2676,12 +2680,6 @@ function queryPlayerInfo(playerData, lastName) {
     return result;
 }
 
-
-let lineFunction = d3.svg.line().x(function (d) {
-    return d.x;
-}).y(function (d) {
-    return d.y;
-}).interpolate('linear');
 
 
 
