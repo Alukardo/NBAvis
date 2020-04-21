@@ -8,429 +8,21 @@
 
 d3.layout.narrative = function () {
 
-// Import jLouvian
-// ---------------
-// [jLouvian](https://github.com/upphiminn/jLouvain) is a open source (MIT)
-// javascript implementation of the Louvian method of
-// [community detection](https://www.wikiwand.com/en/Louvain_Modularity).
-// Graph clustering algorithm
-// --------------------------
-//
-// Author: Corneliu S. (github.com/upphiminn)
-//
-// Lightly cleaned up and documented by Simon Elvery.
-//
-// This is a javascript implementation of the Louvain
-// community detection algorithm (http://arxiv.org/abs/0803.0476)
-// Based on https://bitbucket.org/taynaud/python-louvain/overview
-//
-// TODO: Make this into an ES6 Module.
-
-    function jLouvain() {
-
-        // Constants
-        const __PASS_MAX = -1;
-        const __MIN = 0.0000001;
-
-        // Local vars
-        let original_graph_nodes;
-        let original_graph_edges;
-        let original_graph = {};
-        let partition_init;
-
-        // Helpers
-        function make_set(array) {
-            const set = {};
-            array.forEach(function (d) {
-                set[d] = true;
-            });
-            return Object.keys(set);
-        }
-
-        function obj_values(obj) {
-            const vals = [];
-            for (let key in obj) {
-                if (obj.hasOwnProperty(key)) {
-                    vals.push(obj[key]);
-                }
-            }
-            return vals;
-        }
-
-        function get_degree_for_node(graph, node) {
-            const neighbours = graph._assoc_mat[node] ? Object.keys(graph._assoc_mat[node]) : [];
-            let weight = 0;
-            neighbours.forEach(function (neighbour) {
-                let value = graph._assoc_mat[node][neighbour] || 1;
-                if (node === neighbour) {
-                    value *= 2;
-                }
-                weight += value;
-            });
-            return weight;
-        }
-
-        function get_neighbours_of_node(graph, node) {
-            if (typeof graph._assoc_mat[node] === 'undefined') {
-                return [];
-            }
-
-            const neighbours = Object.keys(graph._assoc_mat[node]);
-            return neighbours;
-        }
-
-
-        function get_edge_weight(graph, node1, node2) {
-            return graph._assoc_mat[node1] ? graph._assoc_mat[node1][node2] : undefined;
-        }
-
-        function get_graph_size(graph) {
-            let size = 0;
-            graph.edges.forEach(function (edge) {
-                size += edge.weight;
-            });
-            return size;
-        }
-
-        function add_edge_to_graph(graph, edge) {
-            update_assoc_mat(graph, edge);
-
-            const edge_index = graph.edges.map(function (d) {
-                return d.source + '_' + d.target;
-            }).indexOf(edge.source + '_' + edge.target);
-
-            if (edge_index !== -1) {
-                graph.edges[edge_index].weight = edge.weight;
-            } else {
-                graph.edges.push(edge);
-            }
-        }
-
-        function make_assoc_mat(edge_list) {
-            const mat = {};
-            edge_list.forEach(function (edge) {
-                mat[edge.source] = mat[edge.source] || {};
-                mat[edge.source][edge.target] = edge.weight;
-                mat[edge.target] = mat[edge.target] || {};
-                mat[edge.target][edge.source] = edge.weight;
-            });
-
-            return mat;
-        }
-
-        function update_assoc_mat(graph, edge) {
-            graph._assoc_mat[edge.source] = graph._assoc_mat[edge.source] || {};
-            graph._assoc_mat[edge.source][edge.target] = edge.weight;
-            graph._assoc_mat[edge.target] = graph._assoc_mat[edge.target] || {};
-            graph._assoc_mat[edge.target][edge.source] = edge.weight;
-        }
-
-        function clone(obj) {
-            if (obj === null || typeof (obj) !== 'object') {
-                return obj;
-            }
-
-            const temp = obj.constructor();
-
-            for (let key in obj) {
-                temp[key] = clone(obj[key]);
-            }
-            return temp;
-        }
-
-        //Core-Algorithm Related
-        function init_status(graph, status, part) {
-            status['nodes_to_com'] = {};
-            status['total_weight'] = 0;
-            status['internals'] = {};
-            status['degrees'] = {};
-            status['gdegrees'] = {};
-            status['loops'] = {};
-            status['total_weight'] = get_graph_size(graph);
-
-            if (typeof part === 'undefined') {
-                graph.nodes.forEach(function (node, i) {
-                    status.nodes_to_com[node] = i;
-                    const deg = get_degree_for_node(graph, node);
-                    if (deg < 0) {
-                        throw 'Bad graph type, use positive weights!';
-                    }
-                    status.degrees[i] = deg;
-                    status.gdegrees[node] = deg;
-                    status.loops[node] = get_edge_weight(graph, node, node) || 0;
-                    status.internals[i] = status.loops[node];
-                });
-            } else {
-                graph.nodes.forEach(function (node) {
-                    const com = part[node];
-                    status.nodes_to_com[node] = com;
-                    const deg = get_degree_for_node(graph, node);
-                    status.degrees[com] = (status.degrees[com] || 0) + deg;
-                    status.gdegrees[node] = deg;
-                    let inc = 0.0;
-
-                    const neighbours = get_neighbours_of_node(graph, node);
-                    neighbours.forEach(function (neighbour) {
-                        const weight = graph._assoc_mat[node][neighbour];
-                        if (weight <= 0) {
-                            throw "Bad graph type, use positive weights";
-                        }
-
-                        if (part[neighbour] === com) {
-                            if (neighbour === node) {
-                                inc += weight;
-                            } else {
-                                inc += weight / 2.0;
-                            }
-                        }
-                    });
-                    status.internals[com] = (status.internals[com] || 0) + inc;
-                });
-            }
-        }
-
-        function __modularity(status) {
-            const links = status.total_weight;
-            let result = 0.0;
-            const communities = make_set(obj_values(status.nodes_to_com));
-
-            communities.forEach(function (com) {
-                const in_degree = status.internals[com] || 0;
-                const degree = status.degrees[com] || 0;
-                if (links > 0) {
-                    result = result + in_degree / links - Math.pow((degree / (2.0 * links)), 2);
-                }
-            });
-            return result;
-        }
-
-        function __neighcom(node, graph, status) {
-            // compute the communities in the neighb. of the node, with the graph given by
-            // node_to_com
-
-            const weights = {};
-            const neighboorhood = get_neighbours_of_node(graph, node);//make iterable;
-
-            neighboorhood.forEach(function (neighbour) {
-                if (neighbour !== node) {
-                    const weight = graph._assoc_mat[node][neighbour] || 1;
-                    const neighbourcom = status.nodes_to_com[neighbour];
-                    weights[neighbourcom] = (weights[neighbourcom] || 0) + weight;
-                }
-            });
-
-            return weights;
-        }
-
-        function __insert(node, com, weight, status) {
-            //insert node into com and modify status
-            status.nodes_to_com[node] = +com;
-            status.degrees[com] = (status.degrees[com] || 0) + (status.gdegrees[node] || 0);
-            status.internals[com] = (status.internals[com] || 0) + weight + (status.loops[node] || 0);
-        }
-
-        function __remove(node, com, weight, status) {
-            //remove node from com and modify status
-            status.degrees[com] = ((status.degrees[com] || 0) - (status.gdegrees[node] || 0));
-            status.internals[com] = ((status.internals[com] || 0) - weight - (status.loops[node] || 0));
-            status.nodes_to_com[node] = -1;
-        }
-
-        function __renumber(dict) {
-            let count = 0;
-            const ret = clone(dict); //deep copy :)
-            const new_values = {};
-            const dict_keys = Object.keys(dict);
-            dict_keys.forEach(function (key) {
-                const value = dict[key];
-                let new_value = (typeof new_values[value] === 'undefined') ? -1 : new_values[value];
-                if (new_value === -1) {
-                    new_values[value] = count;
-                    new_value = count;
-                    count = count + 1;
-                }
-                ret[key] = new_value;
-            });
-            return ret;
-        }
-
-        function __one_level(graph, status) {
-            //Compute one level of the Communities Dendogram.
-            let modif = true,
-                nb_pass_done = 0,
-                cur_mod = __modularity(status),
-                new_mod = cur_mod;
-
-            while (modif && nb_pass_done !== __PASS_MAX) {
-                cur_mod = new_mod;
-                modif = false;
-                nb_pass_done += 1;
-
-                graph.nodes.forEach(eachNode);
-                new_mod = __modularity(status);
-                if (new_mod - cur_mod < __MIN) {
-                    break;
-                }
-            }
-
-            function eachNode(node) {
-                const com_node = status.nodes_to_com[node];
-                const degc_totw = (status.gdegrees[node] || 0) / (status.total_weight * 2.0);
-                const neigh_communities = __neighcom(node, graph, status);
-                __remove(node, com_node, (neigh_communities[com_node] || 0.0), status);
-                let best_com = com_node;
-                let best_increase = 0;
-                const neigh_communities_entries = Object.keys(neigh_communities);//make iterable;
-
-                neigh_communities_entries.forEach(function (com) {
-                    const incr = neigh_communities[com] - (status.degrees[com] || 0.0) * degc_totw;
-                    if (incr > best_increase) {
-                        best_increase = incr;
-                        best_com = com;
-                    }
-                });
-
-                __insert(node, best_com, neigh_communities[best_com] || 0, status);
-
-                if (best_com !== com_node) {
-                    modif = true;
-                }
-            }
-        }
-
-        function induced_graph(partition, graph) {
-            const ret = {nodes: [], edges: [], _assoc_mat: {}};
-            let w_prec, weight;
-            //add nodes from partition values
-            const partition_values = obj_values(partition);
-            ret.nodes = ret.nodes.concat(make_set(partition_values)); //make set
-            graph.edges.forEach(function (edge) {
-                weight = edge.weight || 1;
-                const com1 = partition[edge.source];
-                const com2 = partition[edge.target];
-                w_prec = (get_edge_weight(ret, com1, com2) || 0);
-                const new_weight = (w_prec + weight);
-                add_edge_to_graph(ret, {'source': com1, 'target': com2, 'weight': new_weight});
-            });
-            return ret;
-        }
-
-        function partition_at_level(dendogram, level) {
-            const partition = clone(dendogram[0]);
-            for (var i = 1; i < level + 1; i++) {
-                Object.keys(partition).forEach(eachKey);
-            }
-            return partition;
-
-            function eachKey(key) {
-                const node = key;
-                const com = partition[key];
-                partition[node] = dendogram[i][com];
-            }
-        }
-
-
-        function generate_dendogram(graph, part_init) {
-
-            if (graph.edges.length === 0) {
-                const part = {};
-                graph.nodes.forEach(function (node) {
-                    part[node] = node;
-                });
-                return part;
-            }
-            const status = {};
-
-            init_status(original_graph, status, part_init);
-            let mod = __modularity(status);
-            const status_list = [];
-            __one_level(original_graph, status);
-            let new_mod = __modularity(status);
-            let partition = __renumber(status.nodes_to_com);
-            status_list.push(partition);
-            mod = new_mod;
-            let current_graph = induced_graph(partition, original_graph);
-            init_status(current_graph, status);
-
-            while (true) {
-                __one_level(current_graph, status);
-                new_mod = __modularity(status);
-                if (new_mod - mod < __MIN) {
-                    break;
-                }
-
-                partition = __renumber(status.nodes_to_com);
-                status_list.push(partition);
-
-                mod = new_mod;
-                current_graph = induced_graph(partition, current_graph);
-                init_status(current_graph, status);
-            }
-
-            return status_list;
-        }
-
-        const core = function () {
-            const dendogram = generate_dendogram(original_graph, partition_init);
-            return partition_at_level(dendogram, dendogram.length - 1);
-        };
-
-        core.nodes = function (nds) {
-            if (arguments.length > 0) {
-                original_graph_nodes = nds;
-            }
-            return core;
-        };
-
-        core.edges = function (edgs) {
-            if (typeof original_graph_nodes === 'undefined') {
-                throw 'Please provide the graph nodes first!';
-            }
-
-            if (arguments.length > 0) {
-                original_graph_edges = edgs;
-                const assoc_mat = make_assoc_mat(edgs);
-                original_graph = {
-                    'nodes': original_graph_nodes,
-                    'edges': original_graph_edges,
-                    '_assoc_mat': assoc_mat
-                };
-            }
-            return core;
-        };
-
-        core.partition_init = function (prttn) {
-            if (arguments.length > 0) {
-                partition_init = prttn;
-            }
-            return core;
-        };
-
-        return core;
-    }
-
-// Define all the variables.
-    let narrative,
-        scenes, characters, introductions, links,
-        size, orientation, pathSpace, scale,
-        labelSize, labelPosition, groupMargin, scenePadding,
-        groups, totalCharacters, r2eSort;
-
-// Set some defaults.
-    size = [1, 1];
-    scale = 1;
-    pathSpace = 10;
-    labelSize = [100, 15];
-    labelPosition = 'right';
-    scenePadding = [0, 0, 0, 0];
-    groupMargin = 0;
-    orientation = 'horizontal';
-    r2eSort = true;
+    let scenes, characters, introductions, links, groups, totalCharacters;
+    let size = [1, 1];
+    let scale = 1;
+    let pathSpace = 10;
+    let labelSize = [100, 15];
+    let labelPosition = 'right';
+    let scenePadding = [0, 0, 0, 0];
+    let groupMargin = 0;
+    let orientation = 'horizontal';
+    let r2eSort = true;
 
 // Public functions (the API)
 // ==========================
 // The narrative object which is returned and exposes the public API.
-    narrative = {};
+    let narrative = {};
 
 // Scenes
 // ------
@@ -761,9 +353,6 @@ d3.layout.narrative = function () {
 // Return the public API.
     return narrative;
 
-// Private functions
-// =================
-
 // Initial data wrangling
 // ----------------------
 //
@@ -778,7 +367,7 @@ d3.layout.narrative = function () {
         appearances = [];
         scenes.forEach(function (scene) {
             scene.characters.forEach(function (character) {
-                if(character === undefined) return false;
+                if (character === undefined) return false;
                 // If the character isn't an object assume it's an index from the characters array.
                 character = (typeof character === 'object') ? character : characters[character];
                 // Note forced character positions and sizes.
@@ -787,8 +376,8 @@ d3.layout.narrative = function () {
                 character._width = character.width || false;
                 character._height = character.height || false;
                 let des = "";
-                for(let i =0; i < scene.description.length; i++ ){
-                    if(scene.description[i].id == character.id){
+                for (let i = 0; i < scene.description.length; i++) {
+                    if (scene.description[i].id == character.id) {
                         des = scene.description[i].action;
                         break;
                     }
@@ -860,7 +449,6 @@ d3.layout.narrative = function () {
             }
         });
     }
-
 // Character clustering
 // --------------------
 //
@@ -888,7 +476,6 @@ d3.layout.narrative = function () {
             character.group = group;
         });
     }
-
 // Group scenes
 // ------------
 //
@@ -925,8 +512,8 @@ d3.layout.narrative = function () {
             modeGroup.modeCount++;
             scene.group = modeGroup;
         });
+        scenesPartition(scenes);
     }
-
 // Group appearances
 // -----------------
 //
@@ -944,7 +531,6 @@ d3.layout.narrative = function () {
             }));
         });
     }
-
 // Sort groups
 // -----------
 //
@@ -956,7 +542,6 @@ d3.layout.narrative = function () {
             return b.id - a.id;
         });
     }
-
 // Group positions
 // ---------------
 //
@@ -970,7 +555,6 @@ d3.layout.narrative = function () {
             max += groupMargin;
         });
     }
-
 // Sort group appearances
 // ----------------------
 //
@@ -983,7 +567,6 @@ d3.layout.narrative = function () {
         // let edges  = getEdges(characters, scenes);
         // let matrix = getMatrix(nodes, edges);
     }
-
 // Character group positions
 // -------------------------
 //
@@ -991,8 +574,9 @@ d3.layout.narrative = function () {
     function computeCharacterGroupPositions() {
 
         let charactersOrder = SortR2e(totalCharacters, scenes);
+
         function SortR2e(characters, scenes) {
-            let nodes  = characters.map(function (d, i) {
+            let nodes = characters.map(function (d, i) {
                 return i;
             });
             let edges = getEdges(characters, scenes);
@@ -1012,20 +596,21 @@ d3.layout.narrative = function () {
             });
             for (let i = 0; i < nodes.length; i++) {
                 for (let j = 0; j < nodes.length; j++) {
-                    if(characters[i].group.id === characters[j].group.id){
+                    if (characters[i].group.id === characters[j].group.id) {
                         sceneMatrix[i][j] = sceneMatrix[i][j] + 0.9;
                     }
                 }
             }
-            return r2e(sceneMatrix, nodes.length);
+            return r2e(sceneMatrix, characters.length);
         }
+
         totalCharacters.forEach(function (d, i) {
             d.r2eIndex = charactersOrder[i];
         });
         groups.forEach(function (group) {
-            if(r2eSort){
+            if (r2eSort) {
                 group.characters.sort(function (a, b) {
-                    return  a.r2eIndex - b.r2eIndex;
+                    return a.r2eIndex - b.r2eIndex;
                 });
             }
 
@@ -1034,7 +619,6 @@ d3.layout.narrative = function () {
             });
         });
     }
-
 // Scene timing
 // ------------
 //
@@ -1052,9 +636,8 @@ d3.layout.narrative = function () {
         //scale = ((orientation === 'vertical') ? size[1] - labelSize[1] : size[0] - labelSize[0]) / duration;
 
         scale = 1;
-        console.log('scale:'+ scale);
+        console.log('scale:' + scale);
     }
-
 // Position scenes
 // ---------------
 //
@@ -1084,8 +667,8 @@ d3.layout.narrative = function () {
                     appearance.x = rate * characterPosition(i) + scenePadding[3];
                     prePositions[appearance.character.id] = avg + appearance.x;
                 } else {
-                      appearance.y = rate * characterPosition(i) + scenePadding[0];
-                      appearance.x = scenePadding[3];
+                    appearance.y = rate * characterPosition(i) + scenePadding[0];
+                    appearance.x = scenePadding[3];
                 }
             });
             if (scene.appearances.length > 1) {
@@ -1100,7 +683,7 @@ d3.layout.narrative = function () {
                 //avg = prePositions[tempAppearance.character.id]
             } else if (scene.appearances.length == 1) {
                 avg = characterPosition(tempAppearance.character.cOrder) + tempAppearance.character.group.min;
-               // avg = prePositions[tempAppearance.character.id] ;
+                // avg = prePositions[tempAppearance.character.id] ;
             }
 
             if (orientation === 'vertical') {
@@ -1108,7 +691,7 @@ d3.layout.narrative = function () {
                 scene.y = Math.max(labelSize[0], scale * scene.start + labelSize[1]);
             } else {
                 scene.x = Math.max(labelSize[0], scale * scene.start + labelSize[0]);
-                scene.y = Math.max(    0, avg - tempAppearance.y);
+                scene.y = Math.max(0, avg - tempAppearance.y);
             }
 
             scene.appearances.forEach(function (appearance) {
@@ -1121,7 +704,6 @@ d3.layout.narrative = function () {
         });
 
     }
-
 // Introduction nodes
 // ------------------
 //
@@ -1173,11 +755,11 @@ d3.layout.narrative = function () {
             }
 
             if (orientation === 'vertical') {
-                introduction.x = appearance.character._x || Math.max(0 + labelSize[0] / 2,  x);
+                introduction.x = appearance.character._x || Math.max(0 + labelSize[0] / 2, x);
                 introduction.y = appearance.character._y || Math.max(labelSize[0], y);
             } else {
                 introduction.x = appearance.character._x || Math.max(labelSize[0], x);
-                introduction.y = appearance.character._y || Math.max(0 + labelSize[1] / 2,y);
+                introduction.y = appearance.character._y || Math.max(0 + labelSize[1] / 2, y);
             }
 
             introduction.width = appearance.character._width || labelSize[0];
@@ -1188,7 +770,6 @@ d3.layout.narrative = function () {
 
         });
     }
-
 // Introduction positions
 // ----------------------
 //
@@ -1200,9 +781,9 @@ d3.layout.narrative = function () {
 
         // Get a list of things introductions can collide with.
         //collidables = introductions.concat(scenes);
-        let tempScenes  = [];
+        let tempScenes = [];
         scenes.forEach(function (d) {
-            if(d.characters.length > 1){
+            if (d.characters.length > 1) {
                 tempScenes.push(d);
             }
         });
@@ -1403,7 +984,6 @@ d3.layout.narrative = function () {
         }
 
     }
-
 // Links
 // -----
 //
@@ -1433,7 +1013,6 @@ d3.layout.narrative = function () {
             links.push(linkGroup);
         });
     }
-
 // Utility functions
 // =================
 //
@@ -1441,12 +1020,10 @@ d3.layout.narrative = function () {
     function characterPosition(index) {
         return index * pathSpace + pathSpace / 2;
     }
-
 // Get the actual height of a group based on a character count.
     function characterGroupHeight(count) {
         return count * pathSpace;
     }
-
 // Scene bounds
 // ------------
 //
@@ -1455,7 +1032,6 @@ d3.layout.narrative = function () {
     function getSceneBounds() {
         return [[this.x, this.y], [this.x + this.width, this.y + this.height]];
     }
-
 // Label bounds
 // ------------
 //
@@ -1474,7 +1050,6 @@ d3.layout.narrative = function () {
         }
 
     }
-
 //椭圆排序
     function r2e(sceneMatrix, row_number) {
 
@@ -1524,10 +1099,11 @@ d3.layout.narrative = function () {
         scenes.forEach(function (scene) {
             edges = edges.concat(sceneEdges(scene.appearances, characters));
         });
+
         function sceneEdges(appearances, characters) {
             let i, j, matrix;
             matrix = [];
-            if(appearances.length < 2) return matrix;
+            if (appearances.length < 2) return matrix;
             for (i = appearances.length; i--;) {
                 for (j = i; j--;) {
                     let a = characters.indexOf(appearances[i].character);
@@ -1537,10 +1113,11 @@ d3.layout.narrative = function () {
             }
             return matrix;
         }
+
         edges = edges.reduce(function (result, edge) {
             let resultEdge;
             resultEdge = result.filter(function (resultEdge) {
-                edge.sort(function(a,b){
+                edge.sort(function (a, b) {
                     return a - b;
                 });
                 return resultEdge.source === edge[0] && resultEdge.target === edge[1];
@@ -1553,7 +1130,6 @@ d3.layout.narrative = function () {
         }, []);
         return edges;
     }
-
     function getMatrix(nodes, edges) {
         let sceneMatrix = [];
         for (let i = 0; i < nodes.length; i++) {
@@ -1566,18 +1142,17 @@ d3.layout.narrative = function () {
             sceneMatrix[d.source][d.target] = d.weight;
             sceneMatrix[d.target][d.source] = d.weight;
         });
-        return  sceneMatrix
+        return sceneMatrix
     }
-
     function findMax(matrix) {
         let id = 0;
         let value = 0;
-        for(let i = 0; i < matrix.length; i++){
+        for (let i = 0; i < matrix.length; i++) {
             let tempValue = 0;
-            for(let j = 0; j < matrix[i].length; j++){
+            for (let j = 0; j < matrix[i].length; j++) {
                 tempValue += matrix[i][j];
             }
-            if(tempValue > value){
+            if (tempValue > value) {
                 id = i;
                 value = tempValue;
             }
@@ -1585,5 +1160,444 @@ d3.layout.narrative = function () {
 
 
     }
+    function scenesPartition(scenes) {
+        let Partitions = {home: [], away: [], cross: []};
+        for (let i = 0; i < scenes.length; i++) {
+            if (scenes[i].characters.length < 2) continue;
+            if (scenes[i].characters[0]) ;
+        }
+    }
+    function edgePartition(characters, scenes) {
+        let nodes = characters.map(function (d, i) {
+            return i;
+        });
+        let initGroups = characters.reduce(function (g, d, i) {
+            if (d.initialgroup !== undefined) {
+                g[i] = +d.initialgroup;
+            }
+            return g;
+        }, {});
+        let edges = [];
+        scenes.forEach(function (scene) {
+            edges = edges.concat(sceneEdges(scene.appearances));
+        });
+        edges = edges.reduce(function (result, edge) {
+            var resultEdge;
 
+            resultEdge = result.filter(function (resultEdge) {
+                return (resultEdge.target === edge[0] || resultEdge.target === edge[1]) &&
+                    (resultEdge.source === edge[0] || resultEdge.source === edge[1]);
+
+            })[0] || {source: edge[0], target: edge[1], weight: 0};
+
+            resultEdge.weight++;
+
+            if (resultEdge.weight === 1) {
+                result.push(resultEdge);
+            }
+
+            return result;
+        }, []);
+        let partitioner = jLouvain().nodes(nodes).edges(edges);
+
+        if (initGroups) {
+            partitioner.partition_init(initGroups);
+        }
+
+        let clusters = partitioner();
+
+        function sceneEdges(list) {
+            var i, j, matrix;
+            matrix = [];
+            for (i = list.length; i--;) {
+                for (j = i; j--;) {
+                    matrix.push([characters.indexOf(list[i].character), characters.indexOf(list[j].character)]);
+                }
+            }
+            return matrix;
+        }
+
+        function jLouvain() {
+
+            // Constants
+            const __PASS_MAX = -1;
+            const __MIN = 0.0000001;
+
+            // Local vars
+            let original_graph_nodes;
+            let original_graph_edges;
+            let original_graph = {};
+            let partition_init;
+
+            // Helpers
+            function make_set(array) {
+                const set = {};
+                array.forEach(function (d) {
+                    set[d] = true;
+                });
+                return Object.keys(set);
+            }
+
+            function obj_values(obj) {
+                const vals = [];
+                for (let key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        vals.push(obj[key]);
+                    }
+                }
+                return vals;
+            }
+
+            function get_degree_for_node(graph, node) {
+                const neighbours = graph._assoc_mat[node] ? Object.keys(graph._assoc_mat[node]) : [];
+                let weight = 0;
+                neighbours.forEach(function (neighbour) {
+                    let value = graph._assoc_mat[node][neighbour] || 1;
+                    if (node === neighbour) {
+                        value *= 2;
+                    }
+                    weight += value;
+                });
+                return weight;
+            }
+
+            function get_neighbours_of_node(graph, node) {
+                if (typeof graph._assoc_mat[node] === 'undefined') {
+                    return [];
+                }
+
+                const neighbours = Object.keys(graph._assoc_mat[node]);
+                return neighbours;
+            }
+
+
+            function get_edge_weight(graph, node1, node2) {
+                return graph._assoc_mat[node1] ? graph._assoc_mat[node1][node2] : undefined;
+            }
+
+            function get_graph_size(graph) {
+                let size = 0;
+                graph.edges.forEach(function (edge) {
+                    size += edge.weight;
+                });
+                return size;
+            }
+
+            function add_edge_to_graph(graph, edge) {
+                update_assoc_mat(graph, edge);
+
+                const edge_index = graph.edges.map(function (d) {
+                    return d.source + '_' + d.target;
+                }).indexOf(edge.source + '_' + edge.target);
+
+                if (edge_index !== -1) {
+                    graph.edges[edge_index].weight = edge.weight;
+                } else {
+                    graph.edges.push(edge);
+                }
+            }
+
+            function make_assoc_mat(edge_list) {
+                const mat = {};
+                edge_list.forEach(function (edge) {
+                    mat[edge.source] = mat[edge.source] || {};
+                    mat[edge.source][edge.target] = edge.weight;
+                    mat[edge.target] = mat[edge.target] || {};
+                    mat[edge.target][edge.source] = edge.weight;
+                });
+
+                return mat;
+            }
+
+            function update_assoc_mat(graph, edge) {
+                graph._assoc_mat[edge.source] = graph._assoc_mat[edge.source] || {};
+                graph._assoc_mat[edge.source][edge.target] = edge.weight;
+                graph._assoc_mat[edge.target] = graph._assoc_mat[edge.target] || {};
+                graph._assoc_mat[edge.target][edge.source] = edge.weight;
+            }
+
+            function clone(obj) {
+                if (obj === null || typeof (obj) !== 'object') {
+                    return obj;
+                }
+
+                const temp = obj.constructor();
+
+                for (let key in obj) {
+                    temp[key] = clone(obj[key]);
+                }
+                return temp;
+            }
+
+            //Core-Algorithm Related
+            function init_status(graph, status, part) {
+                status['nodes_to_com'] = {};
+                status['total_weight'] = 0;
+                status['internals'] = {};
+                status['degrees'] = {};
+                status['gdegrees'] = {};
+                status['loops'] = {};
+                status['total_weight'] = get_graph_size(graph);
+
+                if (typeof part === 'undefined') {
+                    graph.nodes.forEach(function (node, i) {
+                        status.nodes_to_com[node] = i;
+                        const deg = get_degree_for_node(graph, node);
+                        if (deg < 0) {
+                            throw 'Bad graph type, use positive weights!';
+                        }
+                        status.degrees[i] = deg;
+                        status.gdegrees[node] = deg;
+                        status.loops[node] = get_edge_weight(graph, node, node) || 0;
+                        status.internals[i] = status.loops[node];
+                    });
+                } else {
+                    graph.nodes.forEach(function (node) {
+                        const com = part[node];
+                        status.nodes_to_com[node] = com;
+                        const deg = get_degree_for_node(graph, node);
+                        status.degrees[com] = (status.degrees[com] || 0) + deg;
+                        status.gdegrees[node] = deg;
+                        let inc = 0.0;
+
+                        const neighbours = get_neighbours_of_node(graph, node);
+                        neighbours.forEach(function (neighbour) {
+                            const weight = graph._assoc_mat[node][neighbour];
+                            if (weight <= 0) {
+                                throw "Bad graph type, use positive weights";
+                            }
+
+                            if (part[neighbour] === com) {
+                                if (neighbour === node) {
+                                    inc += weight;
+                                } else {
+                                    inc += weight / 2.0;
+                                }
+                            }
+                        });
+                        status.internals[com] = (status.internals[com] || 0) + inc;
+                    });
+                }
+            }
+
+            function __modularity(status) {
+                const links = status.total_weight;
+                let result = 0.0;
+                const communities = make_set(obj_values(status.nodes_to_com));
+
+                communities.forEach(function (com) {
+                    const in_degree = status.internals[com] || 0;
+                    const degree = status.degrees[com] || 0;
+                    if (links > 0) {
+                        result = result + in_degree / links - Math.pow((degree / (2.0 * links)), 2);
+                    }
+                });
+                return result;
+            }
+
+            function __neighcom(node, graph, status) {
+                // compute the communities in the neighb. of the node, with the graph given by
+                // node_to_com
+
+                const weights = {};
+                const neighboorhood = get_neighbours_of_node(graph, node);//make iterable;
+
+                neighboorhood.forEach(function (neighbour) {
+                    if (neighbour !== node) {
+                        const weight = graph._assoc_mat[node][neighbour] || 1;
+                        const neighbourcom = status.nodes_to_com[neighbour];
+                        weights[neighbourcom] = (weights[neighbourcom] || 0) + weight;
+                    }
+                });
+
+                return weights;
+            }
+
+            function __insert(node, com, weight, status) {
+                //insert node into com and modify status
+                status.nodes_to_com[node] = +com;
+                status.degrees[com] = (status.degrees[com] || 0) + (status.gdegrees[node] || 0);
+                status.internals[com] = (status.internals[com] || 0) + weight + (status.loops[node] || 0);
+            }
+
+            function __remove(node, com, weight, status) {
+                //remove node from com and modify status
+                status.degrees[com] = ((status.degrees[com] || 0) - (status.gdegrees[node] || 0));
+                status.internals[com] = ((status.internals[com] || 0) - weight - (status.loops[node] || 0));
+                status.nodes_to_com[node] = -1;
+            }
+
+            function __renumber(dict) {
+                let count = 0;
+                const ret = clone(dict); //deep copy :)
+                const new_values = {};
+                const dict_keys = Object.keys(dict);
+                dict_keys.forEach(function (key) {
+                    const value = dict[key];
+                    let new_value = (typeof new_values[value] === 'undefined') ? -1 : new_values[value];
+                    if (new_value === -1) {
+                        new_values[value] = count;
+                        new_value = count;
+                        count = count + 1;
+                    }
+                    ret[key] = new_value;
+                });
+                return ret;
+            }
+
+            function __one_level(graph, status) {
+                //Compute one level of the Communities Dendogram.
+                let modif = true,
+                    nb_pass_done = 0,
+                    cur_mod = __modularity(status),
+                    new_mod = cur_mod;
+
+                while (modif && nb_pass_done !== __PASS_MAX) {
+                    cur_mod = new_mod;
+                    modif = false;
+                    nb_pass_done += 1;
+
+                    graph.nodes.forEach(eachNode);
+                    new_mod = __modularity(status);
+                    if (new_mod - cur_mod < __MIN) {
+                        break;
+                    }
+                }
+
+                function eachNode(node) {
+                    const com_node = status.nodes_to_com[node];
+                    const degc_totw = (status.gdegrees[node] || 0) / (status.total_weight * 2.0);
+                    const neigh_communities = __neighcom(node, graph, status);
+                    __remove(node, com_node, (neigh_communities[com_node] || 0.0), status);
+                    let best_com = com_node;
+                    let best_increase = 0;
+                    const neigh_communities_entries = Object.keys(neigh_communities);//make iterable;
+
+                    neigh_communities_entries.forEach(function (com) {
+                        const incr = neigh_communities[com] - (status.degrees[com] || 0.0) * degc_totw;
+                        if (incr > best_increase) {
+                            best_increase = incr;
+                            best_com = com;
+                        }
+                    });
+
+                    __insert(node, best_com, neigh_communities[best_com] || 0, status);
+
+                    if (best_com !== com_node) {
+                        modif = true;
+                    }
+                }
+            }
+
+            function induced_graph(partition, graph) {
+                const ret = {nodes: [], edges: [], _assoc_mat: {}};
+                let w_prec, weight;
+                //add nodes from partition values
+                const partition_values = obj_values(partition);
+                ret.nodes = ret.nodes.concat(make_set(partition_values)); //make set
+                graph.edges.forEach(function (edge) {
+                    weight = edge.weight || 1;
+                    const com1 = partition[edge.source];
+                    const com2 = partition[edge.target];
+                    w_prec = (get_edge_weight(ret, com1, com2) || 0);
+                    const new_weight = (w_prec + weight);
+                    add_edge_to_graph(ret, {'source': com1, 'target': com2, 'weight': new_weight});
+                });
+                return ret;
+            }
+
+            function partition_at_level(dendogram, level) {
+                const partition = clone(dendogram[0]);
+                for (var i = 1; i < level + 1; i++) {
+                    Object.keys(partition).forEach(eachKey);
+                }
+                return partition;
+
+                function eachKey(key) {
+                    const node = key;
+                    const com = partition[key];
+                    partition[node] = dendogram[i][com];
+                }
+            }
+
+
+            function generate_dendogram(graph, part_init) {
+
+                if (graph.edges.length === 0) {
+                    const part = {};
+                    graph.nodes.forEach(function (node) {
+                        part[node] = node;
+                    });
+                    return part;
+                }
+                const status = {};
+
+                init_status(original_graph, status, part_init);
+                let mod = __modularity(status);
+                const status_list = [];
+                __one_level(original_graph, status);
+                let new_mod = __modularity(status);
+                let partition = __renumber(status.nodes_to_com);
+                status_list.push(partition);
+                mod = new_mod;
+                let current_graph = induced_graph(partition, original_graph);
+                init_status(current_graph, status);
+
+                while (true) {
+                    __one_level(current_graph, status);
+                    new_mod = __modularity(status);
+                    if (new_mod - mod < __MIN) {
+                        break;
+                    }
+
+                    partition = __renumber(status.nodes_to_com);
+                    status_list.push(partition);
+
+                    mod = new_mod;
+                    current_graph = induced_graph(partition, current_graph);
+                    init_status(current_graph, status);
+                }
+
+                return status_list;
+            }
+
+            const core = function () {
+                const dendogram = generate_dendogram(original_graph, partition_init);
+                return partition_at_level(dendogram, dendogram.length - 1);
+            };
+
+            core.nodes = function (nds) {
+                if (arguments.length > 0) {
+                    original_graph_nodes = nds;
+                }
+                return core;
+            };
+
+            core.edges = function (edgs) {
+                if (typeof original_graph_nodes === 'undefined') {
+                    throw 'Please provide the graph nodes first!';
+                }
+
+                if (arguments.length > 0) {
+                    original_graph_edges = edgs;
+                    const assoc_mat = make_assoc_mat(edgs);
+                    original_graph = {
+                        'nodes': original_graph_nodes,
+                        'edges': original_graph_edges,
+                        '_assoc_mat': assoc_mat
+                    };
+                }
+                return core;
+            };
+
+            core.partition_init = function (prttn) {
+                if (arguments.length > 0) {
+                    partition_init = prttn;
+                }
+                return core;
+            };
+
+            return core;
+        }
+    }
 };

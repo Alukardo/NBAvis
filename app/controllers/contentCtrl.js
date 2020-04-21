@@ -2241,10 +2241,10 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     //     let offset = $('story-line2').scrollLeft();
                     //     return offset + "px";
                     //  });
-                    sliderCon.style('padding-left', function (d) {
-                        let offset = $('story-line2').scrollLeft();
-                        return offset + "px";
-                    });
+                    // sliderCon.style('padding-left', function (d) {
+                    //     let offset = $('story-line2').scrollLeft();
+                    //     return offset + "px";
+                    // });
                     selectCon.style('padding-left', function (d) {
                         let offset = $('story-line2').scrollLeft();
                         return offset + "px";
@@ -2275,57 +2275,88 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     return d.characters.length > 1
                 });
                 let characters = $rootScope.storyLine2.characters;
-
                 let nodes  = characters.map(function (d, i) {
                     return i;
                 });
                 let edges  = getEdges(characters, scenes);
                 let matrix = getMatrix(nodes, edges);
 
+                let forceNodes = characters.map(function (d) {
+                    return {"name": d.name, "group": d.affiliation};
+                })
+                let forceLinks = edges.map(function (d) {
+                    return {"source": d.source, "target": d.target, "value": d.weight};
+                })
+
                 let svg = d3.select('force-direct')
                     .append('svg')
                     .attr('id', 'gameSVG')
-                    .attr('width', '100%')
-                    .attr('height', $scope.windowHeight)
+                    .attr('width', '1000px')
+                    .attr('height', '1000px')
                     .style('margin-left', '1%');
 
-                let link = svg.append('g').attr('stroke', '#888').attr('stroke-opacity', 0.6).selectAll('line').data(edges)
-                link.enter().append('line').attr('stroke-width', function (d) {
-                        return 1;
+
+                let link = svg.append("g")
+                    .attr("class", "links")
+                    .selectAll(".link")
+                    .data(forceLinks)
+                    .enter().append("line")
+                    .attr("class", "link")
+                    .attr("stroke",'#000')
+                    .attr("stroke-width", 0.5);
+
+                let node = svg.append("g")
+                    .attr("class", "nodes")
+                    .selectAll(".node")
+                    .data(forceNodes);
+                node.enter().append('g')
+                    .attr("class", "node")
+                    .style("fill",function (d) {
+                        return d.group === 'home'? '#4a6ca5':'#d03e4a';
                     })
-                let node = svg.append('g').attr('stroke', '#fff').selectAll('circle').data(nodes).enter().append('circle').attr('stroke-width',1.5)
-                    .attr('r',function (d) {
-                        return 5;
-                    }).attr('fill', function (d, i) {
-                        let scale = d3.scale.ordinal().domain([0, 20]).range(d3.scale.category20());
-                        return scale(i % 20);
-                    });
-                let force = d3.layout.force();
-                force.charge(-150).linkDistance(100)
-                    .size([500, 500]);
-                force.nodes(nodes)
-                    .links(edges)
+                    .on("mouseover", mouseover)
+                    .on("mouseout", mouseout)
+
+                node.append("circle")
+                    .attr("r", 8);
+
+                node.append("text")
+                    .attr("dy", ".35em")
+                    .text(function(d) { return d.name; });
+
+                let force = d3.layout.force()
+                    .nodes(forceNodes)
+                    .links(forceLinks)
+                    .gravity(.05)
+                    .charge(-240)
+                    .linkDistance(160)
+                    .size([1000, 1000])
                     .start();
 
-                // let simulation = d3.forceSimulation()
-                //     .nodes(data.nodes)
-                //     .velocityDecay(0.2)
-                //     .force("x", d3.forceX(0).strength(0.2))
-                //     .force("y", d3.forceY(-3).strength(0.2))
-                //     .force("collide",d3.forceCollide().radius(function (d) {
-                //         return d.group + 0.5;
-                //     }).iterations(2))
-                //     //.force('link', d3.forceLink(data.links).id(d => d.id).strength(0))
-                //     // .force('charge', d3.forceManyBody())
-                //     .force('center', d3.forceCenter(width * 0.5, height * 0.5))
-                //     .on('tick', function () {
-                //         node.attr('cx', d => d.x);
-                //         node.attr('cy', d => d.y);
-                //         link.attr('x1', d => d.source.x);
-                //         link.attr('y1', d => d.source.y);
-                //         link.attr('x2', d => d.target.x);
-                //         link.attr('y2', d => d.target.y);
-                //     });
+                force.on("tick", function () {
+                    link.attr("x1", function(d) { return d.source.x; })
+                        .attr("y1", function(d) { return d.source.y; })
+                        .attr("x2", function(d) { return d.target.x; })
+                        .attr("y2", function(d) { return d.target.y; });
+
+                    node.attr("transform", function(d) {
+                        return "translate(" + d.x + "," + d.y + ")";
+                    });
+                });
+
+
+
+                function mouseover() {
+                    d3.select(this).select("circle").transition()
+                        .duration(75)
+                        .attr("r", 10);
+                }
+
+                function mouseout() {
+                    d3.select(this).select("circle").transition()
+                        .duration(75)
+                        .attr("r", 8);
+                }
 
                 function getEdges(characters, scenes) {
                     let edges = [];
