@@ -23,14 +23,6 @@ d3.layout.narrative = function () {
 // ==========================
 // The narrative object which is returned and exposes the public API.
     let narrative = {};
-
-// Scenes
-// ------
-//
-// `narrative.scenes([array])`
-//
-// Set or get the scenes array. If an array is passed, sets the narrative's
-// scenes to the passed array, else returns the scenes array.
     narrative.scenes = function (_) {
         if (!arguments.length) {
             return scenes;
@@ -38,14 +30,6 @@ d3.layout.narrative = function () {
         scenes = _;
         return narrative;
     };
-
-// Characters
-// ----------
-//
-// `narrative.characters([array])`
-//
-// Set or get the characters array. If an array is passed, sets the
-// narrative's characters array, otherwise returns the characters array.
     narrative.characters = function (_) {
         if (!arguments.length) {
             return characters;
@@ -53,15 +37,6 @@ d3.layout.narrative = function () {
         characters = _;
         return narrative;
     };
-
-// Size
-// ----
-//
-// `narrative.size([array])`
-//
-// Set or get the size of the layout. A two element array `[width,height]`. Note
-// that this is considered a guide for the layout algorithm.
-// See `narrative.extent()` for getting the final size of the layout.
     narrative.size = function (_) {
         if (!arguments.length) {
             return size;
@@ -69,8 +44,6 @@ d3.layout.narrative = function () {
         size = _;
         return narrative;
     };
-
-// Scale
     narrative.scale = function (_) {
         if (!arguments.length) {
             return scale;
@@ -78,17 +51,6 @@ d3.layout.narrative = function () {
         scale = _;
         return narrative;
     };
-
-// Orientation
-// -----------
-//
-// `narrative.orientation([orientation])`
-//
-// *Incomplete:* Only the default (horizontal) option is fully supported.
-//
-// Set the orientation to use for the layout. The choices are `'horizontal'` (default)
-// or `'vertical'`. In a horizontal orientation 'time' runs from left to right
-// and in vertical, top to bottom.
     narrative.orientation = function (_) {
         if (!arguments.length) {
             return orientation;
@@ -96,19 +58,6 @@ d3.layout.narrative = function () {
         orientation = _;
         return narrative;
     };
-
-// Extent
-// ------
-//
-// `narrative.extent()`
-//
-// Get the extent of the space used by the layout. This is useful for adjusting
-// the size of the containing element after the layout has been calculated.
-//
-// Despite being able to set the size (see `narrative.size()`), it's not always
-// possible to contain the chart in the available space. This function will
-// provide a `[width,height]` array of the layout extent *after* the layout has
-// run.
     narrative.extent = function () {
         return scenes.concat(introductions).reduce(function (max, d) {
             const bounds = d.bounds();
@@ -121,13 +70,6 @@ d3.layout.narrative = function () {
             return max;
         }, [0, 0]);
     };
-
-// Path space
-// ----------
-//
-// `narrative.pathSpace([number])`
-//
-// Set or get the space available to each character's path.
     narrative.pathSpace = function (_) {
         if (!arguments.length) {
             return pathSpace;
@@ -135,16 +77,6 @@ d3.layout.narrative = function () {
         pathSpace = _;
         return narrative;
     };
-
-// Group margin
-// ------------
-//
-// `narrative.groupMargin([margin])`
-//
-// The characters are divided into groups based on the strength of their relationships
-// (i.e. co-appearances in scenes). These groups are then arranged in a way designed
-// to reduce congestion in the centre of the chart. To give thelayout a more open
-// feel, a group margin can be set.
     narrative.groupMargin = function (_) {
         if (!arguments.length) {
             return groupMargin;
@@ -152,16 +84,6 @@ d3.layout.narrative = function () {
         groupMargin = _;
         return narrative;
     };
-
-// Scene padding
-// -------------
-//
-// `narrative.scenePadding([array])`
-//
-// By default scenes have a height equal to `character height × character count`
-// and a width of zero. You may want to allow for extra space around scenes so
-// collisions with labels can be avoided. To set a padding pass an array of values
-// matching the CSS padding argument order `[top, right, bottom, left]`.
     narrative.scenePadding = function (_) {
         if (!arguments.length) {
             return scenePadding;
@@ -169,16 +91,6 @@ d3.layout.narrative = function () {
         scenePadding = _;
         return narrative;
     };
-
-// Label size
-// ----------
-//
-// `narrative.labelSize([array])`
-//
-// Set or get the default space to allocate in the layout for character labels.
-// Must be a two element array `[width,height]`. Label sizes specific to each
-// character which will override these defaults can be set by defining `height`
-// and `width` properties on individual character objects.
     narrative.labelSize = function (_) {
         if (!arguments.length) {
             return labelSize;
@@ -186,15 +98,6 @@ d3.layout.narrative = function () {
         labelSize = _;
         return narrative;
     };
-
-// Label position
-// --------------
-//
-// `narrative.labelPosition([string])`
-//
-// Set or get the default label position for character labels. Valid options are
-// `above`, `below`, `left`, `right`. This can be overridden by setting defining
-// a `labelPosition` property on individual character objects.
     narrative.labelPosition = function (_) {
         if (!arguments.length) {
             return labelPosition;
@@ -202,8 +105,6 @@ d3.layout.narrative = function () {
         labelPosition = _;
         return narrative;
     };
-
-// r2eSort enable/disable
     narrative.r2eSort = function (_) {
         if (!arguments.length) {
             return r2eSort;
@@ -211,28 +112,9 @@ d3.layout.narrative = function () {
         r2eSort = _;
         return narrative;
     };
-
-// Links
-// -----
-//
-// `narrative.links()`
-//
-// Returns an array of links. Each link is consecutive appearances for a given
-// character. Links are an object with `source` and `target` properties which
-// are both appearance objects.
     narrative.links = function () {
         return links;
     };
-
-// Link
-// ----
-//
-// `narrative.link()`
-//
-// Returns a function for generating path strings for links.
-// Links are objects with `source` and `target` properties which each contain
-// an `x` and `y` property. In the context of the narrative chart these are
-// either character apperance or introduction nodes.
     narrative.link = function () {
         let curvature = 0.9;
 
@@ -312,27 +194,9 @@ d3.layout.narrative = function () {
 
         return link;
     };
-
-// Introductions
-// -------------
-//
-// `narrative.introductions()`
-//
-// Get an array of character introductions for plotting on the graph. Introductions
-// are nodes (usually with labels) displayed before the first scene in which each
-// character appears.
     narrative.introductions = function () {
         return introductions;
     };
-
-// Layout
-// ------
-//
-// `narrative.layout()`
-//
-// Compute the narrative layout. This should be called after all options and
-// data have been set and before attempting to use the layout's output for
-// display purposes.
     narrative.layout = function () {
         computeSceneCharacters();
         computeCharacterGroups();
@@ -349,8 +213,6 @@ d3.layout.narrative = function () {
         createLinks();
         return narrative;
     };
-
-// Return the public API.
     return narrative;
 
 // Initial data wrangling
