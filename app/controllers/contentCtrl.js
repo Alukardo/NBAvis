@@ -287,12 +287,12 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
             });
 
             // Story Lines 2
-            let preEvent = null;
+
             let playerStatus = {};
             let tempScoreSum = {'home': 0, 'away': 0};
-            $rootScope.eventGapsce = {'home': [{'x': 0, 'y0': 0, 'y1': 0}], 'away': [{'x': 0, 'y0': 0, 'y1': 0}]};
-            $rootScope.eventEffect = {'home': [{'x': 0, 'y0': 0, 'y1': 0}], 'away': [{'x': 0, 'y0': 0, 'y1': 0}]};
-            $rootScope.eventTurnin = {'home': [{'x': 0, 'y0': 0, 'y1': 0}], 'away': [{'x': 0, 'y0': 0, 'y1': 0}]};
+            $rootScope.eventGapsce = {'home': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter' : 0}], 'away': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter' : 0}]};
+            $rootScope.eventEffect = {'home': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter' : 0}], 'away': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter' : 0}]};
+            $rootScope.eventTurnin = {'home': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter' : 0}], 'away': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter' : 0}]};
             angular.forEach($sessionStorage.playerData, function (player) {
                 let temp = {id: '', name: '', width: 0, affiliation: '', color: '', initialGroup: undefined};
                 temp.id = player['id'];
@@ -374,20 +374,19 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 scene.timeOffset = event['timeOffset'];
                                 scene.characters.push($rootScope.storyLine2.charactersMap[player.id]);
                                 scene.status = deepCopy(playerStatus);
-                                scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 1 + 0.5) * $rootScope.quarterGap : $rootScope.quarterGap;
-                                scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
+                                scene.start = event['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap ;
+                                scene.duration = 1;
                                 $rootScope.storyLine2.scenes.push(scene);
                             });
-                            preEvent = event;
-                            scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap : $rootScope.quarterGap;
-                            scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
+                            scene.start = event['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap ;
+                            scene.duration = 1;
                             let x = scene.start + scene.duration;
-                            $rootScope.eventEffect.away.push({'x': x, 'y0': 0, 'y1': 0});
-                            $rootScope.eventEffect.home.push({'x': x, 'y0': 0, 'y1': 0});
+                            $rootScope.eventEffect.away.push({'x': x, 'y0': 0, 'y1': 0, 'quarter' : scene.quarter});
+                            $rootScope.eventEffect.home.push({'x': x, 'y0': 0, 'y1': 0, 'quarter' : scene.quarter});
                         }
                         if (event['event_type'] === 12) {
-                            scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap : $rootScope.quarterGap;
-                            scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
+                            scene.start = event['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap ;
+                            scene.duration = 1;
                             let x = scene.start + scene.duration;
                             $rootScope.eventEffect.away.push({'x': x, 'y0': 0, 'y1': 0});
                             $rootScope.eventEffect.home.push({'x': x, 'y0': 0, 'y1': 0});
@@ -406,11 +405,11 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 playerStatus[players[0].id] = false;
                                 playerStatus[players[1].id] = true;
                             }
-                            scene.start = preEvent !== null ? preEvent['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap : $rootScope.quarterGap;
-                            scene.duration = preEvent === null ? 1 : event['timeOffset'] - preEvent['timeOffset'];
+                            scene.start = event['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap ;
+                            scene.duration = 1;
                             scene.description = event.description;
                             $rootScope.storyLine2.scenes.push(scene);
-                            preEvent = event;
+
 
                             let sceneTeam = $scope.predictSide(players[0].team);
                             let score_gap = 2 * (event['home_score'] - event['away_score']);
@@ -420,21 +419,23 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
                             let effect = eventEffect(event['event_type'], event['timeDuring'], sceneTeam.teamM);
                             let minEffect = Math.min(effect.away, effect.home);
-                            let x = scene.start + scene.duration;
+                            let x = event['timeOffset'] + (scene.quarter) * $rootScope.quarterGap;
                             let factor = 2.0;
                             $rootScope.eventEffect.away.push({
                                 'x': x,
                                 'y0': (-effect.away + minEffect) * factor,
-                                'y1': 0
+                                'y1': 0,
+                                'quarter' : scene.quarter
                             });
                             $rootScope.eventEffect.home.push({
                                 'x': x,
                                 'y0': 0,
-                                'y1': (effect.home - minEffect) * factor
+                                'y1': (effect.home - minEffect) * factor,
+                                'quarter' : scene.quarter
                             });
 
-                            $rootScope.eventGapsce.away.push({'x': x, 'y0': -score_gap_a, 'y1': 0});
-                            $rootScope.eventGapsce.home.push({'x': x, 'y0': 0, 'y1': score_gap_h});
+                            $rootScope.eventGapsce.away.push({'x': x, 'y0': -score_gap_a, 'y1': 0, 'quarter' : scene.quarter});
+                            $rootScope.eventGapsce.home.push({'x': x, 'y0': 0, 'y1': score_gap_h , 'quarter' : scene.quarter});
 
                             //Turning Point
                             if (event['home_point'] !== event['away_point']) {
@@ -447,8 +448,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                     tempScoreSum.home = 0;
                                 }
                             }
-                            $rootScope.eventTurnin.away.push({'x': x, 'y0': -3 * tempScoreSum.away, 'y1': 0});
-                            $rootScope.eventTurnin.home.push({'x': x, 'y0': 0, 'y1': 3 * tempScoreSum.home});
+                            $rootScope.eventTurnin.away.push({'x': x, 'y0': -3 * tempScoreSum.away, 'y1': 0, 'quarter' : scene.quarter});
+                            $rootScope.eventTurnin.home.push({'x': x, 'y0': 0, 'y1': 3 * tempScoreSum.home , 'quarter' : scene.quarter});
                         }
                     });
                 });
@@ -1025,8 +1026,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
         $scope.playMouseSelect = function (index) {
         };
         return $scope.init();
-    }])
-    .directive('gameGraph', ['$rootScope', '$document', function ($rootScope) {
+    }]);
+app.directive('gameGraph', ['$rootScope', '$document', function ($rootScope) {
         return {
             restrict: 'E',
             templateUrl: 'views/content/gameGraph.html',
@@ -1112,8 +1113,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
             }
         };
-    }])
-    .directive('first', ['$rootScope', '$document', function ($rootScope) {
+    }]);
+app.directive('first', ['$rootScope', '$document', function ($rootScope) {
         return {
             restrict: 'E',  // Element name: <my-graph></my-graph>
             link: function ($scope) {
@@ -1486,8 +1487,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 }
             }
         }
-    }])
-    .directive('storyLine', ['$rootScope', '$document', function ($rootScope) {
+    }]);
+app.directive('storyLine', ['$rootScope', '$document', function ($rootScope) {
         return {
             restrict: 'E',  // Element name: <my-directive></my-directive>
             link: function ($scope, $element) {
@@ -1642,8 +1643,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
             }
         };
-    }])
-    .directive('storyLine2', ['$rootScope', '$document', function ($rootScope, $document) {
+    }]);
+app.directive('storyLine2', ['$rootScope', '$document', function ($rootScope, $document) {
         return {
             restrict: 'E',  // Element name: <my-directive></my-directive>
             link: function ($scope, $element, $document) {
@@ -1654,14 +1655,17 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 let scenesDate = scenes;
                 let characters = $rootScope.storyLine2.characters;
 
-                let query = 0;
-                let sort = true;
-                let thresh = 1.0;
+                let totalQuarter = scenes[scenes.length - 1].quarter + 1;
+
+                let selectType    = 0;
+                let selectSort    = 0;
+                let selectThresh  = 1.0;
+                let selectQuart   = 0;
 
                 let storyLine = d3.select('story-line2').attr('id', 'gameSVG');
 
                 let selectCon = storyLine.append('p').append('div');
-                let sliderCon = storyLine.append('p').append('div');
+                //let sliderCon = storyLine.append('p').append('div');
 
                 let svg0 = storyLine.append('p').append('div').append('svg');
                 let svg1 = storyLine.append('p').append('div').append('svg');
@@ -1678,30 +1682,28 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
 
                 configSelectCon(selectCon);
-                configSliderCon(sliderCon);
-                update(scenes, characters, true);
+                //configSliderCon(sliderCon);
+                update(scenesDate, characters, selectType, selectQuart);
 
-                let tooltip = d3.tip()
-                    .attr('class', 'd3-tip')
-                    .style('box-sizing', 'content-box');
+                let tooltip = d3.tip().attr('class', 'd3-tip');
                 svg0.call(tooltip);
 
 
-                function update(scenes, characters, sort) {
+                function update(scenes, characters, sort, selectQuart = 0) {
                     let Canvas = {};
-                    Canvas.width = scenes.length * 40;
+                    Canvas.width = $scope.windowWidth * 0.9;
                     Canvas.height = 1600;
-
                     let narrative = d3.layout.narrative();
                     narrative.scenes(scenes);
                     narrative.characters(characters);
                     narrative.size([Canvas.width, Canvas.height]);
+                    narrative.range(selectQuart === 0 ? [0, totalQuarter] : [selectQuart-1 , selectQuart]);
                     narrative.pathSpace(20);
                     narrative.groupMargin(60);
                     narrative.labelSize([160, 15]);
                     narrative.scenePadding([0, 5, 0, 5]);
                     narrative.labelPosition('left');
-                    narrative.r2eSort(sort);
+                    narrative.sortType(sort);
                     narrative.layout();
 
                     //configVideo(video);
@@ -2060,37 +2062,52 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 }
 
                 function configSelectCon(object) {
+
+                    let selectQuarterTx = object.append('label').attr('class', 'selectLabel');
+                    selectQuarterTx.text('Quarter : ');
+                    let selectorQuarter = object.append('select').attr('class', 'selectorQuarter').style('width','150px');
+                    let QuarterData = [' All '];
+                    for(let i = 0; i <= scenes[scenes.length - 1].quarter; i++ ){
+                        QuarterData.push(' ' + (i + 1) + ' ');
+                    }
+                    let optionsQuarter = selectorQuarter.selectAll('option').data(QuarterData);
+                    optionsQuarter.enter().append('option').text(function (d) {
+                        return d;
+                    });
+                    selectorQuarter.on("change", function () {
+                        selectQuart = selectorQuarter.property('selectedIndex');
+                        scenesDate = sceneQuery(scenes, selectType, selectThresh, selectQuart);
+                        update(scenesDate, characters, selectSort, selectQuart);
+                    });
+
                     let selectTypeTx = object.append('label').attr('class', 'selectLabel');
                     selectTypeTx.text('Event Type : ');
-                    let selectorType = object.append('select').attr('class', 'selectorType');
+                    let selectorType = object.append('select').attr('class', 'selectorType').style('width','150px');
                     let optionsData = [' All ', ' Shoot Made ', ' Shoot Miss ', ' Free Throw ', ' Rebound ', ' Turn Over ', ' Foul ', ' Violation ', ' Sub ', ' Regular ', ' Jump Ball ', ' Ejection '];
                     let optionsType = selectorType.selectAll('option').data(optionsData);
                     optionsType.enter().append('option').text(function (d) {
                         return d;
                     });
                     selectorType.on("change", function () {
-                        let selectedIndex = selectorType.property('selectedIndex');
-                        scenesDate = sceneQuery(scenes, selectedIndex, thresh);
-                        update(scenesDate, characters, sort);
+                        selectType = selectorType.property('selectedIndex');
+                        scenesDate = sceneQuery(scenes, selectType, selectThresh, selectQuart);
+                        update(scenesDate, characters, selectSort, selectQuart);
                     });
 
                     let selectSortTx = object.append('label').attr('class', 'selectLabel');
                     selectSortTx.text('Sort Type : ');
-                    let selectorSort = object.append('select').attr('class', 'selectorSort');
-                    let SortData = [' R2eSort ', ' None '];
+                    let selectorSort = object.append('select').attr('class', 'selectorSort').style('width','150px');
+                    let SortData = [' GreedSort ', ' R2eSort ', ' None '];
                     let optionsSort = selectorSort.selectAll('option').data(SortData);
                     optionsSort.enter().append('option').text(function (d) {
                         return d;
                     });
                     selectorSort.on("change", function () {
-                        let selectedIndex = selectorSort.property('selectedIndex');
-                        if (selectedIndex === 0) sort = true;
-                        if (selectedIndex === 1) sort = false;
-                        update(scenesDate, characters, sort);
+                        selectSort = selectorSort.property('selectedIndex');
+                        update(scenesDate, characters, selectSort, selectQuart);
                     });
 
-
-                    object.style('margin-left', '120px');
+                    object.style('margin-left', '150px');
                     object.style('margin-right', '10px');
                     object.style('margin-top', '10px');
                     object.style('margin-bottom', '10px');
@@ -2112,9 +2129,9 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         object.max(100);
                         object.value(100);
                         object.on('slide', function (evt, value) {
-                            thresh = value / 100;
+                            selectThresh = value / 100;
                             console.log('value : ' + value);
-                            let dateSet = sceneQuery(scenesDate, query, thresh);
+                            let dateSet = sceneQuery(scenesDate, selectType, selectThresh);
                             update(dateSet, characters, true);
                         });
                     }
@@ -2138,7 +2155,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 }
 
                 function configSteam(object, narrative = d3.layout.narrative(), data, info) {
-                    object.attr('transform', function (d) {
+
+                    object.attr('transform', function () {
                         let x = 10 + 150;
                         let y = 60;
                         return 'translate(' + [x, y] + ')';
@@ -2146,7 +2164,18 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                     object.append('path').attr('class', 'areaH');
                     object.append('path').attr('class', 'areaA');
                     object.append('path').attr('class', 'baseL');
-
+                    let homeFilter = data.home.filter(function (d) {
+                        return d.quarter >= narrative.range()[0] && d.quarter < narrative.range()[1];
+                    })
+                    let awayFilter = data.away.filter(function (d) {
+                        return d.quarter >= narrative.range()[0] && d.quarter < narrative.range()[1];
+                    })
+                    homeFilter.forEach(function (d) {
+                        d.x = d.x - narrative.range()[0] * 820
+                    });
+                    awayFilter.forEach(function (d) {
+                        d.x = d.x - narrative.range()[0] * 820
+                    });
                     let gameLogo = object.append('g').attr('class', 'gameLogo');
                     let homeIcon = gameLogo.append('image').attr('class', 'homeIcon');
                     let awayIcon = gameLogo.append('image').attr('class', 'awayIcon');
@@ -2180,26 +2209,26 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
                     let area = d3.svg.area()
                         .x(function (d) {
-                            return d.x * narrative.scale();
+                            return ( d['x'] - narrative.range()[0] )* narrative.scale();
                         })
                         .y0(function (d) {
-                            return d.y0;
+                            return d['y0'];
                         })
                         .y1(function (d) {
-                            return d.y1;
+                            return d['y1'];
                         })
                         .interpolate("step"); // [ "linear","bundle", "basis", "step", "cardinal"]
 
 
                     let home = object.select('path.areaH')
                         .attr('d', function () {
-                            return area(data.home);
+                            return area(homeFilter);
                         })
                         .attr('fill', $scope.teamColor.home);
 
                     let away = object.select('path.areaA')
                         .attr('d', function (d) {
-                            return area(data.away);
+                            return area(awayFilter);
                         })
                         .attr('fill', $scope.teamColor.away);
                     let base = object.select('path.baseL')
@@ -2212,20 +2241,21 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
                 }
 
-                function sceneQuery(scenes, query, thresh) {
+                function sceneQuery(scenes, query, thresh, quarter = 0) {
                     let dateSet = [];
-                    scenes.forEach(function (scene) {
-                        if (scene.timeOffset <= Math.floor(scenes[scenes.length - 1]['timeOffset'] * thresh)) {
-                            if (query == 0) {
-                                dateSet.push(scene);
-                            } else if (scene.type == query) {
-                                dateSet.push(scene);
-                            } else if (scene.type == 13) {
-                                dateSet.push(scene);
-                            }
-
+                    for(let i = 0 ; i < scenes.length; i++){
+                        if (scenes[i].timeOffset > Math.floor(scenes[scenes.length - 1]['timeOffset'] * thresh)) break;
+                        if (quarter !== 0 && scenes[i].quarter !== quarter - 1) continue;
+                        if (query == 0) {
+                            dateSet.push(scenes[i]);
+                        } else if (scenes[i].type == query) {
+                            dateSet.push(scenes[i]);
+                        } else if (scenes[i].type == 13) {
+                            dateSet.push(scenes[i]);
                         }
-                    });
+
+                    }
+
                     return dateSet;
                 }
 
@@ -2264,8 +2294,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 }
             }
         }
-    }])
-    .directive('forceDirect', ['$rootScope', '$document', function ($rootScope) {
+    }]);
+app.directive('forceDirect', ['$rootScope', '$document', function ($rootScope) {
         return {
             restrict: 'E',  // Element name: <my-directive></my-directive>
             link: function ($scope, $element) {
@@ -2343,8 +2373,6 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                         return "translate(" + d.x + "," + d.y + ")";
                     });
                 });
-
-
 
                 function mouseover() {
                     d3.select(this).select("circle").transition()
