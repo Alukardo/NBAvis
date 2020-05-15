@@ -56,15 +56,21 @@ story-line2{
 	position: relative;
 	float:left;
 	overflow: auto;
+}
 
+.playerInfo{
+	margin-left: 170px;
+	margin-top : 150px;
+	border-style: solid;
+	border-width: 1px;
 }
 .playerImg{
 	width :130px;
-	margin: 5px;
+	margin: 10px;
 }
 .playerName{
 	margin: 5px;
-	font-size:6px;
+	font-size:16px;
 	text-align:center;
 }
 .eventDescription{

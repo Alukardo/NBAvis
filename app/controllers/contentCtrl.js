@@ -290,9 +290,18 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
 
             let playerStatus = {};
             let tempScoreSum = {'home': 0, 'away': 0};
-            $rootScope.eventGapsce = {'home': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter' : 0}], 'away': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter' : 0}]};
-            $rootScope.eventEffect = {'home': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter' : 0}], 'away': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter' : 0}]};
-            $rootScope.eventTurnin = {'home': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter' : 0}], 'away': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter' : 0}]};
+            $rootScope.eventGapsce = {
+                'home': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter': 0}],
+                'away': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter': 0}]
+            };
+            $rootScope.eventEffect = {
+                'home': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter': 0}],
+                'away': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter': 0}]
+            };
+            $rootScope.eventTurnin = {
+                'home': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter': 0}],
+                'away': [{'x': 0, 'y0': 0, 'y1': 0, 'quarter': 0}]
+            };
             angular.forEach($sessionStorage.playerData, function (player) {
                 let temp = {id: '', name: '', width: 0, affiliation: '', color: '', initialGroup: undefined};
                 temp.id = player['id'];
@@ -301,7 +310,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                 temp.affiliation = $scope.predictSide(player['team']).teamM;
                 temp.color = $scope.predictSide(player['team']).color;
                 temp.initialGroup = $scope.predictSide(player['team']).group;
-                //temp.initialGroup = 0;
+                // temp.initialGroup = 0;
                 playerStatus[temp.id] = player['starter'];
                 $rootScope.storyLine2.charactersMap[temp.id] = temp;
                 $rootScope.storyLine2.characters.push($rootScope.storyLine2.charactersMap[temp.id]);
@@ -374,18 +383,18 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 scene.timeOffset = event['timeOffset'];
                                 scene.characters.push($rootScope.storyLine2.charactersMap[player.id]);
                                 scene.status = deepCopy(playerStatus);
-                                scene.start = event['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap ;
+                                scene.start = event['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap;
                                 scene.duration = 1;
                                 $rootScope.storyLine2.scenes.push(scene);
                             });
-                            scene.start = event['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap ;
+                            scene.start = event['timeOffset'] + (scene.quarter + 1 + 1) * $rootScope.quarterGap;
                             scene.duration = 1;
                             let x = scene.start + scene.duration;
-                            $rootScope.eventEffect.away.push({'x': x, 'y0': 0, 'y1': 0, 'quarter' : scene.quarter});
-                            $rootScope.eventEffect.home.push({'x': x, 'y0': 0, 'y1': 0, 'quarter' : scene.quarter});
+                            $rootScope.eventEffect.away.push({'x': x, 'y0': 0, 'y1': 0, 'quarter': scene.quarter});
+                            $rootScope.eventEffect.home.push({'x': x, 'y0': 0, 'y1': 0, 'quarter': scene.quarter});
                         }
                         if (event['event_type'] === 12) {
-                            scene.start = event['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap ;
+                            scene.start = event['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap;
                             scene.duration = 1;
                             let x = scene.start + scene.duration;
                             $rootScope.eventEffect.away.push({'x': x, 'y0': 0, 'y1': 0});
@@ -405,7 +414,7 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 playerStatus[players[0].id] = false;
                                 playerStatus[players[1].id] = true;
                             }
-                            scene.start = event['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap ;
+                            scene.start = event['timeOffset'] + (scene.quarter + 1) * $rootScope.quarterGap;
                             scene.duration = 1;
                             scene.description = event.description;
                             $rootScope.storyLine2.scenes.push(scene);
@@ -425,17 +434,27 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                 'x': x,
                                 'y0': (-effect.away + minEffect) * factor,
                                 'y1': 0,
-                                'quarter' : scene.quarter
+                                'quarter': scene.quarter
                             });
                             $rootScope.eventEffect.home.push({
                                 'x': x,
                                 'y0': 0,
                                 'y1': (effect.home - minEffect) * factor,
-                                'quarter' : scene.quarter
+                                'quarter': scene.quarter
                             });
 
-                            $rootScope.eventGapsce.away.push({'x': x, 'y0': -score_gap_a, 'y1': 0, 'quarter' : scene.quarter});
-                            $rootScope.eventGapsce.home.push({'x': x, 'y0': 0, 'y1': score_gap_h , 'quarter' : scene.quarter});
+                            $rootScope.eventGapsce.away.push({
+                                'x': x,
+                                'y0': -score_gap_a,
+                                'y1': 0,
+                                'quarter': scene.quarter
+                            });
+                            $rootScope.eventGapsce.home.push({
+                                'x': x,
+                                'y0': 0,
+                                'y1': score_gap_h,
+                                'quarter': scene.quarter
+                            });
 
                             //Turning Point
                             if (event['home_point'] !== event['away_point']) {
@@ -448,8 +467,18 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
                                     tempScoreSum.home = 0;
                                 }
                             }
-                            $rootScope.eventTurnin.away.push({'x': x, 'y0': -3 * tempScoreSum.away, 'y1': 0, 'quarter' : scene.quarter});
-                            $rootScope.eventTurnin.home.push({'x': x, 'y0': 0, 'y1': 3 * tempScoreSum.home , 'quarter' : scene.quarter});
+                            $rootScope.eventTurnin.away.push({
+                                'x': x,
+                                'y0': -3 * tempScoreSum.away,
+                                'y1': 0,
+                                'quarter': scene.quarter
+                            });
+                            $rootScope.eventTurnin.home.push({
+                                'x': x,
+                                'y0': 0,
+                                'y1': 3 * tempScoreSum.home,
+                                'quarter': scene.quarter
+                            });
                         }
                     });
                 });
@@ -1028,1373 +1057,1400 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
         return $scope.init();
     }]);
 app.directive('gameGraph', ['$rootScope', '$document', function ($rootScope) {
-        return {
-            restrict: 'E',
-            templateUrl: 'views/content/gameGraph.html',
-            link: function ($scope, $element) {
+    return {
+        restrict: 'E',
+        templateUrl: 'views/content/gameGraph.html',
+        link: function ($scope, $element) {
 
-                console.log($rootScope.data.selectedIndex);
+            console.log($rootScope.data.selectedIndex);
 
-                let zoomRate = 0.08;
-                let theSvgElement;
-                let currentX = 0, currentY = 0;
+            let zoomRate = 0.08;
+            let theSvgElement;
+            let currentX = 0, currentY = 0;
 
-                $rootScope.matrix = [1, 0, 0, 1, 0, 0];
-                angular.element($element).attr('draggable', 'true');
-                $element.bind('dragstart', function (e) {
-                    // if(e.shiftKey){
-                    currentX = e.originalEvent.clientX;
-                    currentY = e.originalEvent.clientY;
-                    // }
-                });
-                $element.bind('dragover', function (e) {
-                    // if(e.shiftKey){
-                    if (e.preventDefault) {
-                        e.preventDefault();
-                    }
-
-                    $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
-                    $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
-
-                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
-                    currentX = e.originalEvent.clientX;
-                    currentY = e.originalEvent.clientY;
-                    return false;
-                    // }
-                });
-                $element.bind('drop', function (e) {
-                    // if(e.shiftKey){
-                    if (e.stopPropogation) {
-                        e.stopPropogation(); // Necessary. Allows us to drop.
-                    }
-                    return false;
-                    // }
-                });
-                // $element.bind('mousewheel', function (mouseWheelEvent) {
-                //     let zoomCenter = {
-                //         'x': mouseWheelEvent.originalEvent.clientX,
-                //         'y': mouseWheelEvent.originalEvent.clientY
-                //     };
-                //     if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
-                //         zoom('zoomIn', zoomCenter);
-                //     } else {
-                //         zoom('zoomOut', zoomCenter);
-                //     }
-                //
-                //     mouseWheelEvent.cancelBubble = true;
-                //     return false;
-                // });
-                //
-                // function zoom(zoomType, zoomCenter) {
-                //     $rootScope.matrix[0] = parseFloat($rootScope.matrix[0]);	//scale-x
-                //     $rootScope.matrix[3] = parseFloat($rootScope.matrix[3]);	//scale-y
-                //
-                //     if (zoomType === 'zoomIn') {
-                //         if ($rootScope.matrix[0] + zoomRate > 0.1 && $rootScope.matrix[3] + zoomRate > 0.1) {
-                //             $rootScope.matrix[0] += zoomRate;
-                //             $rootScope.matrix[3] += zoomRate;
-                //             $rootScope.matrix[4] -= (zoomCenter.x * zoomRate);
-                //             $rootScope.matrix[5] -= (zoomCenter.y * zoomRate);
-                //         }
-                //     } else if (zoomType === 'zoomOut') {
-                //         if ($rootScope.matrix[0] - zoomRate > 0.1 && $rootScope.matrix[3] - zoomRate > 0.1) {
-                //             $rootScope.matrix[0] -= zoomRate;
-                //             $rootScope.matrix[3] -= zoomRate;
-                //             $rootScope.matrix[4] += (zoomCenter.x * zoomRate);
-                //             $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
-                //         }
-                //     }
-                //     theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
+            $rootScope.matrix = [1, 0, 0, 1, 0, 0];
+            angular.element($element).attr('draggable', 'true');
+            $element.bind('dragstart', function (e) {
+                // if(e.shiftKey){
+                currentX = e.originalEvent.clientX;
+                currentY = e.originalEvent.clientY;
                 // }
+            });
+            $element.bind('dragover', function (e) {
+                // if(e.shiftKey){
+                if (e.preventDefault) {
+                    e.preventDefault();
+                }
 
-                theSvgElement = $element.find('#gameSVG');
+                $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
+                $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
+
                 theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
+                currentX = e.originalEvent.clientX;
+                currentY = e.originalEvent.clientY;
+                return false;
+                // }
+            });
+            $element.bind('drop', function (e) {
+                // if(e.shiftKey){
+                if (e.stopPropogation) {
+                    e.stopPropogation(); // Necessary. Allows us to drop.
+                }
+                return false;
+                // }
+            });
+            // $element.bind('mousewheel', function (mouseWheelEvent) {
+            //     let zoomCenter = {
+            //         'x': mouseWheelEvent.originalEvent.clientX,
+            //         'y': mouseWheelEvent.originalEvent.clientY
+            //     };
+            //     if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
+            //         zoom('zoomIn', zoomCenter);
+            //     } else {
+            //         zoom('zoomOut', zoomCenter);
+            //     }
+            //
+            //     mouseWheelEvent.cancelBubble = true;
+            //     return false;
+            // });
+            //
+            // function zoom(zoomType, zoomCenter) {
+            //     $rootScope.matrix[0] = parseFloat($rootScope.matrix[0]);	//scale-x
+            //     $rootScope.matrix[3] = parseFloat($rootScope.matrix[3]);	//scale-y
+            //
+            //     if (zoomType === 'zoomIn') {
+            //         if ($rootScope.matrix[0] + zoomRate > 0.1 && $rootScope.matrix[3] + zoomRate > 0.1) {
+            //             $rootScope.matrix[0] += zoomRate;
+            //             $rootScope.matrix[3] += zoomRate;
+            //             $rootScope.matrix[4] -= (zoomCenter.x * zoomRate);
+            //             $rootScope.matrix[5] -= (zoomCenter.y * zoomRate);
+            //         }
+            //     } else if (zoomType === 'zoomOut') {
+            //         if ($rootScope.matrix[0] - zoomRate > 0.1 && $rootScope.matrix[3] - zoomRate > 0.1) {
+            //             $rootScope.matrix[0] -= zoomRate;
+            //             $rootScope.matrix[3] -= zoomRate;
+            //             $rootScope.matrix[4] += (zoomCenter.x * zoomRate);
+            //             $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
+            //         }
+            //     }
+            //     theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
+            // }
+
+            theSvgElement = $element.find('#gameSVG');
+            theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
 
 
-            }
-        };
-    }]);
+        }
+    };
+}]);
 app.directive('first', ['$rootScope', '$document', function ($rootScope) {
-        return {
-            restrict: 'E',  // Element name: <my-graph></my-graph>
-            link: function ($scope) {
-                console.log('index :' + $rootScope.data.selectedIndex);
-                let svg = d3.select('first').append('svg').attr('class', 'gameSVG');
-                let gameLogo = svg.append('g').attr('class', 'gameLogo');
-                let quarters = svg.append('g').attr('class', 'quarters');
-                let minutes = svg.append('g').attr('class', 'minutes');
-                let plays = svg.append('g').attr('class', 'plays');
-                svg.call(tooltip);
-                update($rootScope.data.selectedIndex + 1);
+    return {
+        restrict: 'E',  // Element name: <my-graph></my-graph>
+        link: function ($scope) {
+            console.log('index :' + $rootScope.data.selectedIndex);
+            let svg = d3.select('first').append('svg').attr('class', 'gameSVG');
+            let gameLogo = svg.append('g').attr('class', 'gameLogo');
+            let quarters = svg.append('g').attr('class', 'quarters');
+            let minutes = svg.append('g').attr('class', 'minutes');
+            let plays = svg.append('g').attr('class', 'plays');
+            svg.call(tooltip);
+            update($rootScope.data.selectedIndex + 1);
 
-                function update(index) {
-                    initialization(svg);
-                    updateLogo($scope.Icon);
-                    if (index == 1) {
-                        updateQuarters($rootScope.quarterDrawData, index);
-                    }
-                    if (index == 2) {
-                        updateQuarters($rootScope.quarterDrawData, index);
-                        updateMinutes($rootScope.minuteDrawData, index);
-                    }
-                    if (index == 3) {
-                        updateQuarters($rootScope.quarterDrawData, index);
-                        updateMinutes($rootScope.minuteDrawData, index);
-                        updatePlays($rootScope.playDrawData, index);
-                    }
+            function update(index) {
+                initialization(svg);
+                updateLogo($scope.Icon);
+                if (index == 1) {
+                    updateQuarters($rootScope.quarterDrawData, index);
                 }
-
-                function initialization(svg) {
-                    svg.attr('width', '100%');
-                    svg.attr('height', $scope.windowHeight);
-                    svg.style('margin-left', '1%');
+                if (index == 2) {
+                    updateQuarters($rootScope.quarterDrawData, index);
+                    updateMinutes($rootScope.minuteDrawData, index);
                 }
-
-                function updateLogo(iconData) {
-                    let homeIcon = gameLogo.append('image').attr('class', 'homeIcon');
-                    let awayIcon = gameLogo.append('image').attr('class', 'awayIcon');
-                    homeIcon.attr('href', 'assets/images/teamLogo/' + $scope.game['homeName'] + '.svg');
-                    homeIcon.attr('width', '75').attr('x', iconData.home.x).attr('y', iconData.home.y);
-                    awayIcon.attr('href', 'assets/images/teamLogo/' + $scope.game['awayName'] + '.svg');
-                    awayIcon.attr('width', '75').attr('x', iconData.away.x).attr('y', iconData.away.y);
+                if (index == 3) {
+                    updateQuarters($rootScope.quarterDrawData, index);
+                    updateMinutes($rootScope.minuteDrawData, index);
+                    updatePlays($rootScope.playDrawData, index);
                 }
+            }
 
-                function updateQuarters(quarterData, index) {
-                    let quarter = quarters.selectAll('g.quarter').data(quarterData);
-                    let enter = quarter.enter().append('g').attr('class', 'quarter').call(function (s) {
-                        s.attr('id', function (d, i) {
-                            return i;
-                        });
-                        s.attr('opacity', function (d) {
+            function initialization(svg) {
+                svg.attr('width', '100%');
+                svg.attr('height', $scope.windowHeight);
+                svg.style('margin-left', '1%');
+            }
+
+            function updateLogo(iconData) {
+                let homeIcon = gameLogo.append('image').attr('class', 'homeIcon');
+                let awayIcon = gameLogo.append('image').attr('class', 'awayIcon');
+                homeIcon.attr('href', 'assets/images/teamLogo/' + $scope.game['homeName'] + '.svg');
+                homeIcon.attr('width', '75').attr('x', iconData.home.x).attr('y', iconData.home.y);
+                awayIcon.attr('href', 'assets/images/teamLogo/' + $scope.game['awayName'] + '.svg');
+                awayIcon.attr('width', '75').attr('x', iconData.away.x).attr('y', iconData.away.y);
+            }
+
+            function updateQuarters(quarterData, index) {
+                let quarter = quarters.selectAll('g.quarter').data(quarterData);
+                let enter = quarter.enter().append('g').attr('class', 'quarter').call(function (s) {
+                    s.attr('id', function (d, i) {
+                        return i;
+                    });
+                    s.attr('opacity', function (d) {
+                        if ($rootScope.quarterSelected && !d.home.isSelected) {
+                            return 0.1;
+                        } else {
+                            return 1.0;
+                        }
+                    });
+
+                    let quarterH = s.append('polygon').attr('class', 'quarterH');
+                    let quarterA = s.append('polygon').attr('class', 'quarterA');
+                    quarterH.attr('points', function (d) {
+                        let points = [];
+                        points.push([d.home.bottomLeft.x, d.home.bottomLeft.y]);
+                        points.push([d.home.upLeft.x, d.home.upLeft.y]);
+                        points.push([d.home.upRight.x, d.home.upRight.y]);
+                        points.push([d.home.bottomRight.x, d.home.bottomRight.y]);
+                        return d3.geom.polygon(points);
+                    });
+                    quarterA.attr('points', function (d) {
+                        let points = [];
+                        points.push([d.away.bottomLeft.x, d.away.bottomLeft.y]);
+                        points.push([d.away.upLeft.x, d.away.upLeft.y]);
+                        points.push([d.away.upRight.x, d.away.upRight.y]);
+                        points.push([d.away.bottomRight.x, d.away.bottomRight.y]);
+                        return d3.geom.polygon(points);
+                    });
+                    quarterH.attr('fill', $scope.teamColor.home);
+                    quarterA.attr('fill', $scope.teamColor.away);
+
+                    let CompareLineS = s.append('path').attr('class', 'CompareLineS');
+                    CompareLineS.attr('d', function (d) {
+                        let points = [d.compareLine.startLine.start, d.compareLine.startLine.end];
+                        return lineFunction(points);
+                    });
+                    CompareLineS.attr('stroke', function (d) {
+                        return d.compareLine.startLine.color;
+                    });
+                    CompareLineS.attr('stroke-width', function (d) {
+                        return d.compareLine.startLine.width;
+                    });
+                    let CompareLineE = s.append('path').attr('class', 'CompareLineE');
+                    CompareLineE.attr('d', function (d) {
+                        let points = [d.compareLine.endLine.start, d.compareLine.endLine.end];
+                        return lineFunction(points);
+                    });
+                    CompareLineE.attr('stroke', function (d) {
+                        return d.compareLine.endLine.color;
+                    });
+                    CompareLineE.attr('stroke-width', function (d) {
+                        return d.compareLine.endLine.width;
+                    });
+                    s.on('click', function (d) {
+                        if (index !== 1) return;
+                        if (!$rootScope.quarterSelected) {
+                            quarters.selectAll('g.quarter').attr('opacity', 0.1);
+                            $rootScope.quarterSelected = true;
+                        }
+
+                        d3.select(this).attr('opacity', function (d) {
+                            d.home.isSelected = !d.home.isSelected;
+                            d.away.isSelected = !d.away.isSelected;
                             if ($rootScope.quarterSelected && !d.home.isSelected) {
                                 return 0.1;
                             } else {
                                 return 1.0;
                             }
                         });
-
-                        let quarterH = s.append('polygon').attr('class', 'quarterH');
-                        let quarterA = s.append('polygon').attr('class', 'quarterA');
-                        quarterH.attr('points', function (d) {
-                            let points = [];
-                            points.push([d.home.bottomLeft.x, d.home.bottomLeft.y]);
-                            points.push([d.home.upLeft.x, d.home.upLeft.y]);
-                            points.push([d.home.upRight.x, d.home.upRight.y]);
-                            points.push([d.home.bottomRight.x, d.home.bottomRight.y]);
-                            return d3.geom.polygon(points);
-                        });
-                        quarterA.attr('points', function (d) {
-                            let points = [];
-                            points.push([d.away.bottomLeft.x, d.away.bottomLeft.y]);
-                            points.push([d.away.upLeft.x, d.away.upLeft.y]);
-                            points.push([d.away.upRight.x, d.away.upRight.y]);
-                            points.push([d.away.bottomRight.x, d.away.bottomRight.y]);
-                            return d3.geom.polygon(points);
-                        });
-                        quarterH.attr('fill', $scope.teamColor.home);
-                        quarterA.attr('fill', $scope.teamColor.away);
-
-                        let CompareLineS = s.append('path').attr('class', 'CompareLineS');
-                        CompareLineS.attr('d', function (d) {
-                            let points = [d.compareLine.startLine.start, d.compareLine.startLine.end];
-                            return lineFunction(points);
-                        });
-                        CompareLineS.attr('stroke', function (d) {
-                            return d.compareLine.startLine.color;
-                        });
-                        CompareLineS.attr('stroke-width', function (d) {
-                            return d.compareLine.startLine.width;
-                        });
-                        let CompareLineE = s.append('path').attr('class', 'CompareLineE');
-                        CompareLineE.attr('d', function (d) {
-                            let points = [d.compareLine.endLine.start, d.compareLine.endLine.end];
-                            return lineFunction(points);
-                        });
-                        CompareLineE.attr('stroke', function (d) {
-                            return d.compareLine.endLine.color;
-                        });
-                        CompareLineE.attr('stroke-width', function (d) {
-                            return d.compareLine.endLine.width;
-                        });
-                        s.on('click', function (d) {
-                            if (index !== 1) return;
-                            if (!$rootScope.quarterSelected) {
-                                quarters.selectAll('g.quarter').attr('opacity', 0.1);
-                                $rootScope.quarterSelected = true;
-                            }
-
-                            d3.select(this).attr('opacity', function (d) {
-                                d.home.isSelected = !d.home.isSelected;
-                                d.away.isSelected = !d.away.isSelected;
-                                if ($rootScope.quarterSelected && !d.home.isSelected) {
-                                    return 0.1;
-                                } else {
-                                    return 1.0;
-                                }
-                            });
-                        });
                     });
-                    let update = quarter.call(function (s) {
-                        s.attr('id', function (d, i) {
-                            return i;
-                        });
-                        let quarterH = s.select('rect.quarterH');
-                        let quarterA = s.select('rect.quarterA');
-                        quarterH.attr('points', function (d) {
-                            let points = [];
-                            points.push([d.home.bottomLeft.x, d.home.bottomLeft.y]);
-                            points.push([d.home.upLeft.x, d.home.upLeft.y]);
-                            points.push([d.home.upRight.x, d.home.upRight.y]);
-                            points.push([d.home.bottomRight.x, d.home.bottomRight.y]);
-                            return d3.geom.polygon(points);
-                        });
-                        quarterA.attr('points', function (d) {
-                            let points = [];
-                            points.push([d.away.bottomLeft.x, d.away.bottomLeft.y]);
-                            points.push([d.away.upLeft.x, d.away.upLeft.y]);
-                            points.push([d.away.upRight.x, d.away.upRight.y]);
-                            points.push([d.away.bottomRight.x, d.away.bottomRight.y]);
-                            return d3.geom.polygon(points);
-                        });
-                        quarterH.attr('fill', $scope.teamColor.home);
-                        quarterA.attr('fill', $scope.teamColor.away);
-
-                        let CompareLineS = s.select('path.CompareLineS');
-                        CompareLineS.attr('d', function (d) {
-                            let points = [d.compareLine.startLine.start, d.compareLine.startLine.end];
-                            return lineFunction(points);
-                        });
-                        CompareLineS.attr('stroke', function (d) {
-                            return d.compareLine.startLine.color;
-                        });
-                        CompareLineS.attr('stroke-width', function (d) {
-                            return d.compareLine.startLine.width;
-                        });
-                        let CompareLineE = s.select('path.CompareLineE');
-                        CompareLineE.attr('d', function (d) {
-                            let points = [d.compareLine.endLine.start, d.compareLine.endLine.end];
-                            return lineFunction(points);
-                        });
-                        CompareLineE.attr('stroke', function (d) {
-                            return d.compareLine.endLine.color;
-                        });
-                        CompareLineE.attr('stroke-width', function (d) {
-                            return d.compareLine.endLine.width;
-                        });
+                });
+                let update = quarter.call(function (s) {
+                    s.attr('id', function (d, i) {
+                        return i;
                     });
-                    let exit = quarter.exit().remove();
-                }
+                    let quarterH = s.select('rect.quarterH');
+                    let quarterA = s.select('rect.quarterA');
+                    quarterH.attr('points', function (d) {
+                        let points = [];
+                        points.push([d.home.bottomLeft.x, d.home.bottomLeft.y]);
+                        points.push([d.home.upLeft.x, d.home.upLeft.y]);
+                        points.push([d.home.upRight.x, d.home.upRight.y]);
+                        points.push([d.home.bottomRight.x, d.home.bottomRight.y]);
+                        return d3.geom.polygon(points);
+                    });
+                    quarterA.attr('points', function (d) {
+                        let points = [];
+                        points.push([d.away.bottomLeft.x, d.away.bottomLeft.y]);
+                        points.push([d.away.upLeft.x, d.away.upLeft.y]);
+                        points.push([d.away.upRight.x, d.away.upRight.y]);
+                        points.push([d.away.bottomRight.x, d.away.bottomRight.y]);
+                        return d3.geom.polygon(points);
+                    });
+                    quarterH.attr('fill', $scope.teamColor.home);
+                    quarterA.attr('fill', $scope.teamColor.away);
 
-                function updateMinutes(minuteData, index) {
-                    let minute = minutes.selectAll('g.minute').data(minuteData);
-                    let enter = minute.enter().append('g').attr('class', 'minute').call(function (s) {
-                        s.attr('id', function (d, i) {
-                            return i;
-                        });
-                        s.attr('opacity', function (d) {
+                    let CompareLineS = s.select('path.CompareLineS');
+                    CompareLineS.attr('d', function (d) {
+                        let points = [d.compareLine.startLine.start, d.compareLine.startLine.end];
+                        return lineFunction(points);
+                    });
+                    CompareLineS.attr('stroke', function (d) {
+                        return d.compareLine.startLine.color;
+                    });
+                    CompareLineS.attr('stroke-width', function (d) {
+                        return d.compareLine.startLine.width;
+                    });
+                    let CompareLineE = s.select('path.CompareLineE');
+                    CompareLineE.attr('d', function (d) {
+                        let points = [d.compareLine.endLine.start, d.compareLine.endLine.end];
+                        return lineFunction(points);
+                    });
+                    CompareLineE.attr('stroke', function (d) {
+                        return d.compareLine.endLine.color;
+                    });
+                    CompareLineE.attr('stroke-width', function (d) {
+                        return d.compareLine.endLine.width;
+                    });
+                });
+                let exit = quarter.exit().remove();
+            }
+
+            function updateMinutes(minuteData, index) {
+                let minute = minutes.selectAll('g.minute').data(minuteData);
+                let enter = minute.enter().append('g').attr('class', 'minute').call(function (s) {
+                    s.attr('id', function (d, i) {
+                        return i;
+                    });
+                    s.attr('opacity', function (d) {
+                        if ($rootScope.minuteSelected && !d.home.isSelected) {
+                            return 0.1;
+                        } else {
+                            return 1.0;
+                        }
+                    });
+                    let minuteH = s.append('polygon').attr('class', 'minuteH');
+                    let minuteA = s.append('polygon').attr('class', 'minuteA');
+                    minuteH.attr('points', function (d) {
+                        let points = [];
+                        points.push([d.home.bottomLeft.x, d.home.bottomLeft.y]);
+                        points.push([d.home.upLeft.x, d.home.upLeft.y]);
+                        points.push([d.home.upRight.x, d.home.upRight.y]);
+                        points.push([d.home.bottomRight.x, d.home.bottomRight.y]);
+                        return d3.geom.polygon(points);
+                    });
+                    minuteA.attr('points', function (d) {
+                        let points = [];
+                        points.push([d.away.bottomLeft.x, d.away.bottomLeft.y]);
+                        points.push([d.away.upLeft.x, d.away.upLeft.y]);
+                        points.push([d.away.upRight.x, d.away.upRight.y]);
+                        points.push([d.away.bottomRight.x, d.away.bottomRight.y]);
+                        return d3.geom.polygon(points);
+                    });
+                    minuteH.attr('fill', function (d) {
+                        return d.home.background;
+                    });
+                    minuteA.attr('fill', function (d) {
+                        return d.away.background;
+                    });
+                    let CompareLineS = s.append('path').attr('class', 'CompareLineS');
+                    CompareLineS.attr('d', function (d) {
+                        let points = [d.compareLine.startLine.start, d.compareLine.startLine.end];
+                        return lineFunction(points);
+                    });
+                    CompareLineS.attr('stroke', function (d) {
+                        return d.compareLine.startLine.color;
+                    });
+                    CompareLineS.attr('stroke-width', function (d) {
+                        return d.compareLine.startLine.width;
+                    });
+                    let CompareLineE = s.append('path').attr('class', 'CompareLineE');
+                    CompareLineE.attr('d', function (d) {
+                        let points = [d.compareLine.endLine.start, d.compareLine.endLine.end];
+                        return lineFunction(points);
+                    });
+                    CompareLineE.attr('stroke', function (d) {
+                        return d.compareLine.endLine.color;
+                    });
+                    CompareLineE.attr('stroke-width', function (d) {
+                        return d.compareLine.endLine.width;
+                    });
+                    s.on('click', function (d) {
+                        if (index !== 2) return;
+                        if (!$rootScope.minuteSelected) {
+                            quarters.selectAll('g.quarter').attr('opacity', 0.1);
+                            minutes.selectAll('g.minute').attr('opacity', 0.1);
+                            $rootScope.minuteSelected = true;
+                        }
+
+                        d3.select(this).attr('opacity', function (d) {
+                            d.home.isSelected = !d.home.isSelected;
+                            d.away.isSelected = !d.away.isSelected;
                             if ($rootScope.minuteSelected && !d.home.isSelected) {
                                 return 0.1;
                             } else {
                                 return 1.0;
                             }
                         });
-                        let minuteH = s.append('polygon').attr('class', 'minuteH');
-                        let minuteA = s.append('polygon').attr('class', 'minuteA');
-                        minuteH.attr('points', function (d) {
-                            let points = [];
-                            points.push([d.home.bottomLeft.x, d.home.bottomLeft.y]);
-                            points.push([d.home.upLeft.x, d.home.upLeft.y]);
-                            points.push([d.home.upRight.x, d.home.upRight.y]);
-                            points.push([d.home.bottomRight.x, d.home.bottomRight.y]);
-                            return d3.geom.polygon(points);
-                        });
-                        minuteA.attr('points', function (d) {
-                            let points = [];
-                            points.push([d.away.bottomLeft.x, d.away.bottomLeft.y]);
-                            points.push([d.away.upLeft.x, d.away.upLeft.y]);
-                            points.push([d.away.upRight.x, d.away.upRight.y]);
-                            points.push([d.away.bottomRight.x, d.away.bottomRight.y]);
-                            return d3.geom.polygon(points);
-                        });
-                        minuteH.attr('fill', function (d) {
-                            return d.home.background;
-                        });
-                        minuteA.attr('fill', function (d) {
-                            return d.away.background;
-                        });
-                        let CompareLineS = s.append('path').attr('class', 'CompareLineS');
-                        CompareLineS.attr('d', function (d) {
-                            let points = [d.compareLine.startLine.start, d.compareLine.startLine.end];
-                            return lineFunction(points);
-                        });
-                        CompareLineS.attr('stroke', function (d) {
-                            return d.compareLine.startLine.color;
-                        });
-                        CompareLineS.attr('stroke-width', function (d) {
-                            return d.compareLine.startLine.width;
-                        });
-                        let CompareLineE = s.append('path').attr('class', 'CompareLineE');
-                        CompareLineE.attr('d', function (d) {
-                            let points = [d.compareLine.endLine.start, d.compareLine.endLine.end];
-                            return lineFunction(points);
-                        });
-                        CompareLineE.attr('stroke', function (d) {
-                            return d.compareLine.endLine.color;
-                        });
-                        CompareLineE.attr('stroke-width', function (d) {
-                            return d.compareLine.endLine.width;
-                        });
-                        s.on('click', function (d) {
-                            if (index !== 2) return;
-                            if (!$rootScope.minuteSelected) {
-                                quarters.selectAll('g.quarter').attr('opacity', 0.1);
-                                minutes.selectAll('g.minute').attr('opacity', 0.1);
-                                $rootScope.minuteSelected = true;
-                            }
-
-                            d3.select(this).attr('opacity', function (d) {
-                                d.home.isSelected = !d.home.isSelected;
-                                d.away.isSelected = !d.away.isSelected;
-                                if ($rootScope.minuteSelected && !d.home.isSelected) {
-                                    return 0.1;
-                                } else {
-                                    return 1.0;
-                                }
-                            });
-                        });
                     });
-                    let update = minute.call(function (s) {
-                        s.attr('id', function (d, i) {
-                            return i;
-                        });
-                        let quarterH = s.select('rect.quarterH');
-                        let quarterA = s.select('rect.quarterA');
-                        quarterH.attr('points', function (d) {
-                            let points = [];
-                            points.push([d.home.bottomLeft.x, d.home.bottomLeft.y]);
-                            points.push([d.home.upLeft.x, d.home.upLeft.y]);
-                            points.push([d.home.upRight.x, d.home.upRight.y]);
-                            points.push([d.home.bottomRight.x, d.home.bottomRight.y]);
-                            return d3.geom.polygon(points);
-                        });
-                        quarterA.attr('points', function (d) {
-                            let points = [];
-                            points.push([d.away.bottomLeft.x, d.away.bottomLeft.y]);
-                            points.push([d.away.upLeft.x, d.away.upLeft.y]);
-                            points.push([d.away.upRight.x, d.away.upRight.y]);
-                            points.push([d.away.bottomRight.x, d.away.bottomRight.y]);
-                            return d3.geom.polygon(points);
-                        });
-                        quarterH.attr('fill', $scope.teamColor.home);
-                        quarterA.attr('fill', $scope.teamColor.away);
-                        let CompareLineS = s.select('path.CompareLineS');
-                        CompareLineS.attr('d', function (d) {
-                            let points = [d.compareLine.startLine.start, d.compareLine.startLine.end];
-                            return lineFunction(points);
-                        });
-                        CompareLineS.attr('stroke', function (d) {
-                            return d.compareLine.startLine.color;
-                        });
-                        CompareLineS.attr('stroke-width', function (d) {
-                            return d.compareLine.startLine.width;
-                        });
-                        let CompareLineE = s.select('path.CompareLineE');
-                        CompareLineE.attr('d', function (d) {
-                            let points = [d.compareLine.endLine.start, d.compareLine.endLine.end];
-                            return lineFunction(points);
-                        });
-                        CompareLineE.attr('stroke', function (d) {
-                            return d.compareLine.endLine.color;
-                        });
-                        CompareLineE.attr('stroke-width', function (d) {
-                            return d.compareLine.endLine.width;
-                        });
+                });
+                let update = minute.call(function (s) {
+                    s.attr('id', function (d, i) {
+                        return i;
                     });
-                    let exit = minute.exit().remove();
-
-                }
-
-                function updatePlays(playData, index) {
-                    let eventsData = [];
-                    playData.forEach(function (d) {
-                        d.home.forEach(function (p) {
-                            eventsData.push(p);
-                        });
-                        d.away.forEach(function (p) {
-                            eventsData.push(p);
-                        })
+                    let quarterH = s.select('rect.quarterH');
+                    let quarterA = s.select('rect.quarterA');
+                    quarterH.attr('points', function (d) {
+                        let points = [];
+                        points.push([d.home.bottomLeft.x, d.home.bottomLeft.y]);
+                        points.push([d.home.upLeft.x, d.home.upLeft.y]);
+                        points.push([d.home.upRight.x, d.home.upRight.y]);
+                        points.push([d.home.bottomRight.x, d.home.bottomRight.y]);
+                        return d3.geom.polygon(points);
                     });
-                    let play = plays.selectAll('.play').data(eventsData);
-                    let enter = play.enter().append('circle').attr('class', 'play')
-                        .attr('id', function (d, i) {
-                            return i;
-                        })
-                        .attr('cx', function (d) {
-                            return d.center.x;
-                        })
-                        .attr('cy', function (d) {
-                            return d.center.y;
-                        })
-                        .attr('r', function (d) {
-                            return d.radius;
-                        })
-                        .attr('fill', function (d) {
-                            return d.background;
-                        })
-                        .on('mouseover', function (d) {
-                            if (index !== 3) return;
-                            let tempEvent = $rootScope.eventData[d.eventId];
-                            let eventPlayerImg = 'https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/' + tempEvent['players'][0].id + '.png';
-                            let eventTime = tempEvent.time;
-                            let eventPlayer = tempEvent['players'][0].name;
-                            let eventType = tempEvent['event_type'];
-                            let eventPoint = tempEvent['home_point'] > tempEvent['away_point'] ? tempEvent['home_point'] : tempEvent['away_point'];
-                            tooltip.html("<table id = 'd3tooltip'>" +
-                                "<tr>" +
-                                "<td width='70%'>" +
-                                "<img id='playerPhoto'  style='background:' + $scope.predictSide(tempEvent['players'][0]['team']).color +'' src=''+ eventPlayerImg + ''  width='130px' ></td>" +
-                                "<td width='30%'>" +
-                                "<table height='100%'>" +
-                                "<tr height = '33%'><td>" + eventTime + "</td></tr>" +
-                                "<tr height = '33%'><td>" + eventPlayer + "</td></tr>" +
-                                "<tr height = '33%'><td>" + eventType + "</td></tr>" +
-                                "</table>" +
-                                "</td></table>");
-                            tooltip.show();
+                    quarterA.attr('points', function (d) {
+                        let points = [];
+                        points.push([d.away.bottomLeft.x, d.away.bottomLeft.y]);
+                        points.push([d.away.upLeft.x, d.away.upLeft.y]);
+                        points.push([d.away.upRight.x, d.away.upRight.y]);
+                        points.push([d.away.bottomRight.x, d.away.bottomRight.y]);
+                        return d3.geom.polygon(points);
+                    });
+                    quarterH.attr('fill', $scope.teamColor.home);
+                    quarterA.attr('fill', $scope.teamColor.away);
+                    let CompareLineS = s.select('path.CompareLineS');
+                    CompareLineS.attr('d', function (d) {
+                        let points = [d.compareLine.startLine.start, d.compareLine.startLine.end];
+                        return lineFunction(points);
+                    });
+                    CompareLineS.attr('stroke', function (d) {
+                        return d.compareLine.startLine.color;
+                    });
+                    CompareLineS.attr('stroke-width', function (d) {
+                        return d.compareLine.startLine.width;
+                    });
+                    let CompareLineE = s.select('path.CompareLineE');
+                    CompareLineE.attr('d', function (d) {
+                        let points = [d.compareLine.endLine.start, d.compareLine.endLine.end];
+                        return lineFunction(points);
+                    });
+                    CompareLineE.attr('stroke', function (d) {
+                        return d.compareLine.endLine.color;
+                    });
+                    CompareLineE.attr('stroke-width', function (d) {
+                        return d.compareLine.endLine.width;
+                    });
+                });
+                let exit = minute.exit().remove();
 
-                        })
-                        .on('mouseout', function () {
-                            if (index !== 3) return;
-                            tooltip.hide();
-                        });
-                    let update = play.attr('id', function (d, i) {
+            }
+
+            function updatePlays(playData, index) {
+                let eventsData = [];
+                playData.forEach(function (d) {
+                    d.home.forEach(function (p) {
+                        eventsData.push(p);
+                    });
+                    d.away.forEach(function (p) {
+                        eventsData.push(p);
+                    })
+                });
+                let play = plays.selectAll('.play').data(eventsData);
+                let enter = play.enter().append('circle').attr('class', 'play')
+                    .attr('id', function (d, i) {
                         return i;
                     })
-                        .attr('cx', function (d) {
-                            return d.center.x;
-                        })
-                        .attr('cy', function (d) {
-                            return d.center.y;
-                        })
-                        .attr('r', function (d) {
-                            return d.radius;
-                        })
-                        .attr('fill', function (d) {
-                            return d.background;
-                        });
-                    let exit = play.exit().remove();
+                    .attr('cx', function (d) {
+                        return d.center.x;
+                    })
+                    .attr('cy', function (d) {
+                        return d.center.y;
+                    })
+                    .attr('r', function (d) {
+                        return d.radius;
+                    })
+                    .attr('fill', function (d) {
+                        return d.background;
+                    })
+                    .on('mouseover', function (d) {
+                        if (index !== 3) return;
+                        let tempEvent = $rootScope.eventData[d.eventId];
+                        let eventPlayerImg = 'https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/' + tempEvent['players'][0].id + '.png';
+                        let eventTime = tempEvent.time;
+                        let eventPlayer = tempEvent['players'][0].name;
+                        let eventType = tempEvent['event_type'];
+                        let eventPoint = tempEvent['home_point'] > tempEvent['away_point'] ? tempEvent['home_point'] : tempEvent['away_point'];
+                        tooltip.html("<table id = 'd3tooltip'>" +
+                            "<tr>" +
+                            "<td width='70%'>" +
+                            "<img id='playerPhoto'  style='background:' + $scope.predictSide(tempEvent['players'][0]['team']).color +'' src=''+ eventPlayerImg + ''  width='130px' ></td>" +
+                            "<td width='30%'>" +
+                            "<table height='100%'>" +
+                            "<tr height = '33%'><td>" + eventTime + "</td></tr>" +
+                            "<tr height = '33%'><td>" + eventPlayer + "</td></tr>" +
+                            "<tr height = '33%'><td>" + eventType + "</td></tr>" +
+                            "</table>" +
+                            "</td></table>");
+                        tooltip.show();
 
-                }
+                    })
+                    .on('mouseout', function () {
+                        if (index !== 3) return;
+                        tooltip.hide();
+                    });
+                let update = play.attr('id', function (d, i) {
+                    return i;
+                })
+                    .attr('cx', function (d) {
+                        return d.center.x;
+                    })
+                    .attr('cy', function (d) {
+                        return d.center.y;
+                    })
+                    .attr('r', function (d) {
+                        return d.radius;
+                    })
+                    .attr('fill', function (d) {
+                        return d.background;
+                    });
+                let exit = play.exit().remove();
+
             }
         }
-    }]);
+    }
+}]);
 app.directive('storyLine', ['$rootScope', '$document', function ($rootScope) {
-        return {
-            restrict: 'E',  // Element name: <my-directive></my-directive>
-            link: function ($scope, $element) {
+    return {
+        restrict: 'E',  // Element name: <my-directive></my-directive>
+        link: function ($scope, $element) {
 
-                console.log($rootScope.data.selectedIndex);
+            console.log($rootScope.data.selectedIndex);
 
-                let areaFunction = d3.svg.area()
-                    .x(function (d) {
-                        return d.x;
-                    })
-                    .y0(function (d) {
-                        return d.y0;
-                    })
-                    .y1(function (d) {
-                        return d.y1;
-                    })
-                    .interpolate("monotone");
+            let areaFunction = d3.area()
+                .x(function (d) {
+                    return d.x;
+                })
+                .y0(function (d) {
+                    return d.y0;
+                })
+                .y1(function (d) {
+                    return d.y1;
+                })
+                .curve(d3.curveMonotoneX);
 
-                let svg = d3.select('story-line')
-                    .append('svg')
-                    .attr('id', 'gameSVG')
-                    .attr('width', '100%')
-                    .attr('height', $scope.windowHeight)
-                    .style('margin-left', '1%');
+            let svg = d3.select('story-line')
+                .append('svg')
+                .attr('id', 'gameSVG')
+                .attr('width', '100%')
+                .attr('height', $scope.windowHeight)
+                .style('margin-left', '1%');
 
-                let storyLEntity = svg.append('g')
-                    .attr('id', 'storyLEntity')
-                    .attr('ng-if', 'data.selectedIndex === 5');
+            let storyLEntity = svg.append('g')
+                .attr('id', 'storyLEntity')
+                .attr('ng-if', 'data.selectedIndex === 5');
 
-                let playerNames = storyLEntity.append('g')
-                    .attr('id', 'playerName')
-                    .selectAll('text')
-                    .data($rootScope.storyLine.ps)
-                    .enter()
-                    .append('text')
-                    .attr('x', '0')
-                    .attr('y', function (d) {
-                        return $rootScope.storyLine.pre[d].startY;
-                    })
-                    .text(function (d) {
-                        return $rootScope.storyLine.pre[d].name;
-                    })
-                    .style('font-family', 'Arial')
-                    .style('fill', function (d) {
-                        return $rootScope.storyLine.pre[d].color;
-                    });
-
-
-                let paths = svg.append('g')
-                    .attr('id', 'storyLine')
-                    .selectAll('g')
-                    .data($rootScope.storyLine.ps)
-                    .enter()
-                    .append('g')
-                    .attr('id', function (d) {
-                        return d;
-                    })
-                    .append('path')
-                    .attr('d', function (d) {
-                        return areaFunction($rootScope.storyLine.draw[d]);
-                    })
-                    // .attr('stroke', function (d) {
-                    //     return d3.rgb($rootScope.storyLine.pre[d].color);
-                    // })
-                    // .attr('stroke-width', function (d) {
-                    //     return 2;
-                    // })
-                    // .attr('stroke-linecap', 'round')
-                    .attr('fill', function (d) {
-                        return d3.rgb($rootScope.storyLine.pre[d].color);
-                    });
-
-
-                let zoomRate = 0.1;
-                let theSvgElement;
-                let currentX = 0, currentY = 0;
-
-
-                angular.element($element).attr('draggable', 'true');
-                $element.bind('dragstart', function (e) {
-                    // if(e.shiftKey){
-                    currentX = e.originalEvent.clientX;
-                    currentY = e.originalEvent.clientY;
-                    // }
-                });
-                $element.bind('dragover', function (e) {
-                    // if(e.shiftKey){
-                    if (e.preventDefault) {
-                        e.preventDefault();
-                    }
-
-                    $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
-                    $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
-
-                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
-                    currentX = e.originalEvent.clientX;
-                    currentY = e.originalEvent.clientY;
-                    return false;
-                    // }
-                });
-                $element.bind('drop', function (e) {
-                    // if(e.shiftKey){
-                    if (e.stopPropogation) {
-                        e.stopPropogation(); // Necessary. Allows us to drop.
-                    }
-                    return false;
-                    // }
-                });
-                $element.bind('mousewheel', function (mouseWheelEvent) {
-                    let zoomCenter = {
-                        'x': mouseWheelEvent.originalEvent.clientX,
-                        'y': mouseWheelEvent.originalEvent.clientY
-                    };
-                    if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
-                        zoom('zoomIn', zoomCenter);
-                    } else {
-                        zoom('zoomOut', zoomCenter);
-                    }
-
-                    mouseWheelEvent.cancelBubble = true;
-                    return false;
+            let playerNames = storyLEntity.append('g')
+                .attr('id', 'playerName')
+                .selectAll('text')
+                .data($rootScope.storyLine.ps)
+                .enter()
+                .append('text')
+                .attr('x', '0')
+                .attr('y', function (d) {
+                    return $rootScope.storyLine.pre[d].startY;
+                })
+                .text(function (d) {
+                    return $rootScope.storyLine.pre[d].name;
+                })
+                .style('font-family', 'Arial')
+                .style('fill', function (d) {
+                    return $rootScope.storyLine.pre[d].color;
                 });
 
-                function zoom(zoomType, zoomCenter) {
-                    $rootScope.matrix[0] = parseFloat($rootScope.matrix[0]);	//scale-x
-                    $rootScope.matrix[3] = parseFloat($rootScope.matrix[3]);	//scale-y
 
-                    if (zoomType === 'zoomIn') {
-                        if ($rootScope.matrix[0] + zoomRate > 0.1 && $rootScope.matrix[3] + zoomRate > 0.1) {
-                            $rootScope.matrix[0] += zoomRate;
-                            $rootScope.matrix[3] += zoomRate;
-                            $rootScope.matrix[4] -= (zoomCenter.x * zoomRate);
-                            $rootScope.matrix[5] -= (zoomCenter.y * zoomRate);
-                        }
-                    } else if (zoomType === 'zoomOut') {
-                        if ($rootScope.matrix[0] - zoomRate > 0.1 && $rootScope.matrix[3] - zoomRate > 0.1) {
-                            $rootScope.matrix[0] -= zoomRate;
-                            $rootScope.matrix[3] -= zoomRate;
-                            $rootScope.matrix[4] += (zoomCenter.x * zoomRate);
-                            $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
-                        }
-                    }
-                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
+            let paths = svg.append('g')
+                .attr('id', 'storyLine')
+                .selectAll('g')
+                .data($rootScope.storyLine.ps)
+                .enter()
+                .append('g')
+                .attr('id', function (d) {
+                    return d;
+                })
+                .append('path')
+                .attr('d', function (d) {
+                    return areaFunction($rootScope.storyLine.draw[d]);
+                })
+                // .attr('stroke', function (d) {
+                //     return d3.rgb($rootScope.storyLine.pre[d].color);
+                // })
+                // .attr('stroke-width', function (d) {
+                //     return 2;
+                // })
+                // .attr('stroke-linecap', 'round')
+                .attr('fill', function (d) {
+                    return d3.rgb($rootScope.storyLine.pre[d].color);
+                });
+
+
+            let zoomRate = 0.1;
+            let theSvgElement;
+            let currentX = 0, currentY = 0;
+
+
+            angular.element($element).attr('draggable', 'true');
+            $element.bind('dragstart', function (e) {
+                // if(e.shiftKey){
+                currentX = e.originalEvent.clientX;
+                currentY = e.originalEvent.clientY;
+                // }
+            });
+            $element.bind('dragover', function (e) {
+                // if(e.shiftKey){
+                if (e.preventDefault) {
+                    e.preventDefault();
                 }
 
-                function svgInitialize() {
-                    theSvgElement = $element.find('#gameSVG');
-                    theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
+                $rootScope.matrix[4] += e.originalEvent.clientX - currentX;
+                $rootScope.matrix[5] += e.originalEvent.clientY - currentY;
+
+                theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
+                currentX = e.originalEvent.clientX;
+                currentY = e.originalEvent.clientY;
+                return false;
+                // }
+            });
+            $element.bind('drop', function (e) {
+                // if(e.shiftKey){
+                if (e.stopPropogation) {
+                    e.stopPropogation(); // Necessary. Allows us to drop.
+                }
+                return false;
+                // }
+            });
+            $element.bind('mousewheel', function (mouseWheelEvent) {
+                let zoomCenter = {
+                    'x': mouseWheelEvent.originalEvent.clientX,
+                    'y': mouseWheelEvent.originalEvent.clientY
+                };
+                if (mouseWheelEvent.originalEvent.wheelDelta > 0) {
+                    zoom('zoomIn', zoomCenter);
+                } else {
+                    zoom('zoomOut', zoomCenter);
                 }
 
-                svgInitialize();
+                mouseWheelEvent.cancelBubble = true;
+                return false;
+            });
+
+            function zoom(zoomType, zoomCenter) {
+                $rootScope.matrix[0] = parseFloat($rootScope.matrix[0]);	//scale-x
+                $rootScope.matrix[3] = parseFloat($rootScope.matrix[3]);	//scale-y
+
+                if (zoomType === 'zoomIn') {
+                    if ($rootScope.matrix[0] + zoomRate > 0.1 && $rootScope.matrix[3] + zoomRate > 0.1) {
+                        $rootScope.matrix[0] += zoomRate;
+                        $rootScope.matrix[3] += zoomRate;
+                        $rootScope.matrix[4] -= (zoomCenter.x * zoomRate);
+                        $rootScope.matrix[5] -= (zoomCenter.y * zoomRate);
+                    }
+                } else if (zoomType === 'zoomOut') {
+                    if ($rootScope.matrix[0] - zoomRate > 0.1 && $rootScope.matrix[3] - zoomRate > 0.1) {
+                        $rootScope.matrix[0] -= zoomRate;
+                        $rootScope.matrix[3] -= zoomRate;
+                        $rootScope.matrix[4] += (zoomCenter.x * zoomRate);
+                        $rootScope.matrix[5] += (zoomCenter.y * zoomRate);
+                    }
+                }
+                theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
+            }
+
+            function svgInitialize() {
+                theSvgElement = $element.find('#gameSVG');
+                theSvgElement.children('g').attr('transform', 'matrix(' + $rootScope.matrix.join(' ') + ')');
+            }
+
+            svgInitialize();
+
+        }
+    };
+}]);
+app.directive('storyLine2', ['$rootScope', '$document', function ($rootScope, $document) {
+    return {
+        restrict: 'E',  // Element name: <my-directive></my-directive>
+        link: function ($scope, $element, $document) {
+
+            console.log($rootScope.data.selectedIndex);
+
+            let scenes = $rootScope.storyLine2.scenes;
+            let scenesDate = scenes;
+            let characters = $rootScope.storyLine2.characters;
+
+            let totalQuarter = scenes[scenes.length - 1].quarter + 1;
+
+            let selectType = 0;
+            let selectSort = 0;
+            let selectThresh = 1.0;
+            let selectQuart = 0;
+
+            let storyLine = d3.select('story-line2').attr('id', 'gameSVG');
+
+
+            let Forces = storyLine.append('p').append('div').style('height','500px');
+            let infoP  = Forces.append('table').style('float', 'left');
+            let svgF   = Forces.append('svg').style('float', 'left');
+
+            let narrativeChart = storyLine.append('p').append('div');
+            let selectCon = narrativeChart.append('p').append('div');
+            let svg0      = narrativeChart.append('p').append('div').append('svg');
+
+            let svg1 = storyLine.append('p').append('div').append('svg');
+            let svg2 = storyLine.append('p').append('div').append('svg');
+            let svg3 = storyLine.append('p').append('div').append('svg');
+
+            let Links = svg0.append('g').attr('class', 'links');
+            let Scenes = svg0.append('g').attr('class', 'scenes');
+            let Intros = svg0.append('g').attr('class', 'intros');
+
+            let SteamS = svg1.append('g').attr('class', 'steamS');
+            let SteamP = svg2.append('g').attr('class', 'steamP');
+            let SteamT = svg3.append('g').attr('class', 'steamT');
+
+
+            configSelectCon(selectCon);
+            configPlayerInfo(Forces);
+
+            update(scenesDate, characters, selectType, selectQuart);
+
+            let tooltip = d3.tip().attr('class', 'd3-tip');
+            svg0.call(tooltip);
+
+
+            function update(scenes, characters, sort, selectQuart = 0) {
+                let Canvas = {};
+                Canvas.width = $scope.windowWidth * 0.9;
+                Canvas.height = 3600;
+                let narrative = narrativeLines();
+                narrative.scenes(scenes);
+                narrative.characters(characters);
+                narrative.size([Canvas.width, Canvas.height]);
+                narrative.range(selectQuart === 0 ? [0, totalQuarter] : [selectQuart - 1, selectQuart]);
+                narrative.pathSpace(20);
+                narrative.groupMargin(60);
+                narrative.labelSize([160, 15]);
+                narrative.scenePadding([0, 5, 0, 5]);
+                narrative.labelPosition('left');
+                narrative.sortType(sort);
+                narrative.layout();
+
+                //configVideo(video);
+
+                configSvg(svg0, narrative, 0, 0);
+                configSvg(svg1, narrative, 0, 120);
+                configSvg(svg2, narrative, 0, 120);
+                configSvg(svg3, narrative, 0, 120);
+
+                configForce(Forces, scenesDate, characters);
+                configSteam(SteamS, narrative, $rootScope.eventGapsce, 'Score Gap');
+                configSteam(SteamP, narrative, $rootScope.eventTurnin, 'Turning Points');
+                configSteam(SteamT, narrative, $rootScope.eventEffect, 'Real-time Efficiency');
+
+                updateLinks(narrative);
+                updateScenes(narrative);
+                updateNodes(narrative);
 
             }
-        };
-    }]);
-app.directive('storyLine2', ['$rootScope', '$document', function ($rootScope, $document) {
-        return {
-            restrict: 'E',  // Element name: <my-directive></my-directive>
-            link: function ($scope, $element, $document) {
 
-                console.log($rootScope.data.selectedIndex);
+            function updateLinks(narrative) {
 
-                let scenes = $rootScope.storyLine2.scenes;
-                let scenesDate = scenes;
-                let characters = $rootScope.storyLine2.characters;
-
-                let totalQuarter = scenes[scenes.length - 1].quarter + 1;
-
-                let selectType    = 0;
-                let selectSort    = 0;
-                let selectThresh  = 1.0;
-                let selectQuart   = 0;
-
-                let storyLine = d3.select('story-line2').attr('id', 'gameSVG');
-
-                let selectCon = storyLine.append('p').append('div');
-                //let sliderCon = storyLine.append('p').append('div');
-
-                let svg0 = storyLine.append('p').append('div').append('svg');
-                let svg1 = storyLine.append('p').append('div').append('svg');
-                let svg2 = storyLine.append('p').append('div').append('svg');
-                let svg3 = storyLine.append('p').append('div').append('svg');
-
-                let Links = svg0.append('g').attr('class', 'links');
-                let Scenes = svg0.append('g').attr('class', 'scenes');
-                let Intros = svg0.append('g').attr('class', 'intros');
-
-                let SteamS = svg1.append('g').attr('class', 'steamS');
-                let SteamP = svg2.append('g').attr('class', 'steamP');
-                let SteamT = svg3.append('g').attr('class', 'steamT');
-
-
-                configSelectCon(selectCon);
-                //configSliderCon(sliderCon);
-                update(scenesDate, characters, selectType, selectQuart);
-
-                let tooltip = d3.tip().attr('class', 'd3-tip');
-                svg0.call(tooltip);
-
-
-                function update(scenes, characters, sort, selectQuart = 0) {
-                    let Canvas = {};
-                    Canvas.width = $scope.windowWidth * 0.9;
-                    Canvas.height = 1600;
-                    let narrative = d3.layout.narrative();
-                    narrative.scenes(scenes);
-                    narrative.characters(characters);
-                    narrative.size([Canvas.width, Canvas.height]);
-                    narrative.range(selectQuart === 0 ? [0, totalQuarter] : [selectQuart-1 , selectQuart]);
-                    narrative.pathSpace(20);
-                    narrative.groupMargin(60);
-                    narrative.labelSize([160, 15]);
-                    narrative.scenePadding([0, 5, 0, 5]);
-                    narrative.labelPosition('left');
-                    narrative.sortType(sort);
-                    narrative.layout();
-
-                    //configVideo(video);
-
-                    configSvg(svg0, narrative, 0, 0);
-                    configSvg(svg1, narrative, 0, 120);
-                    configSvg(svg2, narrative, 0, 120);
-                    configSvg(svg3, narrative, 0, 120);
-
-                    configSteam(SteamS, narrative, $rootScope.eventGapsce, 'Score Gap');
-                    configSteam(SteamP, narrative, $rootScope.eventTurnin, 'Turning Points');
-                    configSteam(SteamT, narrative, $rootScope.eventEffect, 'Real-time Efficiency');
-
-                    updateLinks(narrative);
-                    updateScenes(narrative);
-                    updateNodes(narrative);
-
-                }
-
-                function updateLinks(narrative) {
-
-                    let link = Links.selectAll('g')
-                        .data(narrative.links());
-
-                    link.enter()
-                        .append('g')
-                        .attr('class', 'character')
-                        .attr('id', function (d) {
-                            return d.id;
-                        });
-
-                    link.attr('id', function (d) {
-                        return d.id;
-                    });
-
-                    link.exit().remove();
-
-                    let segment = link.selectAll('path')
-                        .data(function (d) {
-                            return d.links;
-                        });
-
-                    segment.enter()
-                        .append('path')
-                        .attr('d', narrative.link())
-                        .attr('stroke', function (d) {
-                            return d.character.color;
-                        })
-                        .attr('stroke-dasharray', function (d) {
-                            return d.target.scene.status[d.character.id] ? '' : '1,4';
-                        })
-                        .attr('stroke-width', 2)
-                        .attr('fill', 'none')
-                        .on('mouseover', function (d) {
-                            svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                            svg0.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
-
-                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
-                            svg0.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
-
-                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
-                            d.character.appearances.forEach(function (c) {
-                                let id = c.scene.id;
-                                svg.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
-                            });
-                        })
-                        .on('mouseout', function () {
-                            svg0.select('g.links').selectAll('g').attr('opacity', 1.0);
-                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
-                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
-                        });
-
-                    segment.attr('d', narrative.link())
-                        .attr('stroke', function (d) {
-                            return d.character.color;
-                        })
-                        .attr('stroke-dasharray', function (d) {
-                            return d.target.scene.status[d.character.id] ? '' : '1,4';
-                        })
-                        .on('mouseover', function (d) {
-                            svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                            svg0.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
-
-                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
-                            svg0.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
-
-                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
-                            d.character.appearances.forEach(function (c) {
-                                let id = c.scene.id;
-                                svg0.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
-                            });
-                        })
-                        .on('mouseout', function () {
-                            svg0.select('g.links').selectAll('g').attr('opacity', 1.0);
-                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
-                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
-                        });
-
-                    segment.exit().remove();
-                }
-
-                function updateScenes(narrative) {
-                    let scene = Scenes.selectAll('.scene')
-                        .data(narrative.scenes());
-
-                    scene.enter()
-                        .append('g')
-                        .attr('class', 'scene')
-                        .attr('id', function (d) {
-                            return d.id;
-                        })
-                        .attr('transform', function (d) {
-                            let x, y;
-                            x = Math.round(d.x) + 0.5;
-                            y = Math.round(d.y) + 0.5;
-                            return 'translate(' + [x, y] + ')';
-                        })
-                        .on('mouseover', function (d) {
-                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
-                            svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
-                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
-                            d.characters.forEach(function (c) {
-                                svg0.select('g.links').selectAll('[id = \'' + c.id + '\']').attr('opacity', 1.0);
-                                svg0.select('g.intros').selectAll('[id = \'' + c.id + '\']').attr('opacity', 1.0);
-                                c.appearances.forEach(function (e) {
-                                    let id = e.scene.id;
-                                    svg0.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
-                                });
-
-                            });
-                            tooltip.offset([-10, 0]);
-                            let toolTipContent = "<table width='300px'>";
-                            for(let i= 0; i<d.characters.length;i++){
-                                toolTipContent +=
-                                    "<tr>" +
-                                    "<td style='zoom: 75%'>" + playerImg(d.characters[i]) + "</td>" +
-                                    "<td style='alignment: left'>" +
-                                    "<label class ='playerName' >" + d.appearances[i].des + "</label>" +
-                                    "</td>" +
-                                    "</tr>";
-                            }
-                            toolTipContent += "</table>";
-                            tooltip.html("<div style='background: #dddddd' >" + toolTipContent + "</div>");
-                            tooltip.show();
-                        })
-                        .on('mouseout', function () {
-                            svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
-                            svg0.select('g.links').selectAll('g.character').attr('opacity', 1.0);
-                            svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
-                            tooltip.hide();
-                        })
-                        .append('rect')
-                        .attr('opacity', 0)
-                        .attr('width', function (d) {
-                            return d.width;
-                        })
-                        .attr('height', function (d) {
-                            return d.height;
-                        })
-                        .attr('rx', 5)
-                        .attr('ry', 5)
-                        .attr('stroke', '#000')
-                        .attr('opacity', function (d) {
-                            if (d.appearances.length === 1)
-                                return 0;
-                            else
-                                return 1;
-                        })
-                        .attr('fill', '#ffffff');
-
-
-                    scene.attr('id', function (d) {
+                let link = Links.selectAll('g')
+                    .data(narrative.links());
+                let enter = link.enter().append('g')
+                    .attr('class', 'character')
+                    .attr('id', function (d) {
                         return d.id;
                     })
-                        .attr('transform', function (d) {
-                            let x, y;
-                            x = Math.round(d.x) + 0.5;
-                            y = Math.round(d.y) + 0.5;
-                            return 'translate(' + [x, y] + ')';
-                        })
-                        .select('rect')
-                        .attr('width', function (d) {
-                            return d.width;
-                        })
-                        .attr('height', function (d) {
-                            return d.height;
-                        })
-                        .attr('opacity', function (d) {
-                            if (d.appearances.length === 1)
-                                return 0;
-                            else
-                                return 1;
-                        });
-
-                    scene.exit().remove();
-
-                    let appearance = scene.selectAll('.appearance')
-                        .data(function (d) {
-                            return d.appearances;
-                        });
-
-                    appearance.enter()
-                        .append('circle')
-                        .attr('class', 'appearance')
-                        .attr('cx', function (d) {
-                            return d.x;
-                        })
-                        .attr('cy', function (d) {
-                            return d.y;
-                        })
-                        .attr('r', function (d) {
-                            if (d.scene.type === 13)
-                                return 4;
-                            else
-                                return 2;
-                        })
-                        .attr('fill', function (d) {
-                            if (d.scene.type === 13)
-                                return '#a5a5a5';
-                            else
-                                return d.character.color;
-                        })
-                        .attr('stroke', function (d) {
-                            return d.character.color;
-                        });
-
-                    appearance.attr('cx', function (d) {
-                        return d.x;
-                    })
-                        .attr('cy', function (d) {
-                            return d.y;
-                        })
-                        .attr('r', function (d) {
-                            if (d.scene.type === 13)
-                                return 4;
-                            else
-                                return 2;
-                        })
-                        .attr('fill', function (d) {
-                            if (d.scene.type === 13)
-                                return '#a5a5a5';
-                            else
-                                return d.character.color;
-                        })
-                        .attr('stroke', function (d) {
-                            return d.character.color;
-                        });
-
-                    appearance.exit().remove();
-
-
-                }
-
-                function updateNodes(narrative) {
-                    let intro = Intros.selectAll('.intro')
-                        .data(narrative.introductions());
-                    intro.enter().call(function (s) {
-                        let g = s.append('g')
-                            .attr('class', 'intro')
-                            .attr('id', function (d) {
-                                return d.character.id;
-                            });
-
-                        g.append('rect')
-                            .attr('x', -4)
-                            .attr('y', -4.5)
-                            .attr('width', 4)
-                            .attr('height', 8)
-                            .attr('fill', function (d) {
-                                return d.character.color;
-                            });
-
-                        let text = g.append('g').attr('class', 'text');
-
-                        // Apppend two actual 'text' nodes to fake an 'outside' outline.
-                        text.append('text');
-                        text.append('text').attr('class', 'color');
-
-                        g.attr('transform', function (d) {
-                            let x, y;
-                            x = Math.round(d.x);
-                            y = Math.round(d.y);
-                            return 'translate(' + [x, y] + ')';
-                        });
-
-                        g.selectAll('text')
-                            .attr('text-anchor', 'end')
-                            .attr('y', '4px')
-                            .attr('x', '-8px')
-                            .text(function (d) {
-                                return d.character.name;
+                    .call(function (s) {
+                        let path = s.selectAll('path')
+                            .data(function (d) {
+                                return d.links;
                             })
-                            .attr('font-family', 'Arial')
-                            .attr('fill', function (d) {
+                        path.enter().append('path')
+                            .attr('d', narrative.link())
+                            .attr('stroke', function (d) {
                                 return d.character.color;
                             })
+                            .attr('stroke-dasharray', function (d) {
+                                return d.target.scene.status[d.character.id] ? '' : '1,4';
+                            })
+                            .attr('stroke-width', 2)
+                            .attr('fill', 'none')
                             .on('mouseover', function (d) {
+                                return highlightCY(d);
+                            })
+                            .on('mouseout', function(){
+                                return highlightCN();
+                            });
+                        path.attr('d', narrative.link())
+                            .attr('stroke', function (d) {
+                                return d.character.color;
+                            })
+                            .attr('stroke-dasharray', function (d) {
+                                return d.target.scene.status[d.character.id] ? '' : '1,4';
+                            })
+                            .attr('stroke-width', 2)
+                            .attr('fill', 'none');
+                        path.exit().remove();
+                    });
+                let update = link.attr('class', 'character')
+                    .attr('id', function (d) {
+                        return d.id;
+                    })
+                    .call(function (s) {
+                        let path = s.selectAll('path')
+                            .data(function (d) {
+                                return d.links;
+                            })
+                        path.enter().append('path')
+                            .attr('d', narrative.link())
+                            .attr('stroke', function (d) {
+                                return d.character.color;
+                            })
+                            .attr('stroke-dasharray', function (d) {
+                                return d.target.scene.status[d.character.id] ? '' : '1,4';
+                            })
+                            .attr('stroke-width', 2)
+                            .attr('fill', 'none')
+                            .on('mouseover', function (d) {
+                                svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                                svg0.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
+
+                                svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
+                                svg0.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
+
                                 svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
                                 d.character.appearances.forEach(function (c) {
                                     let id = c.scene.id;
                                     svg0.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
                                 });
-
+                            })
+                            .on('mouseout', function () {
+                                svg0.select('g.links').selectAll('g').attr('opacity', 1.0);
+                                svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
+                                svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
+                            });
+                        path.attr('d', narrative.link())
+                            .attr('stroke', function (d) {
+                                return d.character.color;
+                            })
+                            .attr('stroke-dasharray', function (d) {
+                                return d.target.scene.status[d.character.id] ? '' : '1,4';
+                            })
+                            .attr('stroke-width', 2)
+                            .attr('fill', 'none')
+                            .on('mouseover', function (d) {
                                 svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
                                 svg0.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
+
                                 svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
                                 svg0.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
 
-                                tooltip.offset([-10, 0]);
-                                tooltip.html("<div  style='background: #dddddd'>" + playerImg(d.character) + "</div>").show();
+                                svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
+                                d.character.appearances.forEach(function (c) {
+                                    let id = c.scene.id;
+                                    svg0.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
+                                });
                             })
                             .on('mouseout', function () {
-                                svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
                                 svg0.select('g.links').selectAll('g').attr('opacity', 1.0);
                                 svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
-                                tooltip.hide();
+                                svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
                             });
-
+                        path.exit().remove();
                     });
-                    intro.call(function (s) {
-                        let g = s.attr('id', function (d) {
+                let exit = link.exit().remove();
+            }
+
+            function updateScenes(narrative) {
+                let scene = Scenes.selectAll('.scene')
+                    .data(narrative.scenes());
+                let enter = scene.enter().append('g').attr('class', 'scene')
+                    .attr('id', function (d) {
+                        return d.id;
+                    })
+                    .attr('transform', function (d) {
+                        let x, y;
+                        x = Math.round(d.x) + 0.5;
+                        y = Math.round(d.y) + 0.5;
+                        return 'translate(' + [x, y] + ')';
+                    })
+                    .call(function (s) {
+                        s.append('rect')
+                            .on('mouseover', function (d) {
+                                svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
+                                svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                                svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
+                                d.characters.forEach(function (c) {
+                                    svg0.select('g.links').selectAll('[id = \'' + c.id + '\']').attr('opacity', 1.0);
+                                    svg0.select('g.intros').selectAll('[id = \'' + c.id + '\']').attr('opacity', 1.0);
+                                    c.appearances.forEach(function (e) {
+                                        let id = e.scene.id;
+                                        svg0.select('g.scenes').selectAll('[id =\'' + id + '\']').attr('opacity', 1.0);
+                                    });
+
+                                });
+                                tooltip.offset([-10, 150]);
+                                let toolTipContent = "<table width='300px'>";
+                                for (let i = 0; i < d.characters.length; i++) {
+                                    toolTipContent +=
+                                        "<tr>" +
+                                        "<td>" + playerImg(d.characters[i]) + "</td>" +
+                                        "<td style='alignment: left'>" +
+                                        "<label class ='playerName' >" + d.appearances[i].des + "</label>" +
+                                        "</td>" +
+                                        "</tr>";
+                                }
+                                toolTipContent += "</table>";
+                                tooltip.html("<div style='background: #dddddd' >" + toolTipContent + "</div>");
+                                tooltip.show();
+                            })
+                            .on('mouseout', function () {
+                                svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
+                                svg0.select('g.links').selectAll('g.character').attr('opacity', 1.0);
+                                svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
+                                tooltip.hide();
+                            })
+                            .attr('opacity', 0)
+                            .attr('width', function (d) {
+                                return d.width;
+                            })
+                            .attr('height', function (d) {
+                                return d.height;
+                            })
+                            .attr('rx', 5)
+                            .attr('ry', 5)
+                            .attr('stroke', '#000')
+                            .attr('opacity', function (d) {
+                                if (d.appearances.length === 1)
+                                    return 0;
+                                else
+                                    return 1;
+                            })
+                            .attr('fill', '#ffffff');
+                        let appearance = s.selectAll('.appearance')
+                            .data(function (d) {
+                                return d.appearances;
+                            });
+                        appearance.enter().append('circle')
+                            .attr('class', 'appearance')
+                            .attr('cx', function (c) {
+                                return c.x;
+                            })
+                            .attr('cy', function (c) {
+                                return c.y;
+                            })
+                            .attr('r', function (c) {
+                                if (c.scene.type === 13)
+                                    return 4;
+                                else
+                                    return 2;
+                            })
+                            .attr('fill', function (c) {
+                                if (c.scene.type === 13)
+                                    return '#a5a5a5';
+                                else
+                                    return c.character.color;
+                            })
+                            .attr('stroke', function (c) {
+                                return c.character.color;
+                            });
+                    });
+                let update = scene
+                    .attr('id', function (d) {
+                        return d.id;
+                    })
+                    .attr('transform', function (d) {
+                        let x, y;
+                        x = Math.round(d.x) + 0.5;
+                        y = Math.round(d.y) + 0.5;
+                        return 'translate(' + [x, y] + ')';
+                    })
+                    .call(function (s) {
+                        s.select('rect')
+                            .attr('width', function (d) {
+                                return d.width;
+                            })
+                            .attr('height', function (d) {
+                                return d.height;
+                            })
+                            .attr('opacity', function (d) {
+                                if (d.appearances.length === 1)
+                                    return 0;
+                                else
+                                    return 1;
+                            });
+                        let appearance = s.selectAll('.appearance')
+                            .data(function (d) {
+                                return d.appearances;
+                            });
+                        appearance.enter().append('circle')
+                            .attr('class', 'appearance')
+                            .attr('cx', function (c) {
+                                return c.x;
+                            })
+                            .attr('cy', function (c) {
+                                return c.y;
+                            })
+                            .attr('r', function (c) {
+                                if (c.scene.type === 13)
+                                    return 4;
+                                else
+                                    return 2;
+                            })
+                            .attr('fill', function (c) {
+                                if (c.scene.type === 13)
+                                    return '#a5a5a5';
+                                else
+                                    return c.character.color;
+                            })
+                            .attr('stroke', function (c) {
+                                return c.character.color;
+                            });
+                        appearance.attr('class', 'appearance')
+                            .attr('cx', function (c) {
+                                return c.x;
+                            })
+                            .attr('cy', function (c) {
+                                return c.y;
+                            })
+                            .attr('r', function (c) {
+                                if (c.scene.type === 13)
+                                    return 4;
+                                else
+                                    return 2;
+                            })
+                            .attr('fill', function (c) {
+                                if (c.scene.type === 13)
+                                    return '#a5a5a5';
+                                else
+                                    return c.character.color;
+                            })
+                            .attr('stroke', function (c) {
+                                return c.character.color;
+                            });
+                        appearance.exit().remove()
+                    })
+
+                let exit = scene.exit().remove();
+
+            }
+
+            function updateNodes(narrative) {
+                let intro = Intros.selectAll('.intro')
+                    .data(narrative.introductions());
+                intro.enter().call(function (s) {
+                    let g = s.append('g')
+                        .attr('class', 'intro')
+                        .attr('id', function (d) {
                             return d.character.id;
                         });
 
-                        g.attr('x', -4)
-                            .attr('y', -4.5)
-                            .attr('width', 4)
-                            .attr('height', 8)
-                            .attr('fill', function (d) {
-                                return d.character.color;
-                            });
-
-
-                        g.attr('transform', function (d) {
-                            let x, y;
-                            x = Math.round(d.x);
-                            y = Math.round(d.y);
-                            return 'translate(' + [x, y] + ')';
+                    g.append('rect')
+                        .attr('x', -4)
+                        .attr('y', -4.5)
+                        .attr('width', 4)
+                        .attr('height', 8)
+                        .attr('fill', function (d) {
+                            return d.character.color;
                         });
 
-                        g.selectAll('text')
-                            .attr('text-anchor', 'end')
-                            .attr('y', '4px')
-                            .attr('x', '-8px')
-                            .text(function (d) {
-                                return d.character.name;
-                            })
-                            .attr('font-family', 'Arial')
-                            .attr('fill', function (d) {
-                                return d.character.color;
-                            })
+                    let text = g.append('g').attr('class', 'text');
 
-                    });
-                    intro.exit().remove();
+                    // Apppend two actual 'text' nodes to fake an 'outside' outline.
+                    text.append('text');
+                    text.append('text').attr('class', 'color');
 
-                }
-
-                function configSelectCon(object) {
-
-                    let selectQuarterTx = object.append('label').attr('class', 'selectLabel');
-                    selectQuarterTx.text('Quarter : ');
-                    let selectorQuarter = object.append('select').attr('class', 'selectorQuarter').style('width','150px');
-                    let QuarterData = [' All '];
-                    for(let i = 0; i <= scenes[scenes.length - 1].quarter; i++ ){
-                        QuarterData.push(' ' + (i + 1) + ' ');
-                    }
-                    let optionsQuarter = selectorQuarter.selectAll('option').data(QuarterData);
-                    optionsQuarter.enter().append('option').text(function (d) {
-                        return d;
-                    });
-                    selectorQuarter.on("change", function () {
-                        selectQuart = selectorQuarter.property('selectedIndex');
-                        scenesDate = sceneQuery(scenes, selectType, selectThresh, selectQuart);
-                        update(scenesDate, characters, selectSort, selectQuart);
+                    g.attr('transform', function (d) {
+                        let x, y;
+                        x = Math.round(d.x);
+                        y = Math.round(d.y);
+                        return 'translate(' + [x, y] + ')';
                     });
 
-                    let selectTypeTx = object.append('label').attr('class', 'selectLabel');
-                    selectTypeTx.text('Event Type : ');
-                    let selectorType = object.append('select').attr('class', 'selectorType').style('width','150px');
-                    let optionsData = [' All ', ' Shoot Made ', ' Shoot Miss ', ' Free Throw ', ' Rebound ', ' Turn Over ', ' Foul ', ' Violation ', ' Sub ', ' Regular ', ' Jump Ball ', ' Ejection '];
-                    let optionsType = selectorType.selectAll('option').data(optionsData);
-                    optionsType.enter().append('option').text(function (d) {
-                        return d;
-                    });
-                    selectorType.on("change", function () {
-                        selectType = selectorType.property('selectedIndex');
-                        scenesDate = sceneQuery(scenes, selectType, selectThresh, selectQuart);
-                        update(scenesDate, characters, selectSort, selectQuart);
-                    });
-
-                    let selectSortTx = object.append('label').attr('class', 'selectLabel');
-                    selectSortTx.text('Sort Type : ');
-                    let selectorSort = object.append('select').attr('class', 'selectorSort').style('width','150px');
-                    let SortData = [' GreedSort ', ' R2eSort ', ' None '];
-                    let optionsSort = selectorSort.selectAll('option').data(SortData);
-                    optionsSort.enter().append('option').text(function (d) {
-                        return d;
-                    });
-                    selectorSort.on("change", function () {
-                        selectSort = selectorSort.property('selectedIndex');
-                        update(scenesDate, characters, selectSort, selectQuart);
-                    });
-
-                    object.style('margin-left', '150px');
-                    object.style('margin-right', '10px');
-                    object.style('margin-top', '10px');
-                    object.style('margin-bottom', '10px');
-                    return object;
-                }
-
-                function configSliderCon(object) {
-                    object.style('width', '1000px');
-                    object.style('margin-left', '120px');
-                    object.style('margin-top', '10px');
-                    object.style('margin-bottom', '10px');
-                    let slider = d3.slider();
-                    configSlider(slider);
-                    object.call(slider);
-
-                    function configSlider(object) {
-                        object.axis(true);
-                        object.min(0.1);
-                        object.max(100);
-                        object.value(100);
-                        object.on('slide', function (evt, value) {
-                            selectThresh = value / 100;
-                            console.log('value : ' + value);
-                            let dateSet = sceneQuery(scenesDate, selectType, selectThresh);
-                            update(dateSet, characters, true);
+                    g.selectAll('text')
+                        .attr('text-anchor', 'end')
+                        .attr('y', '4px')
+                        .attr('x', '-8px')
+                        .text(function (d) {
+                            return d.character.name;
+                        })
+                        .attr('font-family', 'Arial')
+                        .attr('fill', function (d) {
+                            return d.character.color;
+                        })
+                        .on('mouseover', function (d) {
+                            return highlightCY(d);
+                        })
+                        .on('mouseout', function () {
+                            return highlightCN();
                         });
-                    }
 
-                }
+                });
+                intro.call(function (s) {
+                    let g = s.attr('id', function (d) {
+                        return d.character.id;
+                    });
 
-                function configSvg(object, narrative = d3.layout.narrative(), width, height) {
-                    object.attr('id', 'narrative-chart');
-                    object.attr('transform', function (d) {
-                        let x = 10;
-                        let y = 0;
+                    g.attr('x', -4)
+                        .attr('y', -4.5)
+                        .attr('width', 4)
+                        .attr('height', 8)
+                        .attr('fill', function (d) {
+                            return d.character.color;
+                        });
+                    g.attr('transform', function (d) {
+                        let x, y;
+                        x = Math.round(d.x);
+                        y = Math.round(d.y);
                         return 'translate(' + [x, y] + ')';
                     });
 
-                    object.style('margin-left', '5px');
-                    object.style('margin-right', '5px');
-                    object.style('margin-top', '10px');
-                    object.style('margin-bottom', '10px');
-                    object.attr('width', width === 0 ? narrative.extent()[0] + 30 : width);
-                    object.attr('height', height === 0 ? narrative.extent()[1] + 5 : height);
+                    g.selectAll('text')
+                        .attr('text-anchor', 'end')
+                        .attr('y', '4px')
+                        .attr('x', '-8px')
+                        .text(function (d) {
+                            return d.character.name;
+                        })
+                        .attr('font-family', 'Arial')
+                        .attr('fill', function (d) {
+                            return d.character.color;
+                        })
+
+                });
+                intro.exit().remove();
+
+            }
+
+            function configSelectCon(object) {
+
+                let selectQuarterTx = object.append('label').attr('class', 'selectLabel');
+                selectQuarterTx.text('Quarter : ');
+                let selectorQuarter = object.append('select').attr('class', 'selectorQuarter').style('width', '150px');
+                let QuarterData = [' All '];
+                for (let i = 0; i <= scenes[scenes.length - 1].quarter; i++) {
+                    QuarterData.push(' ' + (i + 1) + ' ');
                 }
-
-                function configSteam(object, narrative = d3.layout.narrative(), data, info) {
-
-                    object.attr('transform', function () {
-                        let x = 10 + 150;
-                        let y = 60;
-                        return 'translate(' + [x, y] + ')';
-                    });
-                    object.append('path').attr('class', 'areaH');
-                    object.append('path').attr('class', 'areaA');
-                    object.append('path').attr('class', 'baseL');
-                    let homeFilter = data.home.filter(function (d) {
-                        return d.quarter >= narrative.range()[0] && d.quarter < narrative.range()[1];
-                    })
-                    let awayFilter = data.away.filter(function (d) {
-                        return d.quarter >= narrative.range()[0] && d.quarter < narrative.range()[1];
-                    })
-                    homeFilter.forEach(function (d) {
-                        d.x = d.x - narrative.range()[0] * 820
-                    });
-                    awayFilter.forEach(function (d) {
-                        d.x = d.x - narrative.range()[0] * 820
-                    });
-                    let gameLogo = object.append('g').attr('class', 'gameLogo');
-                    let homeIcon = gameLogo.append('image').attr('class', 'homeIcon');
-                    let awayIcon = gameLogo.append('image').attr('class', 'awayIcon');
-                    let TextInfo = gameLogo.append('text').attr('class', 'TextInfo');
-                    homeIcon.attr('href', 'assets/images/teamLogo/' + $scope.game['homeName'] + '.svg');
-                    homeIcon.attr('width', '30').attr('x', 0).attr('y', 24);
-                    awayIcon.attr('href', 'assets/images/teamLogo/' + $scope.game['awayName'] + '.svg');
-                    awayIcon.attr('width', '30').attr('x', 0).attr('y', -24);
-                    homeIcon.attr('transform', function (d) {
-                        let width = parseFloat(homeIcon.style('width'));
-                        let height = parseFloat(homeIcon.style('height'));
-                        let x = -30 - width;
-                        let y = -0.5 * height;
-                        return 'translate(' + [x, y] + ')';
-                    });
-                    awayIcon.attr('transform', function (d) {
-                        let width = parseFloat(awayIcon.style('width'));
-                        let height = parseFloat(awayIcon.style('height'));
-                        let x = -30 - width;
-                        let y = -0.5 * height;
-                        return 'translate(' + [x, y] + ')';
-                    });
-                    TextInfo.text(info);
-                    TextInfo.attr('text-anchor', 'head');
-                    TextInfo.attr('font-family', 'Arial');
-                    TextInfo.attr('transform', function (d) {
-                        let x = -150;
-                        let y = -45;
-                        return 'translate(' + [x, y] + ')';
-                    });
-
-                    let area = d3.svg.area()
-                        .x(function (d) {
-                            return ( d['x'] - narrative.range()[0] )* narrative.scale();
-                        })
-                        .y0(function (d) {
-                            return d['y0'];
-                        })
-                        .y1(function (d) {
-                            return d['y1'];
-                        })
-                        .interpolate("step"); // [ "linear","bundle", "basis", "step", "cardinal"]
-
-
-                    let home = object.select('path.areaH')
-                        .attr('d', function () {
-                            return area(homeFilter);
-                        })
-                        .attr('fill', $scope.teamColor.home);
-
-                    let away = object.select('path.areaA')
-                        .attr('d', function (d) {
-                            return area(awayFilter);
-                        })
-                        .attr('fill', $scope.teamColor.away);
-                    let base = object.select('path.baseL')
-                        .attr('d', function (d) {
-                            return 'M0,' + 0 + 'L' + (narrative.extent()[0] - 170) + ',' + 0;
-                        })
-                        .attr('stroke-width', 2)
-                        .attr('stroke', '#a5a5a5')
-                        .attr('stroke-dasharray', '1,4');
-
-                }
-
-                function sceneQuery(scenes, query, thresh, quarter = 0) {
-                    let dateSet = [];
-                    for(let i = 0 ; i < scenes.length; i++){
-                        if (scenes[i].timeOffset > Math.floor(scenes[scenes.length - 1]['timeOffset'] * thresh)) break;
-                        if (quarter !== 0 && scenes[i].quarter !== quarter - 1) continue;
-                        if (query == 0) {
-                            dateSet.push(scenes[i]);
-                        } else if (scenes[i].type == query) {
-                            dateSet.push(scenes[i]);
-                        } else if (scenes[i].type == 13) {
-                            dateSet.push(scenes[i]);
-                        }
-
-                    }
-
-                    return dateSet;
-                }
-
-                function configVideo(object) {
-                    object.attr('src', 'http://smb.cdnak.neulion.com/nlds_vod/nba/vod/2016/11/14/21600145/2_21600145_orl_ind_2016_b_discrete_ind19_1_1600.mp4');
-                    object.attr('autoplay', 'autoplay');
-                    object.attr('controls', 'controls');
-                    object.style('padding-left', '120px');
-                }
-
-                $('story-line2').scroll(function () {
-                    // video.style('margin-left', function (d) {
-                    //     let offset = $('story-line2').scrollLeft();
-                    //     return offset + "px";
-                    //  });
-                    // sliderCon.style('padding-left', function (d) {
-                    //     let offset = $('story-line2').scrollLeft();
-                    //     return offset + "px";
-                    // });
-                    selectCon.style('padding-left', function (d) {
-                        let offset = $('story-line2').scrollLeft();
-                        return offset + "px";
-                    });
+                let optionsQuarter = selectorQuarter.selectAll('option').data(QuarterData);
+                optionsQuarter.enter().append('option').text(function (d) {
+                    return d;
+                });
+                selectorQuarter.on("change", function () {
+                    selectQuart = selectorQuarter.property('selectedIndex');
+                    scenesDate = sceneQuery(scenes, selectType, selectThresh, selectQuart);
+                    update(scenesDate, characters, selectSort, selectQuart);
                 });
 
-                function playerImg(character) {
-                    let preUrl = 'https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/';
-                    return "<table width='148'>" +
-                        "<tr><td align ='center'>" +
-                        "<img class = 'playerImg' " +
-                        "style = 'background: " + character.color + "' " +
-                        "src = '" + preUrl + character.id + ".png" + "'>" +
-                        "</td></tr>" +
-                        "<tr><td align='center'>" +
-                        "<label class ='playerName' >" + character.name + "</label>" + "</td></tr>" + "</table>";
-                }
-            }
-        }
-    }]);
-app.directive('forceDirect', ['$rootScope', '$document', function ($rootScope) {
-        return {
-            restrict: 'E',  // Element name: <my-directive></my-directive>
-            link: function ($scope, $element) {
-                console.log($rootScope.data.selectedIndex);
+                let selectTypeTx = object.append('label').attr('class', 'selectLabel');
+                selectTypeTx.text('Event Type : ');
+                let selectorType = object.append('select').attr('class', 'selectorType').style('width', '150px');
+                let optionsData = [' All ', ' Shoot Made ', ' Shoot Miss ', ' Free Throw ', ' Rebound ', ' Turn Over ', ' Foul ', ' Violation ', ' Sub ', ' Regular ', ' Jump Ball ', ' Ejection '];
+                let optionsType = selectorType.selectAll('option').data(optionsData);
+                optionsType.enter().append('option').text(function (d) {
+                    return d;
+                });
+                selectorType.on("change", function () {
+                    selectType = selectorType.property('selectedIndex');
+                    scenesDate = sceneQuery(scenes, selectType, selectThresh, selectQuart);
+                    update(scenesDate, characters, selectSort, selectQuart);
+                });
 
-                let scenes = $rootScope.storyLine2.scenes.filter(function (d) {
+                let selectSortTx = object.append('label').attr('class', 'selectLabel');
+                selectSortTx.text('Sort Type : ');
+                let selectorSort = object.append('select').attr('class', 'selectorSort').style('width', '150px');
+                let SortData = [' R2eSort ', ' GreedSort ', ' None '];
+                let optionsSort = selectorSort.selectAll('option').data(SortData);
+                optionsSort.enter().append('option').text(function (d) {
+                    return d;
+                });
+                selectorSort.on("change", function () {
+                    selectSort = selectorSort.property('selectedIndex');
+                    update(scenesDate, characters, selectSort, selectQuart);
+                });
+
+                object.style('margin-left', '150px');
+                object.style('margin-right', '10px');
+                object.style('margin-top', '10px');
+                object.style('margin-bottom', '10px');
+                return object;
+            }
+
+            function configSvg(object, narrative, width, height) {
+                object.attr('id', 'narrative-chart');
+                object.attr('transform', function (d) {
+                    let x = 10;
+                    let y = 0;
+                    return 'translate(' + [x, y] + ')';
+                });
+                object.style('margin-left', '5px');
+                object.style('margin-right', '5px');
+                object.style('margin-top', '10px');
+                object.style('margin-bottom', '10px');
+                object.attr('width', width === 0 ? narrative.extent()[0] + 30 : width);
+                object.attr('height', height === 0 ? narrative.extent()[1] + 5 : height);
+            }
+
+            function configSteam(object, narrative, data, info) {
+
+                object.attr('transform', function () {
+                    let x = 10 + 150;
+                    let y = 60;
+                    return 'translate(' + [x, y] + ')';
+                });
+                object.append('path').attr('class', 'areaH');
+                object.append('path').attr('class', 'areaA');
+                object.append('path').attr('class', 'baseL');
+                let homeFilter = data.home.filter(function (d) {
+                    return d.quarter >= narrative.range()[0] && d.quarter < narrative.range()[1];
+                })
+                let awayFilter = data.away.filter(function (d) {
+                    return d.quarter >= narrative.range()[0] && d.quarter < narrative.range()[1];
+                })
+                let gameLogo = object.append('g').attr('class', 'gameLogo');
+                let homeIcon = gameLogo.append('image').attr('class', 'homeIcon');
+                let awayIcon = gameLogo.append('image').attr('class', 'awayIcon');
+                let TextInfo = gameLogo.append('text').attr('class', 'TextInfo');
+                homeIcon.attr('href', 'assets/images/teamLogo/' + $scope.game['homeName'] + '.svg');
+                homeIcon.attr('width', '30').attr('x', 0).attr('y', 24);
+                awayIcon.attr('href', 'assets/images/teamLogo/' + $scope.game['awayName'] + '.svg');
+                awayIcon.attr('width', '30').attr('x', 0).attr('y', -24);
+                homeIcon.attr('transform', function (d) {
+                    let width = parseFloat(homeIcon.style('width'));
+                    let height = parseFloat(homeIcon.style('height'));
+                    let x = -30 - width;
+                    let y = -0.5 * height;
+                    return 'translate(' + [x, y] + ')';
+                });
+                awayIcon.attr('transform', function (d) {
+                    let width = parseFloat(awayIcon.style('width'));
+                    let height = parseFloat(awayIcon.style('height'));
+                    let x = -30 - width;
+                    let y = -0.5 * height;
+                    return 'translate(' + [x, y] + ')';
+                });
+                TextInfo.text(info);
+                TextInfo.attr('text-anchor', 'head');
+                TextInfo.attr('font-family', 'Arial');
+                TextInfo.attr('transform', function (d) {
+                    let x = -150;
+                    let y = -45;
+                    return 'translate(' + [x, y] + ')';
+                });
+
+                let area = d3.area()
+                    .x(function (d) {
+                        return (d['x'] - narrative.range()[0] * 820) * narrative.scale();
+                    })
+                    .y0(function (d) {
+                        return d['y0'];
+                    })
+                    .y1(function (d) {
+                        return d['y1'];
+                    })
+                    .curve(d3.curveStep); // [ "linear","bundle", "basis", "step", "cardinal"]
+
+
+                let home = object.select('path.areaH')
+                    .attr('d', function () {
+                        return area(homeFilter);
+                    })
+                    .attr('fill', $scope.teamColor.home);
+
+                let away = object.select('path.areaA')
+                    .attr('d', function (d) {
+                        return area(awayFilter);
+                    })
+                    .attr('fill', $scope.teamColor.away);
+                let base = object.select('path.baseL')
+                    .attr('d', function (d) {
+                        return 'M0,' + 0 + 'L' + (narrative.extent()[0] - 170) + ',' + 0;
+                    })
+                    .attr('stroke-width', 2)
+                    .attr('stroke', '#a5a5a5')
+                    .attr('stroke-dasharray', '1,4');
+
+            }
+
+            function sceneQuery(scenes, query, thresh, quarter = 0) {
+                let dateSet = [];
+                for (let i = 0; i < scenes.length; i++) {
+                    if (scenes[i].timeOffset > Math.floor(scenes[scenes.length - 1]['timeOffset'] * thresh)) break;
+                    if (quarter !== 0 && scenes[i].quarter !== quarter - 1) continue;
+                    if (query == 0) {
+                        dateSet.push(scenes[i]);
+                    } else if (scenes[i].type == query) {
+                        dateSet.push(scenes[i]);
+                    } else if (scenes[i].type == 13) {
+                        dateSet.push(scenes[i]);
+                    }
+
+                }
+                return dateSet;
+            }
+
+            function configPlayerInfo(object) {
+                let table       = object.select('table').attr('class','playerInfo');
+                table.selectAll('td').remove();
+                table.style('background','#FFF');
+                let tableCol    = table.append('td');
+                let tableRow0   = tableCol.append('tr');
+                let playerImage = tableRow0.append('img')
+                                           .attr('class','playerImg')
+                                           .style('width', '260px')
+                                           .style('height', '190px');
+
+                let tableRow1   = tableCol.append('tr').attr('align','center');
+                let playerName  = tableRow1.append('label').attr('class','playerName');
+            }
+
+            function updatePlayerInfo(object, character) {
+                let preUrl = 'https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/';
+                preUrl = 'https://china.nba.com/media/img/players/head/260x190/';
+                let playerInfo  = object.select('.playerInfo');
+                let playerImage = object.select('.playerImg');
+                let playerName  = object.select('.playerName');
+                playerInfo.style('background','#b8b8bf');
+                playerImage.style('background', character.color);
+                playerImage.attr('src', preUrl + character.id + ".png");
+                playerName.text(character.name);
+            }
+
+            function configForce(object, scenes, characters) {
+                let forceDirect = object.select('svg').attr('width','1000px').attr('height','500px');
+                forceDirect.attr('transform', function () {
+                    let x = 500;
+                    let y = 0;
+                    return 'translate(' + [x, y] + ')';
+                });
+                let scenesF = scenes.filter(function (d) {
                     return d.characters.length > 1
                 });
-                let characters = $rootScope.storyLine2.characters;
-                let nodes  = characters.map(function (d, i) {
+                let charactersF = characters;
+                let nodes = charactersF.map(function (d, i) {
                     return i;
                 });
-                let edges  = getEdges(characters, scenes);
+                let edges = getEdges(charactersF, scenesF);
                 let matrix = getMatrix(nodes, edges);
-
                 let forceNodes = characters.map(function (d) {
-                    return {"name": d.name, "group": d.affiliation};
-                })
+                    return {'id': d.id, 'name': d.name, 'group': d.affiliation, 'color': d.color};
+                });
                 let forceLinks = edges.map(function (d) {
                     return {"source": d.source, "target": d.target, "value": d.weight};
-                })
-
-                let svg = d3.select('force-direct')
-                    .append('svg')
-                    .attr('id', 'gameSVG')
-                    .attr('width', '1000px')
-                    .attr('height', '1000px')
-                    .style('margin-left', '1%');
-
-
-                let link = svg.append("g")
-                    .attr("class", "links")
-                    .selectAll(".link")
-                    .data(forceLinks)
-                    .enter().append("line")
-                    .attr("class", "link")
-                    .attr("stroke",'#000')
-                    .attr("stroke-width", 0.5);
-
-                let node = svg.append("g")
-                    .attr("class", "nodes")
-                    .selectAll(".node")
-                    .data(forceNodes);
-                node.enter().append('g')
-                    .attr("class", "node")
-                    .style("fill",function (d) {
-                        return d.group === 'home'? '#4a6ca5':'#d03e4a';
-                    })
-                    .on("mouseover", mouseover)
-                    .on("mouseout", mouseout)
-
-                node.append("circle")
-                    .attr("r", 8);
-
-                node.append("text")
-                    .attr("dy", ".35em")
-                    .text(function(d) { return d.name; });
-
-                let force = d3.layout.force()
-                    .nodes(forceNodes)
-                    .links(forceLinks)
-                    .gravity(.05)
-                    .charge(-240)
-                    .linkDistance(160)
-                    .size([1000, 1000])
-                    .start();
-
-                force.on("tick", function () {
-                    link.attr("x1", function(d) { return d.source.x; })
-                        .attr("y1", function(d) { return d.source.y; })
-                        .attr("x2", function(d) { return d.target.x; })
-                        .attr("y2", function(d) { return d.target.y; });
-
-                    node.attr("transform", function(d) {
-                        return "translate(" + d.x + "," + d.y + ")";
-                    });
                 });
 
-                function mouseover() {
-                    d3.select(this).select("circle").transition()
-                        .duration(75)
-                        .attr("r", 10);
-                }
+                forceDirect.selectAll("g").remove();
 
-                function mouseout() {
-                    d3.select(this).select("circle").transition()
-                        .duration(75)
-                        .attr("r", 8);
-                }
+                let interactions = forceDirect.append("g").attr("class", "interactions");
+                let texts = forceDirect.append("g").attr("class", "texts")
+                let players = forceDirect.append("g").attr("class", "players")
+
+
+                let interaction = interactions.selectAll(".interaction").data(forceLinks)
+                    .join("line")
+                    .attr("class", "interaction")
+                    .attr("source", function (d) {
+                        return characters[d.source].id;
+                    })
+                    .attr("target", function (d) {
+                        return characters[d.target].id;
+                    })
+                    .attr("stroke", '#000')
+                    .attr("stroke-width", 0.5);
+
+
+                let player = players.selectAll("circle.player").data(forceNodes)
+                    .join('circle')
+                    .attr("class", "player")
+                    .attr("id",function (d) {
+                        return d.id;
+                    })
+                    .attr("r", 8)
+                    .style("fill", function (d) {
+                        return d.color;
+                    })
+                    .on("mouseover", function () {
+                        d3.select(this).transition()
+                            .duration(75)
+                            .attr("r", 10);
+                    })
+                    .on("mouseout", function () {
+                        d3.select(this).transition()
+                            .duration(75)
+                            .attr("r", 8);
+                    });
+
+
+                let text = texts.selectAll("text.player").data(forceNodes)
+                    .join('text')
+                    .attr("class", "player")
+                    .attr("id",function (d) {
+                        return d.id;
+                    })
+                    .attr('dx', 8)
+                    .attr('dy', -8)
+                    .text(d => d.name);
+
+
+                let force = d3.forceSimulation(forceNodes)
+                    .force('link', d3.forceLink(forceLinks).strength(0.01))
+                    .force('charge', d3.forceManyBody(-50000))
+                    .force('center', d3.forceCenter(250, 250))
+                    .on("tick", function () {
+                        interaction.attr("x1", d => d.source.x);
+                        interaction.attr("y1", d => d.source.y);
+                        interaction.attr("x2", d => d.target.x);
+                        interaction.attr("y2", d => d.target.y);
+                        player.attr('cx', d => d.x);
+                        player.attr('cy', d => d.y);
+                        text.attr('x', d => d.x);
+                        text.attr('y', d => d.y);
+                    });
+
+                let drag = function (force) {
+                    function start(d) {
+                        if (!d3.event.active) force.alphaTarget(0.3).restart();
+                        d.fx = d.x;
+                        d.fy = d.y;
+                    }
+
+                    function drag(d) {
+                        d.fx = d3.event.x;
+                        d.fy = d3.event.y;
+                    }
+
+                    function end(d) {
+                        if (!d3.event.active) force.alphaTarget(0);
+                        d.fx = null;
+                        d.fy = null;
+                    }
+
+                    return d3.drag()
+                        .on('start', start)
+                        .on('drag', drag)
+                        .on('end', end);
+                };
+
+                player.call(drag(force));
+
 
                 function getEdges(characters, scenes) {
                     let edges = [];
                     scenes.forEach(function (scene) {
                         edges = edges.concat(sceneEdges(scene.characters, characters));
                     });
+
                     function sceneEdges(sceneCharacters, totalCharacters) {
                         let i, j, matrix;
                         matrix = [];
-                        if(sceneCharacters.length < 2) return matrix;
+                        if (sceneCharacters.length < 2) return matrix;
                         for (i = sceneCharacters.length; i--;) {
                             for (j = i; j--;) {
                                 let a = totalCharacters.indexOf(sceneCharacters[i]);
@@ -2404,10 +2460,11 @@ app.directive('forceDirect', ['$rootScope', '$document', function ($rootScope) {
                         }
                         return matrix;
                     }
+
                     edges = edges.reduce(function (result, edge) {
                         let resultEdge;
                         resultEdge = result.filter(function (resultEdge) {
-                            edge.sort(function(a,b){
+                            edge.sort(function (a, b) {
                                 return a - b;
                             });
                             return resultEdge.source === edge[0] && resultEdge.target === edge[1];
@@ -2420,6 +2477,7 @@ app.directive('forceDirect', ['$rootScope', '$document', function ($rootScope) {
                     }, []);
                     return edges;
                 }
+
                 function getMatrix(nodes, edges) {
                     let sceneMatrix = [];
                     for (let i = 0; i < nodes.length; i++) {
@@ -2432,13 +2490,77 @@ app.directive('forceDirect', ['$rootScope', '$document', function ($rootScope) {
                         sceneMatrix[d.source][d.target] = d.weight;
                         sceneMatrix[d.target][d.source] = d.weight;
                     });
-                    return  sceneMatrix
+                    return sceneMatrix
                 }
-
-
             }
-        };
-    }]);
+
+            function configVideo(object) {
+                object.attr('src', 'http://smb.cdnak.neulion.com/nlds_vod/nba/vod/2016/11/14/21600145/2_21600145_orl_ind_2016_b_discrete_ind19_1_1600.mp4');
+                object.attr('autoplay', 'autoplay');
+                object.attr('controls', 'controls');
+                object.style('padding-left', '120px');
+            }
+
+            $('story-line2').scroll(function () {
+                // video.style('margin-left', function (d) {
+                //     let offset = $('story-line2').scrollLeft();
+                //     return offset + "px";
+                //  });
+                // sliderCon.style('padding-left', function (d) {
+                //     let offset = $('story-line2').scrollLeft();
+                //     return offset + "px";
+                // });
+                selectCon.style('padding-left', function (d) {
+                    let offset = $('story-line2').scrollLeft();
+                    return offset + "px";
+                });
+            });
+
+            function playerImg(character, width = 148) {
+
+                let preUrl = 'https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/';
+                preUrl = 'https://china.nba.com/media/img/players/head/260x190/';
+                return "<table width='" + width + "'>" +
+                    "<tr><td align ='center'>" +
+                    "<img class = 'playerImg' " +
+                    "style = 'background: " + character.color + "' " +
+                    "src = '" + preUrl + character.id + ".png" + "'>" +
+                    "</td></tr>" +
+                    "<tr><td align='center'>" +
+                    "<label class ='playerName' >" + character.name + "</label>" + "</td></tr>" + "</table>";
+            }
+
+            function highlightCY(d) {
+                svg0.select('g.links').selectAll('g.character').attr('opacity', 0.1);
+                svg0.select('g.links').selectAll('[id =\'' + d.character.id + '\']').attr('opacity', 1.0);
+
+                svg0.select('g.intros').selectAll('g.intro').attr('opacity', 0.1);
+                svg0.select('g.intros').selectAll('[id = \'' + d.character.id + '\']').attr('opacity', 1.0);
+
+                svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 0.1);
+                svgF.selectAll('.player').attr('opacity', 0.1);
+                svgF.selectAll('.interaction').attr('opacity', 0.1);
+
+                d.character.appearances.forEach(function (c) {
+                    svg0.select('g.scenes').selectAll('[id =\'' + c.scene.id + '\']').attr('opacity', 1.0);
+                    c.scene.characters.forEach(function (p) {
+                        svgF.selectAll('[id =\'' + p.id + '\']').attr('opacity', 1.0);
+                    })
+                    // c.scene
+                });
+                updatePlayerInfo(Forces, d.character);
+            }
+            function highlightCN(_) {
+                svg0.select('g.scenes').selectAll('g.scene').attr('opacity', 1.0);
+                svg0.select('g.links').selectAll('g').attr('opacity', 1.0);
+                svg0.select('g.intros').selectAll('g.intro').attr('opacity', 1.0);
+                svgF.selectAll('.player').attr('opacity', 1.0);
+                svgF.selectAll('.interaction').attr('opacity', 1.0);
+                configPlayerInfo(Forces);
+            }
+        }
+    }
+}]);
 
 function eventWeight(actType, position) {
     let result = 0;
@@ -2738,7 +2860,4 @@ function queryPlayerInfo(playerData, lastName) {
     }
     return result;
 }
-
-
-
 
