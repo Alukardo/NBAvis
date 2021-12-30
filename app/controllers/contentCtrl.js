@@ -1,6 +1,4 @@
-addScript('app/utils/contentUtils.js');
-app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$stateParams', '$sessionStorage', '$window', 'ngProgress', 'contentService', 'globalService',
-    function ($rootScope, $scope, $mdBottomSheet, $stateParams, $sessionStorage, $window, ngProgress, contentService, globalService) {
+app.controller('contentCtrl', function ($rootScope, $scope, $sessionStorage, $window, ngProgress, contentService, globalService) {
 
         let Point = globalService.Point;
         let Line = globalService.Line;
@@ -943,8 +941,8 @@ app.controller('contentCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$state
         });
 
         return $scope.init();
-    }]);
-app.directive('scoreboard',  ['$rootScope',function ($rootScope) {
+    });
+app.directive('scoreboard',  function ($rootScope) {
     return {
         restrict: 'E',
         link: function ($scope, $element) {
@@ -1185,8 +1183,8 @@ app.directive('scoreboard',  ['$rootScope',function ($rootScope) {
             });
         }
     }
-}]);
-app.directive('streamgraph', ['$rootScope',function ($rootScope) {
+});
+app.directive('streamgraph', function ($rootScope) {
     return {
         restrict: 'E',
         link: function ($scope) {
@@ -1289,8 +1287,8 @@ app.directive('streamgraph', ['$rootScope',function ($rootScope) {
             }
         }
     }
-}]);
-app.directive('forcegraph',  ['$rootScope',function ($rootScope) {
+});
+app.directive('forcegraph',  function ($rootScope) {
     return {
         restrict: 'E',
         link: function ($scope) {
@@ -1450,8 +1448,8 @@ app.directive('forcegraph',  ['$rootScope',function ($rootScope) {
             }
         }
     }
-}]);
-app.directive('storyLine',   ['$rootScope',function ($rootScope) {
+});
+app.directive('storyLine',   function ($rootScope) {
     return {
         restrict: 'E',  // Element name: <my-directive></my-directive>
         link: function ($scope, $element) {
@@ -1582,8 +1580,8 @@ app.directive('storyLine',   ['$rootScope',function ($rootScope) {
 
         }
     };
-}]);
-app.directive('storyLine2',  ['$rootScope',function ($rootScope) {
+});
+app.directive('storyLine2',  function ($rootScope) {
     return {
         restrict: 'E',
         link: function ($scope) {
@@ -1922,7 +1920,7 @@ app.directive('storyLine2',  ['$rootScope',function ($rootScope) {
             }
         }
     }
-}]);
+});
 
 
 
