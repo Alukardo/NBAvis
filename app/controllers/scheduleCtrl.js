@@ -1,5 +1,4 @@
-app.controller('scheduleCtrl', ['$rootScope', '$scope', '$filter', '$location', '$state', '$stateParams', 'ngProgress', '$mdDialog', 'scheduleService', 'globalService',
-    function ($rootScope, $scope, $filter, $location, $state, $stateParams, ngProgress, $mdDialog, scheduleService, globalService) {
+app.controller('scheduleCtrl', function ($rootScope, $scope, $filter, $state, $stateParams, ngProgress, scheduleService, globalService) {
         $scope.init = function () {
             console.log('# ScheduleController initial.');
             ngProgress.height('10px');
@@ -60,4 +59,4 @@ app.controller('scheduleCtrl', ['$rootScope', '$scope', '$filter', '$location', 
             });
         };
         return $scope.init();
-    }]);
+    });

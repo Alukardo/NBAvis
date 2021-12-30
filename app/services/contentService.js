@@ -1,6 +1,6 @@
 app.constant('WEB_CONTENT_SERVICE', 'http://127.0.0.1:8000/pdp/');
 app.constant('BOX_WEB_CONTENT_SERVICE', 'http://127.0.0.1:8000/playerd/');
-app.factory('contentService', ['$http', 'WEB_CONTENT_SERVICE', 'BOX_WEB_CONTENT_SERVICE', function ($http, WEB_CONTENT_SERVICE, BOX_WEB_CONTENT_SERVICE) {
+app.factory('contentService', function ($http, WEB_CONTENT_SERVICE, BOX_WEB_CONTENT_SERVICE) {
         let service = {};
         service.getGameBoxDataByID = function (data, successCallback, errorCallback) {
             $http.get(BOX_WEB_CONTENT_SERVICE, {params: {"gameId": data.gameId}})
@@ -25,4 +25,4 @@ app.factory('contentService', ['$http', 'WEB_CONTENT_SERVICE', 'BOX_WEB_CONTENT_
                 });
         };
         return service;
-    }]);
+    });
