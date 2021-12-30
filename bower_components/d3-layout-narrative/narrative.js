@@ -414,7 +414,7 @@ function narrativeLines() {
         characters.forEach(function (d) {
             prePositions[d.id] = { x : 0, y : characterPosition(d.cOrder) + d.group.min };
         });
-
+        let tempScene = [];
         scenes.forEach(function (scene) {
             // appearances 位置计算
             scene.appearances.sort(function (a, b) {
@@ -445,8 +445,19 @@ function narrativeLines() {
                 let b1 = prePositions[scene.appearances[1].character.id].y - scene.appearances[1].y;
 
                 avg  = p0.x > p1.x ? b0 : b1;
-                if( x - p0.x > 50 && x - p1.x > 50) {
-                    avg  = (a0 - avg) *  (a0 - avg) < (a1 - avg) *  (a1 - avg) ? a0 : a1;
+                let count = 0;
+                let flag = -1;
+
+                // if( x - p0.x > 50 && x - p1.x > 50) {
+                //     avg  = (a0 - avg) *  (a0 - avg) < (a1 - avg) *  (a1 - avg) ? a0 : a1;
+                // }
+                if(tempScene.length > 5){
+                    while (detect(avg, scene, tempScene, 35) == false){
+                        flag  = - flag;
+                        count = count + 1;
+                        avg = avg + (flag * count)
+                    }
+
                 }
 
 
@@ -468,8 +479,7 @@ function narrativeLines() {
 
             scene.x = scale * (scene.start - startInit) + labelSize[0];
             scene.y = avg;
-
-
+            tempScene.push(scene);
 
             scene.appearances.forEach(function (appearance) {
                 let x = scene.x + scenePadding[3];
@@ -477,6 +487,20 @@ function narrativeLines() {
                 prePositions[appearance.character.id] = { x : x , y : y };
             });
         });
+        function detect(avg, scene, tempScene, dc) {
+            for(let i = 0 ; i< tempScene.length; i++){
+                if(scene.characters[0] === tempScene[i].characters[0] ||
+                    scene.characters[1] === tempScene[i].characters[1] ||
+                    scene.characters[0] === tempScene[i].characters[1] ||
+                    scene.characters[1] === tempScene[i].characters[0] ) continue;
+                let c = {x: scale * (scene.start - startInit) + labelSize[0], y: avg}
+                if(distance(c, tempScene[i]) < dc) return false;
+            }
+            return true;
+        }
+        function distance(a, b) {
+            return Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+        }
 
     }
 

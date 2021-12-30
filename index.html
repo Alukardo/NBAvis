@@ -12,7 +12,9 @@
     <link rel="stylesheet" href="assets/stylesheets/global.css">
     <link rel="stylesheet" href="assets/stylesheets/schedule.css">
     <link rel="stylesheet" href="assets/stylesheets/content.css">
+    <link rel="stylesheet" href="assets/stylesheets/gamesvg.css">
 
+    <script src="app/utils/globalUtils.js"></script>
     <script src='bower_components/jquery/dist/jquery.min.js'></script>
     <script src='bower_components/d3/d3.js'></script>
     <script src='bower_components/wasm_r2e/r2e.js'></script>
@@ -34,6 +36,9 @@
     <script src='bower_components/angular-material-icons/angular-material-icons.min.js'></script>
     <script src='bower_components/ngprogress/build/ngprogress.min.js'></script>
     <script src='bower_components/jquery.tipsy/js/jquery.tipsy.min.js'></script>
+    <script src=""></script>
+
+
 </head>
 <body layout='row'>
 <div layout="column" tabIndex="-1" role="main" flex ng-controller="globalCtrl">
@@ -42,7 +47,7 @@
             <ng-md-icon icon="{{menuIcon}}" size="26" style="fill:white" options='{"rotation": "counterclock"}'
                         ng-click="toolbarMenuClick(menuIcon)" layout-align="left" ></ng-md-icon>
             <span>Game Vis</span>
-            <ng-md-icon   icon="settings" size="26"  style="fill:white;" ng-click="showToolMenu()" ></ng-md-icon>
+            <ng-md-icon icon="settings" size="26"  style="fill:white;" ng-click="showToolMenu()" ></ng-md-icon>
         </h2>
     </md-toolbar>
     <md-content ui-view flex>

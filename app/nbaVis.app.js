@@ -8,8 +8,7 @@ let app = angular.module('nbaVisApp', [
     'ngMdIcons',
     'ngProgress'
 ]);
-app.config(['$routeProvider', '$locationProvider', '$stateProvider', '$urlRouterProvider',
-    function ($routeProvider, $locationProvider, $stateProvider, $urlRouterProvider) {
+app.config(['$routeProvider','$locationProvider','$stateProvider','$urlRouterProvider', function ($routeProvider, $locationProvider, $stateProvider, $urlRouterProvider) {
         $urlRouterProvider.otherwise("/");
         $stateProvider
             .state('schedule', {
@@ -27,28 +26,27 @@ app.config(['$routeProvider', '$locationProvider', '$stateProvider', '$urlRouter
                 templateUrl: 'views/content/gameContent.html',
                 controller: 'contentCtrl'
             });
-    }])
-    .controller('globalCtrl', ['$rootScope', '$state', '$mdBottomSheet', '$http', function ($rootScope, $state, $mdBottomSheet) {
+    }]);
+app.controller('globalCtrl', ['$rootScope', '$state', '$mdBottomSheet', function ($rootScope, $state, $mdBottomSheet) {
     $rootScope.factor = {'x': '', 'y': ''};
     $rootScope.aggregate = {'unit': '', 'value': '', 'threshold': ''};
     $rootScope.data = {'selectedIndex': 0};
+    $rootScope.scoreLevel = {'degree': 0};
     $rootScope.matrix = [1, 0, 0, 1, 0, 0];
     $rootScope.previousState = '';
     $rootScope.currentState = '';
     $rootScope.$on('$stateChangeSuccess', function (ev, to, toParams, from) {
         $rootScope.previousState = from['name'];
         $rootScope.currentState = to['name'];
-
     });
     $rootScope.toolbarMenuClick = function (state) {
-        if (state === 'menu') {
-        } else  {
-            if ($rootScope.previousState === '') {
-                $state.go('schedule');
-            } else {
-                $state.go($rootScope.previousState);
-            }
+        if (state === 'menu') return
+        if ($rootScope.previousState === '') {
+            $state.go('schedule');
+        } else {
+            $state.go($rootScope.previousState);
         }
+
     };
     $rootScope.showToolMenu = function () {
         $mdBottomSheet.show({
@@ -62,12 +60,13 @@ app.config(['$routeProvider', '$locationProvider', '$stateProvider', '$urlRouter
         let tempB = (parseInt((tempTeamColor).substring(5, 7), 16) - (teamScore / 10.0)) < 0 ? 0 : (parseInt((tempTeamColor).substring(5, 7), 16) + (teamScore * 10));
         return 'rgb(' + tempR + ',' + tempG + ',' + tempB + ')';
     };
-}])
-    .controller('toolMenuCtrl', ['$rootScope', '$scope', '$mdBottomSheet', '$sessionStorage', '$window', function ($rootScope, $scope, $mdBottomSheet, $sessionStorage, $window) {
+}]);
+app.controller('toolMenuCtrl', ['$rootScope', '$scope', '$window', function ($rootScope, $scope, $window) {
     $scope.resetMatrix = function () {
+        $rootScope.scoreLevel = {'degree': 0};
         $rootScope.factor.x = $window.innerWidth / 180;
         $rootScope.matrix = [1, 0, 0, 1, 0, 0];
-        angular.element('#gameSVG').children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
+        angular.element('scoreboard').children('g').attr('transform', "matrix(" + $rootScope.matrix.join(' ') + ")");
     };
     $scope.resetSelected = function () {
         $rootScope.quarterSelected = false;
@@ -133,41 +132,10 @@ app.config(['$routeProvider', '$locationProvider', '$stateProvider', '$urlRouter
         }
     }
 
-}])
-    .factory('globalService', ['$sessionStorage', '$http', function ($sessionStorage, $http) {
+}]);
+app.factory('globalService', ['$sessionStorage', function ($sessionStorage) {
     let globalService = {};
-    let teamColor = {
-        "ATL": {"away": "#000080", "home": "#FF0000"},
-        "BOS": {"away": "#009E60", "home": "#009E60"},
-        "BKN": {"away": "#000000", "home": "#000000"},
-        "CHA": {"away": "#1D1160", "home": "#008CA8"},
-        "CHI": {"away": "#D4001F", "home": "#D4001F"},
-        "CLE": {"away": "#860038", "home": "#FDBB30"},
-        "DAL": {"away": "#0B60AD", "home": "#072156"},
-        "DEN": {"away": "#4B90CD", "home": "#FDB827"},
-        "DET": {"away": "#00519A", "home": "#EB003C"},
-        "GSW": {"away": "#04529C", "home": "#FFCC33"},
-        "HOU": {"away": "#CE1138", "home": "#CE1138"},
-        "IND": {"away": "#092C57", "home": "#FFC322"},
-        "LAC": {"away": "#EE2944", "home": "#146AA2"},
-        "LAL": {"away": "#4A2583", "home": "#F5AF1B"},
-        "MEM": {"away": "#001F70", "home": "#7399C6"},
-        "MIA": {"away": "#B62630", "home": "#FF9F00"},
-        "MIL": {"away": "#003614", "home": "#E32636"},
-        "MIN": {"away": "#0F4D92", "home": "#50C878"},
-        "NOP": {"away": "#002B5C", "home": "#B4975A"},
-        "NYK": {"away": "#0953A0", "home": "#FF7518"},
-        "OKC": {"away": "#007DC3", "home": "#F05133"},
-        "ORL": {"away": "#708090", "home": "#0047AB"},
-        "PHI": {"away": "#0046AD", "home": "#D0103A"},
-        "PHX": {"away": "#1C105E", "home": "#E65F20"},
-        "POR": {"away": "#F0163A", "home": "#F0163A"},
-        "SAC": {"away": "#753BBD", "home": "#753BBD"},
-        "SAS": {"away": "#BEC8C9", "home": "#BEC8C9"},
-        "TOR": {"away": "#708090", "home": "#B31B1B"},
-        "UTA": {"away": "#00275D", "home": "#0D4006"},
-        "WAS": {"away": "#002244", "home": "#C60C30"}
-    };
+
     globalService.setGame = function (game) {
         $sessionStorage.game = game;
     };
@@ -203,6 +171,5 @@ app.config(['$routeProvider', '$locationProvider', '$stateProvider', '$urlRouter
         this.radius = radius;
         this.background = background;
     };
-
     return globalService;
 }]);

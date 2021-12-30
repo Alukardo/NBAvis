@@ -1,5 +1,4 @@
-//app.constant('WEB_SCHEDULE_SERVICE', 'https://www.alukardo.top/django/gamesch/');
-app.constant('WEB_SCHEDULE_SERVICE', 'http://192.168.0.104:8000/gamesch/');
+app.constant('WEB_SCHEDULE_SERVICE', 'http://127.0.0.1:8000/gamesch/');
 app.factory('scheduleService', ['$http', 'WEB_SCHEDULE_SERVICE', function ($http, WEB_SCHEDULE_SERVICE) {
     let service = {};
     service.getGameByDate = function (date, successCallback, errorCallback) {

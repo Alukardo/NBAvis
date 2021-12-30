@@ -2,3 +2,9 @@
     justify-content:space-between;
     align-items:center;
 }
+md-radio-group{
+    border: 0px;
+}
+md-radio-button{
+    width: auto;
+}

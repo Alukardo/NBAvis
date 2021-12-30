@@ -1,0 +1,69 @@
+table#tooltip {
+    position: relative;
+    display: inline;
+    width:300px;
+    color: #FFFFFF;
+    background: #000000;
+    height: 120px;
+    line-height: 30px;
+    text-align: center;
+    border-radius: 6px;
+}
+img.playerPhoto{
+    width: 130px;
+    height: 100px;
+    offset-after: 5px;
+}
+table#d3tooltip {
+    color: #FFFFFF;
+    background: #a5a5a5;
+    text-align: center;
+    width: 130px;
+    height: 130px;
+}
+tr.tipLable{
+    height: 15px;
+}
+
+.isSelected{
+    opacity: 1.0;
+}
+.notSelected{
+    opacity: 0.1;
+}
+.playerInfo{
+    margin-left: 170px;
+    margin-top : 150px;
+    border-style: solid;
+    border-width: 1px;
+}
+.playerImg{
+    width :130px;
+    margin: 10px;
+}
+.playerName{
+    margin: 5px;
+    font-size:16px;
+    text-align:center;
+}
+.eventDescription{
+    font-size:3px;
+    text-align:center;
+}
+
+.selectLabel{
+    margin: 10px 10px 10px 15px;
+}
+.visual-graph-container{
+    overflow-x: auto;
+    z-index:1;
+    word-break: break-all;
+    white-space: nowrap;
+}
+.visual-graph {
+    margin: 10px 5px;
+    position: relative;
+    display:block
+}
+
+

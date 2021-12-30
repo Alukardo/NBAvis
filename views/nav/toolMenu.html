@@ -2,8 +2,18 @@
 	<md-list>
 		<md-item>
 			<div flex="10" layout layout-align="center center">
-	        	<span>Factor</span>
-	      	</div>
+				<span>Levels</span>
+			</div>
+			<md-radio-group ng-model="scoreLevel.degree" layout="row" aria-activedescendant="radio#0">
+				<md-radio-button id = "radio#0" ng-value="0" aria-label="0">by Quarter</md-radio-button>
+				<md-radio-button id = "radio#1" ng-value="1" aria-label="1">by Minute</md-radio-button>
+				<md-radio-button id = "radio#2" ng-value="2" aria-label="2">by Play</md-radio-button>
+			</md-radio-group>
+		</md-item>
+		<md-item>
+			<div flex="10" layout layout-align="center center">
+				<span>Factor</span>
+			</div>
 			<md-slider flex min="1" max="20" aria-label="factor.x" id="factorX-slider" ng-disabled="data.selectedIndex === 3" ng-model="factor.x" ></md-slider>
 			<div flex="20" layout layout-align="center center">
 				<input flex type="number" aria-label="factor.x" aria-controls="factorX-slider" min="1" max="20" ng-disabled="data.selectedIndex === 3" ng-model="factor.x" >
@@ -11,17 +21,17 @@
 		</md-item>
 		<md-item>
 			<div flex="10" layout layout-align="center center">
-	        	<span>Aggregate Unit</span>
-	      	</div>
-	      	<md-select layout-align="center center" placeholder="Pick" ng-model="aggregate.unit" ng-disabled="data.selectedIndex !== 3" >
-			    <md-option flex layout-align="center center" value="1">Quarter</md-option>
-			    <md-option flex layout-align="center center" value="2">Minute</md-option>
-			    <md-option flex layout-align="center center" value="3">Second</md-option>
-			    <md-option flex layout-align="center center" value="4">Starter-Bench</md-option>
-		  	</md-select>
+				<span>Aggregate Unit</span>
+			</div>
+			<md-select layout-align="center center" placeholder="Pick" ng-model="aggregate.unit" ng-disabled="data.selectedIndex !== 3" >
+				<md-option flex layout-align="center center" value="1">Quarter</md-option>
+				<md-option flex layout-align="center center" value="2">Minute</md-option>
+				<md-option flex layout-align="center center" value="3">Second</md-option>
+				<md-option flex layout-align="center center" value="4">Starter-Bench</md-option>
+			</md-select>
 			<div flex="10" layout layout-align="center center">
-	        	<span>Aggregate Value</span>
-	      	</div>
+				<span>Aggregate Value</span>
+			</div>
 			<md-slider flex min="0" max="20" ng-model="aggregate.value" ng-disabled="data.selectedIndex !== 3" aria-label="aggregate.value" id="aggValue-slider"></md-slider>
 			<div flex="20" layout layout-align="center center">
 				<input flex type="number" ng-model="aggregate.value" ng-disabled="data.selectedIndex !== 3"  aria-label="aggregate.value" aria-controls="aggValue-slider" min="0" max="20">
@@ -29,8 +39,8 @@
 		</md-item>
 		<md-item>
 			<div flex="10" layout layout-align="center center">
-	        	<span>Aggregate Threshold</span>
-	      	</div>
+				<span>Aggregate Threshold</span>
+			</div>
 			<md-slider flex min="0" max="20" ng-model="aggregate.threshold" ng-disabled="data.selectedIndex !== 3"  aria-label="aggregate.threshold" id="aggthreshold-slider"></md-slider>
 			<div flex="20" layout layout-align="center center">
 				<input flex type="number" ng-model="aggregate.threshold" ng-disabled="data.selectedIndex !== 3"  aria-label="aggregate.threshold" aria-controls="aggthreshold-slider" min="0" max="20">
@@ -38,14 +48,14 @@
 		</md-item>
 		<md-item>
 			<div flex="10" layout layout-align="center center">
-				<md-button ng-click="resetMatrix()">ResetView</md-button>
-	      	</div>
-	      	<div flex="10" layout layout-align="center center">
-				<md-button ng-disabled="data.selectedIndex === 3" ng-click="resetSelected()">ResetSelected</md-button>
-	      	</div>
-	      	<div flex="10" layout layout-align="center center">
+				<md-button ng-click="resetMatrix()">Reset View</md-button>
+			</div>
+			<div flex="10" layout layout-align="center center">
+				<md-button ng-disabled="data.selectedIndex === 3" ng-click="resetSelected()">Reset Selected</md-button>
+			</div>
+			<div flex="10" layout layout-align="center center">
 				<md-button ng-disabled="data.selectedIndex === 3" ng-click="compare(data.selectedIndex)">Compare</md-button>
-	      	</div>
+			</div>
 		</md-item>
 	</md-list>
 </md-bottom-sheet>

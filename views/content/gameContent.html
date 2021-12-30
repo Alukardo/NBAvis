@@ -1,38 +1,22 @@
 <md-tabs md-selected="data.selectedIndex">
-
-	<md-tab id="tab1" aria-controls="tab1-content" >
-		Level One
-	</md-tab>
-	<md-tab id="tab2" aria-controls="tab2-content" >
-		Level Two
-	</md-tab>
-	<md-tab id="tab3" aria-controls="tab3-content">
-		Level Three
-	</md-tab>
-	<md-tab id="tab4" aria-controls="tab4-content">
-		Level Four
-	</md-tab>
-	<md-tab id="tab5" aria-controls="tab6-content" >
-		Story Line
-	</md-tab>
-
+	<md-tab id="tab1" aria-controls="tab1-content" > Score Board  </md-tab>
+	<md-tab id="tab2" aria-controls="tab2-content" > Stream Graph </md-tab>
+	<md-tab id="tab3" aria-controls="tab3-content" > Force Graph </md-tab>
+	<md-tab id="tab4" aria-controls="tab4-content" > Story Line  </md-tab>
 </md-tabs>
 
 <ng-switch on="data.selectedIndex" class="tabpanel-container" >
-	<div role="tabpanel" id="tab1-content" aria-labelledby="tab1" ng-switch-when="0" >
-		<game-graph></game-graph>
+	<div role="tabpanel" id="tab1-content" aria-labelledby="tab1" ng-switch-when="0">
+		<scoreboard></scoreboard>
     </div>
     <div role="tabpanel" id="tab2-content" aria-labelledby="tab2" ng-switch-when="1">
-		<game-graph></game-graph>
+		<streamgraph></streamgraph>
     </div>
     <div role="tabpanel" id="tab3-content" aria-labelledby="tab3" ng-switch-when="2">
-		<game-graph></game-graph>
+		<forcegraph></forcegraph>
     </div>
     <div role="tabpanel" id="tab4-content" aria-labelledby="tab4" ng-switch-when="3">
-		<game-graph></game-graph>
-    </div>
-	<div role="tabpanel" id="tab5-content" aria-labelledby="tab5" ng-switch-when="4">
 		<story-line2></story-line2>
-	</div>
+    </div>
 
 </ng-switch>
