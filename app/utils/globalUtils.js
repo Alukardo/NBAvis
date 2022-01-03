@@ -19,7 +19,13 @@ function deepCopy(obj) {
     }
     return result;
 }
-
+function getTeamColor(game){
+    let color = {};
+    color.home = teamColor[game['homeName']].home;
+    color.away = teamColor[game['awayName']].away;
+    color.none = "#888888";
+    return color;
+}
 let teamColor = {
     "ATL": {"away": "#000080", "home": "#FF0000"},
     "BOS": {"away": "#009E60", "home": "#009E60"},

@@ -54,11 +54,13 @@ tr.tipLable{
 .selectLabel{
     margin: 10px 10px 10px 15px;
 }
+div{
+    word-break: break-all;
+    white-space: nowrap;
+}
 .visual-graph-container{
     overflow-x: auto;
     z-index:1;
-    word-break: break-all;
-    white-space: nowrap;
 }
 .visual-graph {
     margin: 10px 5px;

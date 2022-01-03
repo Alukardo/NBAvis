@@ -192,10 +192,13 @@ function description(des, type, playerInfo, playerData) {
             let reg2 = /([\w|\'|\-]+\s?J?r?\.?)\s STEAL/i;
 
             if (reg1.exec(des) !== null) {
-                res.push({
-                    'id': queryPlayerInfo(playerData, reg1.exec(des)[1])['id'],
-                    'action': "Turnover: " + reg1.exec(des)[2]
-                });
+                if(queryPlayerInfo(playerData, reg1.exec(des)[1]) != null){
+                    res.push({
+                        'id': queryPlayerInfo(playerData, reg1.exec(des)[1])['id'],
+                        'action': "Turnover: " + reg1.exec(des)[2]
+                    });
+                }
+
             }
             if (reg2.exec(des) !== null) {
                 res.push({'id': queryPlayerInfo(playerData, reg2.exec(des)[1])['id'], 'action': "Turnover: STEAL"});
@@ -270,4 +273,42 @@ function description(des, type, playerInfo, playerData) {
             break;
     }
     return deepCopy(res);
+}
+function setContentSize(tabpanel, width, height) {
+    tabpanel.style('width' , width  + 'px');
+    tabpanel.style('height', height + 'px');
+}
+function getMatrix(nodes, edges) {
+    let sceneMatrix = [];
+    for (let i = 0; i < nodes.length; i++) {
+        sceneMatrix[i] = [];
+        for (let j = 0; j < nodes.length; j++) {
+            sceneMatrix[i][j] = 0.0;
+        }
+    }
+    edges.forEach(function (d) {
+        sceneMatrix[d.source][d.target] = d.weight;
+        sceneMatrix[d.target][d.source] = d.weight;
+    });
+    return sceneMatrix
+}
+function findMax(matrix) {
+    let id = 0;
+    let value = 0;
+    for (let i = 0; i < matrix.length; i++) {
+        let tempValue = 0;
+        for (let j = 0; j < matrix[i].length; j++) {
+            tempValue += matrix[i][j];
+        }
+        if (tempValue > value) {
+            id = i;
+            value = tempValue;
+        }
+    }
+
+
+}
+
+function initProgress(ngProgress){
+    ngProgress.height('10px');
 }

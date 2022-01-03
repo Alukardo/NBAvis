@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html ng-app='nbaVisApp'>
+<html lang="en" ng-app='nbaVisApp'>
 <head>
     <meta charset='utf-8'>
     <title>Game Vis</title>
@@ -43,11 +43,11 @@
 <body layout='row'>
 <div layout="column" tabIndex="-1" role="main" flex ng-controller="globalCtrl">
     <md-toolbar>
-        <h2 class="md-toolbar-tools"  layout="row">
+        <h2 class="md-toolbar-tools" layout="row">
             <ng-md-icon icon="{{menuIcon}}" size="26" style="fill:white" options='{"rotation": "counterclock"}'
-                        ng-click="toolbarMenuClick(menuIcon)" layout-align="left" ></ng-md-icon>
+                        ng-click="toolbarMenuClick(menuIcon)" layout-align="left"></ng-md-icon>
             <span>Game Vis</span>
-            <ng-md-icon icon="settings" size="26"  style="fill:white;" ng-click="showToolMenu()" ></ng-md-icon>
+            <ng-md-icon icon="settings" size="26" style="fill:white;" ng-click="showToolMenu()"></ng-md-icon>
         </h2>
     </md-toolbar>
     <md-content ui-view flex>

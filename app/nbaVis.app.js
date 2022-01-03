@@ -131,7 +131,6 @@ app.controller('toolMenuCtrl', ['$rootScope', '$scope', '$window', function ($ro
                 break;
         }
     }
-
 }]);
 app.factory('globalService', ['$sessionStorage', function ($sessionStorage) {
     let globalService = {};

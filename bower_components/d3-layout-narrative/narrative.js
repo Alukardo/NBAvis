@@ -559,49 +559,6 @@ function narrativeLines() {
         }
     }
 
-    function computeCollision() {
-
-        let nodes = scenes.filter(function (d) {
-            return d.appearances.length > 1;
-        }).slice();
-        nodes.forEach(function (node) {
-            let collisions, movable;
-            collisions = collidesWith(node);
-            if (!collisions) return;
-            movable = collisions.filter(function (d) {
-                return d.characters;
-            });
-            movable.forEach(function (d) {
-                d.y += 30;
-            });
-
-        });
-        // Gets a list of all other nodes that this node collides with.
-        function collidesWith(node) {
-            let collisions = [];
-            for (let i = 0; i < nodes.length; i++) {
-                if (node !== nodes[i] && collides(node.bounds(), nodes[i].bounds())) {
-                    if (node.characters[0] !== nodes[i].characters[0]) {
-                        collisions.push(nodes[i]);
-                    }
-                }
-            }
-            return (collisions.length) ? collisions : false;
-
-            function collides(a, b) {
-                return !(
-                    // Verticals.
-                    a[1][0] <= b[0][0] ||
-                    b[1][0] <= a[0][0] ||
-
-                    // Horizontals.
-                    a[1][1] <= b[0][1] ||
-                    b[1][1] <= a[0][1]);
-            }
-        }
-
-    }
-
     function createLinks() {
         characters.forEach(function (character) {
             let i;
@@ -632,40 +589,6 @@ function narrativeLines() {
 
     function characterGroupHeight(count) {
         return count * pathSpace;
-    }
-
-
-
-    function getMatrix(nodes, edges) {
-        let sceneMatrix = [];
-        for (let i = 0; i < nodes.length; i++) {
-            sceneMatrix[i] = [];
-            for (let j = 0; j < nodes.length; j++) {
-                sceneMatrix[i][j] = 0.0;
-            }
-        }
-        edges.forEach(function (d) {
-            sceneMatrix[d.source][d.target] = d.weight;
-            sceneMatrix[d.target][d.source] = d.weight;
-        });
-        return sceneMatrix
-    }
-
-    function findMax(matrix) {
-        let id = 0;
-        let value = 0;
-        for (let i = 0; i < matrix.length; i++) {
-            let tempValue = 0;
-            for (let j = 0; j < matrix[i].length; j++) {
-                tempValue += matrix[i][j];
-            }
-            if (tempValue > value) {
-                id = i;
-                value = tempValue;
-            }
-        }
-
-
     }
 
     function edgePartition(characters, scenes) {
@@ -1257,5 +1180,48 @@ function narrativeLines() {
             }
             return sceneMatrix;
         }
+    }
+
+    function computeCollision() {
+
+        let nodes = scenes.filter(function (d) {
+            return d.appearances.length > 1;
+        }).slice();
+        nodes.forEach(function (node) {
+            let collisions, movable;
+            collisions = collidesWith(node);
+            if (!collisions) return;
+            movable = collisions.filter(function (d) {
+                return d.characters;
+            });
+            movable.forEach(function (d) {
+                d.y += 30;
+            });
+
+        });
+        // Gets a list of all other nodes that this node collides with.
+        function collidesWith(node) {
+            let collisions = [];
+            for (let i = 0; i < nodes.length; i++) {
+                if (node !== nodes[i] && collides(node.bounds(), nodes[i].bounds())) {
+                    if (node.characters[0] !== nodes[i].characters[0]) {
+                        collisions.push(nodes[i]);
+                    }
+                }
+            }
+            return (collisions.length) ? collisions : false;
+
+            function collides(a, b) {
+                return !(
+                    // Verticals.
+                    a[1][0] <= b[0][0] ||
+                    b[1][0] <= a[0][0] ||
+
+                    // Horizontals.
+                    a[1][1] <= b[0][1] ||
+                    b[1][1] <= a[0][1]);
+            }
+        }
+
     }
 }
